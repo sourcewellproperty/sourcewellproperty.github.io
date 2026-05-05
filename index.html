@@ -353,6 +353,9 @@ a.link:hover{text-decoration:underline;}
     <button class="sb-item" id="nav-playbook" onclick="showPage('playbook')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2h10a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M5 6l1.5 1.5L9 5M5 10l1.5 1.5L9 9"/></svg>Playbook
     </button>
+    <button class="sb-item" id="nav-content" onclick="showPage('content')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M4 7h5M4 10h3"/><circle cx="11.5" cy="9" r="2"/></svg>Content
+    </button>
     <div class="sb-sec" style="margin-top:8px;">Config</div>
     <button class="sb-item" id="nav-settings" onclick="showPage('settings')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>Settings
@@ -761,6 +764,15 @@ a.link:hover{text-decoration:underline;}
     <div style="font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--txt3);margin-bottom:14px;font-weight:700;">Edit Playbooks</div>
     <div id="pb-editor"></div>
   </div>
+</div>
+
+<!-- CONTENT CALENDAR PAGE -->
+<div id="page-content" class="page">
+  <div class="pg-hdr">
+    <div><div class="pg-title">Content Calendar</div><div class="pg-sub">10 weeks · Instagram + LinkedIn · Build in Public</div></div>
+    <div id="content-progress-strip" style="display:flex;gap:8px;align-items:center;"></div>
+  </div>
+  <div id="content-calendar"></div>
 </div>
 
 <!-- SETTINGS PAGE -->
@@ -1421,6 +1433,7 @@ function showPage(name){
   if(nb) nb.classList.add('active');
   if(name==='settings') loadSettingsPage();
   if(name==='analyser') populateAnalyserDealSelect();
+  if(name==='content') renderContentCalendar();
   if(name==='playbook') renderPlaybook();
 }
 
@@ -4795,6 +4808,216 @@ function loadCompsForDealFromPipeline(dealId) {
       loadCompsFromDeal(dealId);
     }
   }, 100);
+}
+
+
+
+// ═══════════════ CONTENT CALENDAR ═══════════════
+
+var CONTENT_PILLARS = {
+  'P1': {label:'Build in Public',   color:'#f5a623', bg:'#78350f22'},
+  'P2': {label:'Viewings',          color:'#34d399', bg:'#052e1622'},
+  'P3': {label:'Market Intel',      color:'#60a5fa', bg:'#1e3a5f22'},
+  'P4': {label:'Lessons',           color:'#f87171', bg:'#3b0f0f22'},
+  'P5': {label:'Operator',          color:'#a78bfa', bg:'#312e5522'},
+  'P6': {label:'JV & Networking',   color:'#2dd4bf', bg:'#0f2d2b22'}
+};
+
+var CONTENT_CALENDAR = [
+  {week:'Week 1 (5 May)',   posts:[
+    {id:'c01', date:'Tue 6 May',  pillar:'P1', topic:'The storage room origin story', ig:'Reel: face to camera on Welsh street, 90 seconds, the storage room story', li:'Long-form post: full story, the redundancy, what it means for Sourcewell now', hook:'Before I went full time into property, I used to make agent calls from a dark storage room.'},
+    {id:'c02', date:'Fri 9 May',  pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format, Welsh street background', li:'Written analysis: GDV maths, offer logic, verdict on the same property', hook:'From the viewing itself'}
+  ]},
+  {week:'Week 2 (12 May)',  posts:[
+    {id:'c03', date:'Mon 12 May', pillar:'P5', topic:'Real SA numbers — what 1,314 bookings taught me about underwriting', ig:'Reel: face to camera, one stat as hook, 45 seconds on investor implication', li:'Long-form post: the data breakdown, what it means, why sourcers who haven\'t operated get this wrong', hook:'1,314 bookings. 8.5-day average stay. 42% direct. Here\'s what that means for every BRR-to-SA I underwrite.'},
+    {id:'c04', date:'Fri 16 May', pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format', li:'Written deal analysis: same property, full maths', hook:'From the viewing itself'}
+  ]},
+  {week:'Week 3 (19 May)',  posts:[
+    {id:'c05', date:'Mon 19 May', pillar:'P1', topic:'Two weeks of posting publicly — honest update', ig:'Short Reel: face to camera, honest numbers, one reflection', li:'Short text post: two weeks of numbers, what changed, one question', hook:'Two weeks in. Here\'s where I am.'},
+    {id:'c06', date:'Wed 21 May', pillar:'P6', topic:'How sophisticated investors assess risk — what my JV partner taught me', ig:'Face to camera Reel: one insight from JV partner, downside before upside, 45 seconds', li:'Long-form post: how to present a deal, investor criteria differ', hook:'My JV partner comes from an investment banking background. It changed how I present every deal.'},
+    {id:'c07', date:'Fri 23 May', pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format', li:'Written deal analysis: same property, full maths', hook:'From the viewing itself'}
+  ]},
+  {week:'Week 4 (26 May)',  posts:[
+    {id:'c08', date:'Mon 26 May', pillar:'P3', topic:'Cwmbran — the most overlooked SA market in South Wales', ig:'Face to camera Reel or on-location in Cwmbran, Grange Hospital demand driver, 60 seconds', li:'Long-form post: the full Cwmbran case, hospital demand, hotel supply constraints, the opportunity', hook:'Grange University Hospital. Constrained hotel supply. Nobody\'s talking about Cwmbran. They will be.'},
+    {id:'c09', date:'Wed 28 May', pillar:'P4', topic:'The biggest mistake in my first weeks of sourcing', ig:'Face to camera Reel: the GDV check mistake, the fix, 60 seconds', li:'Long-form post: what the mistake was, how it happened, what changed', hook:'I was calling agents about every property in my postcodes. It felt productive. It wasn\'t.'},
+    {id:'c10', date:'Fri 30 May', pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format', li:'Written deal analysis: same property, full maths', hook:'From the viewing itself'}
+  ]},
+  {week:'Week 5 (2 Jun)',   posts:[
+    {id:'c11', date:'Mon 2 Jun',  pillar:'P1', topic:'One month of posting — honest review', ig:'Short Reel: face to camera, what landed, what didn\'t, 60 seconds', li:'Long-form post: the honest month review — content, market observations, what\'s next', hook:'One month. Two platforms. Here\'s what actually landed and what flopped.'},
+    {id:'c12', date:'Wed 4 Jun',  pillar:'P5', topic:'SA with BTL fallback as downside protection', ig:'Face to camera Reel: the BTL fallback concept, why it matters, 45 seconds', li:'Long-form post: the contrarian belief made operational', hook:'Every SA educator sells the cashflow dream. I run SA units. I still think you need BTL alongside it.'},
+    {id:'c13', date:'Thu 5 Jun',  pillar:'P6', topic:'Three investors, same deal, three different verdicts', ig:'Face to camera Reel: investor criteria explained simply, 60 seconds', li:'Long-form post: some want capital recycled, some want ROCE, some want the floor first', hook:'The same deal can appeal or fail depending on one thing. Here\'s what most sourcers miss.'},
+    {id:'c14', date:'Fri 6 Jun',  pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format', li:'Written deal analysis: same property, full maths', hook:'From the viewing itself'}
+  ]},
+  {week:'Week 6 (9 Jun)',   posts:[
+    {id:'c15', date:'Mon 9 Jun',  pillar:'P3', topic:'Newport NP20 — why it still works for BRR in 2026', ig:'Carousel or Reel: NP20 data, demand drivers, the opportunity', li:'Long-form post: comparables, days on market, the BRR case for NP20', hook:'Everyone\'s chasing Bristol. Newport NP20 is doing the work quietly.'},
+    {id:'c16', date:'Wed 11 Jun', pillar:'P4', topic:'What 20+ viewings without a close actually teaches you', ig:'Face to camera Reel: the real lessons, honest and direct, 60 seconds', li:'Long-form post: the lessons list, which surprised you, what you\'d tell week-one Luke', hook:'20 viewings. 0 closes. Here\'s what that actually teaches you.'},
+    {id:'c17', date:'Thu 12 Jun', pillar:'P1', topic:'Week update — honest numbers and one reflection', ig:'Story sequence: 4-5 frames, week in numbers', li:'Short text post: numbers, one honest paragraph, one question', hook:'Most people post when things are going well. Here\'s week 6 as it actually is.'},
+    {id:'c18', date:'Fri 13 Jun', pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format', li:'Written deal analysis: same property, full maths', hook:'From the viewing itself'}
+  ]},
+  {week:'Week 7 (16 Jun)',  posts:[
+    {id:'c19', date:'Mon 16 Jun', pillar:'P3', topic:'Port Talbot and Baglan — Celtic Freeport as a forward demand play', ig:'Carousel or on-location Reel: what the Freeport means, the timeline, what to model', li:'Long-form post: the investment thesis, the risk, the honest verdict on timing', hook:'Most investors are ignoring SA13. Within 24 months that\'s going to look like a mistake.'},
+    {id:'c20', date:'Wed 18 Jun', pillar:'P5', topic:'What an 11pm guest lockbox failure taught me about real SA cashflow', ig:'Face to camera Reel: tell the story, make it real, 60 seconds', li:'Short post: the story, the cost, the implication for investors', hook:'11pm. Lockbox not working. Three guests in the rain. Here\'s what that night taught me about underwriting SA.'},
+    {id:'c21', date:'Thu 19 Jun', pillar:'P6', topic:'What my mentor told me this week that I\'m still thinking about', ig:'Face to camera Reel: in-car or on Welsh street after the mentor call, one lesson', li:'Short post: the lesson, why it landed, one question', hook:'I pay for a mentor. He said something this week that completely reframed how I qualify deals.'},
+    {id:'c22', date:'Fri 20 Jun', pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format', li:'Written deal analysis: same property, full maths', hook:'From the viewing itself'}
+  ]},
+  {week:'Week 8 (23 Jun)',  posts:[
+    {id:'c23', date:'Mon 23 Jun', pillar:'P3', topic:'Morriston SA6 — BRR streets sub-\u00a3155k and why they work', ig:'Carousel or on-location Reel: the streets that work, the ones that don\'t', li:'Long-form post: Morriston Hospital as demand anchor, the specific streets, the maths', hook:'Morriston Hospital is the size of a small town. Investors are still ignoring SA6.'},
+    {id:'c24', date:'Wed 25 Jun', pillar:'P4', topic:'Why I stopped trying to source three strategies and focused on one routing logic', ig:'Face to camera Reel: BRR-to-SA, BRR-to-BTL, turnkey — the routing logic explained simply', li:'Long-form post: how the tiered deal routing works and why it matters for investors', hook:'BRR-to-SA. BRR-to-BTL. Turnkey BTL. Here\'s why having a routing logic beats picking one strategy.'},
+    {id:'c25', date:'Thu 26 Jun', pillar:'P1', topic:'Week update — honest numbers and reflection', ig:'Story sequence: week in numbers', li:'Short text post: numbers, one reflection, one question', hook:'Week 8. Still building. Here\'s where I am.'},
+    {id:'c26', date:'Fri 27 Jun', pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format', li:'Written deal analysis: same property, full maths', hook:'From the viewing itself'}
+  ]},
+  {week:'Week 9 (30 Jun)',  posts:[
+    {id:'c27', date:'Mon 30 Jun', pillar:'P6', topic:'5 questions every investor should ask a sourcer before sending money', ig:'Carousel Reel: one question per frame, why each one matters, 60 seconds', li:'Long-form post: the 5 questions with full explanation, why they can\'t be faked', hook:'Most investors ask about returns. Returns can be made up. These 5 questions can\'t.'},
+    {id:'c28', date:'Tue 1 Jul',  pillar:'P5', topic:'Direct bookings vs OTA — why the 42% number changes everything', ig:'Face to camera Reel: OTA cut vs direct cut, what the gap does to cashflow, 45 seconds', li:'Long-form post: the maths, the implication, what to ask your sourcer', hook:'OTAs take 15-18%. Direct takes 0%. Here\'s what 42% direct bookings does to a BRR-to-SA stack.'},
+    {id:'c29', date:'Wed 2 Jul',  pillar:'P4', topic:'The single thing I\'d change about my first weeks of sourcing', ig:'Face to camera Reel: honest and direct, the one change, 60 seconds', li:'Long-form post: the one change, full context, what it\'s meant since', hook:'I made every beginner sourcing mistake. There\'s one I\'d undo before any of the others.'},
+    {id:'c30', date:'Thu 3 Jul',  pillar:'P3', topic:'BAE Systems Glascoed — contractor demand nobody talks about', ig:'On-location Reel or face to camera: the demand driver, what it means for nearby SA', li:'Long-form post: Glascoed employment base, accommodation demand, the opportunity', hook:'Most SA investors in South Wales don\'t know about BAE Glascoed. Here\'s why they should.'},
+    {id:'c31', date:'Fri 4 Jul',  pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format', li:'Written deal analysis: same property, full maths', hook:'From the viewing itself'}
+  ]},
+  {week:'Week 10 (7 Jul)', posts:[
+    {id:'c32', date:'Mon 7 Jul',  pillar:'P1', topic:'Two months of posting — what worked, what didn\'t, what\'s next', ig:'Face to camera Reel: the honest two-month review, 90 seconds', li:'Long-form post: content lessons, market observations, what changed in how you think', hook:'Two months. Two platforms. Here\'s the honest review.'},
+    {id:'c33', date:'Tue 8 Jul',  pillar:'P6', topic:'An investor who said no — and why his objection was completely fair', ig:'Face to camera Reel: the conversation, the objection, what changed', li:'Long-form post: the honest account, what you learned, how it changed your approach', hook:'He said no. I asked him why. His answer changed how I approach every investor conversation.'},
+    {id:'c34', date:'Wed 9 Jul',  pillar:'P3', topic:'AirROI vs reality — where the data holds up and where it doesn\'t', ig:'Face to camera Reel: the specific gaps in AirROI for South Wales markets, 60 seconds', li:'Long-form post: what AirROI gets right, what it misses, how Ty SA data fills the gap', hook:'AirROI suggests 3-4 day average stays in South Wales. Our actual data says 8.5 days. Here\'s why that gap matters.'},
+    {id:'c35', date:'Thu 10 Jul', pillar:'P4', topic:'What the redundancy taught me that 10 years of planning couldn\'t', ig:'Face to camera Reel: the storage room reference used lightly, the lesson about pressure', li:'Long-form post: what being forced into full-time property taught you that voluntary transition doesn\'t', hook:'I didn\'t choose to go full time into property. I was pushed. It was the best thing that happened to me.'},
+    {id:'c36', date:'Fri 11 Jul', pillar:'P2', topic:'This week\'s viewing — walk and talk + written analysis', ig:'Walk and talk Reel, existing format', li:'Written deal analysis: same property, full maths', hook:'From the viewing itself'}
+  ]}
+];
+
+function getContentStatus() {
+  return retrieve('sw-content-status', {});
+}
+
+function toggleContentPosted(postId, platform) {
+  var status = getContentStatus();
+  var key = postId + '_' + platform;
+  status[key] = !status[key];
+  store('sw-content-status', status);
+  renderContentCalendar();
+}
+
+function renderContentCalendar() {
+  var el = document.getElementById('content-calendar');
+  if(!el) return;
+  el.innerHTML = '';
+  var status = getContentStatus();
+
+  var totalPosts = 0, totalDone = 0;
+  CONTENT_CALENDAR.forEach(function(w){ w.posts.forEach(function(p){
+    totalPosts += 2;
+    if(status[p.id+'_ig']) totalDone++;
+    if(status[p.id+'_li']) totalDone++;
+  });});
+
+  // Overall progress
+  var pct = totalPosts > 0 ? Math.round(totalDone/totalPosts*100) : 0;
+  var strip = document.getElementById('content-progress-strip');
+  if(strip) {
+    var col = pct >= 80 ? 'var(--green)' : pct >= 40 ? 'var(--amber2)' : 'var(--blue)';
+    strip.innerHTML = '<div style="font-family:var(--fm);font-size:11px;color:var(--txt3);">Overall</div>'+
+      '<div style="background:#0a0e1a;border-radius:3px;height:5px;width:120px;"><div style="background:'+col+';height:5px;width:'+pct+'%;border-radius:3px;"></div></div>'+
+      '<div style="font-family:var(--fm);font-size:12px;font-weight:700;color:'+col+';">'+totalDone+' / '+totalPosts+'</div>';
+  }
+
+  CONTENT_CALENDAR.forEach(function(week) {
+    // Week done count
+    var wDone = 0, wTotal = week.posts.length * 2;
+    week.posts.forEach(function(p){
+      if(status[p.id+'_ig']) wDone++;
+      if(status[p.id+'_li']) wDone++;
+    });
+    var wPct = wTotal > 0 ? Math.round(wDone/wTotal*100) : 0;
+    var wComplete = wDone === wTotal;
+
+    // Week header
+    var wHdr = document.createElement('div');
+    wHdr.style.cssText = 'background:var(--surf);border:1px solid var(--brd);border-radius:var(--r2);padding:12px 16px;margin-bottom:8px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;';
+    wHdr.innerHTML = '<div>'+
+      '<div style="font-family:var(--fm);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--txt);">'+week.week+'</div>'+
+      '<div style="font-size:11px;color:var(--txt3);margin-top:2px;">'+week.posts.length+' post'+(week.posts.length!==1?'s':'')+' · '+wDone+' / '+wTotal+' published</div>'+
+    '</div>'+
+    '<div style="display:flex;align-items:center;gap:8px;">'+
+      '<div style="background:var(--surf2);border-radius:3px;height:4px;width:80px;"><div style="background:'+(wComplete?'var(--green)':'var(--amber2)')+';height:4px;width:'+wPct+'%;border-radius:3px;"></div></div>'+
+      (wComplete?'<span style="font-family:var(--fm);font-size:9px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:1px;">Done</span>':'')+
+    '</div>';
+    el.appendChild(wHdr);
+
+    // Posts
+    week.posts.forEach(function(post) {
+      var pillar = CONTENT_PILLARS[post.pillar] || {label:post.pillar, color:'var(--txt3)', bg:'var(--surf2)'};
+      var igDone = !!status[post.id+'_ig'];
+      var liDone = !!status[post.id+'_li'];
+      var bothDone = igDone && liDone;
+
+      var card = document.createElement('div');
+      card.style.cssText = 'background:var(--surf);border:1px solid '+(bothDone?'#34d39933':post.pillar==='P2'?'#34d39922':'var(--brd)')+';border-radius:var(--r);margin-bottom:6px;overflow:hidden;opacity:'+(bothDone?'.55':'1')+';transition:opacity .2s;';
+
+      // Card header (always visible)
+      var cardHead = document.createElement('div');
+      cardHead.style.cssText = 'padding:12px 14px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;';
+
+      var pillarBadge = document.createElement('div');
+      pillarBadge.style.cssText = 'font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 7px;border-radius:3px;background:'+pillar.bg+';color:'+pillar.color+';white-space:nowrap;margin-top:1px;flex-shrink:0;';
+      pillarBadge.textContent = post.pillar;
+
+      var headText = document.createElement('div');
+      headText.style.flex = '1';
+      headText.innerHTML = '<div style="font-size:12px;color:var(--txt3);font-family:var(--fm);font-size:9px;margin-bottom:3px;">'+post.date+'</div>'+
+        '<div style="font-size:13px;font-weight:500;color:var(--txt);line-height:1.4;">'+post.topic+'</div>'+
+        '<div style="font-size:11px;color:var(--txt3);margin-top:4px;font-style:italic;line-height:1.4;">"'+post.hook+'"</div>';
+
+      // Platform tick buttons
+      var ticks = document.createElement('div');
+      ticks.style.cssText = 'display:flex;gap:6px;flex-shrink:0;margin-top:2px;';
+
+      var igBtn = document.createElement('button');
+      igBtn.style.cssText = 'font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:4px 9px;border-radius:4px;cursor:pointer;transition:all .15s;border:1.5px solid '+(igDone?'#a78bfa':'var(--brd2)')+';background:'+(igDone?'#312e5544':'transparent')+';color:'+(igDone?'#a78bfa':'var(--txt3)')+';';
+      igBtn.textContent = igDone ? '✓ IG' : 'IG';
+      igBtn.addEventListener('click', (function(id){ return function(e){ e.stopPropagation(); toggleContentPosted(id,'ig'); }; })(post.id));
+
+      var liBtn = document.createElement('button');
+      liBtn.style.cssText = 'font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:4px 9px;border-radius:4px;cursor:pointer;transition:all .15s;border:1.5px solid '+(liDone?'#60a5fa':'var(--brd2)')+';background:'+(liDone?'#1e3a5f44':'transparent')+';color:'+(liDone?'#60a5fa':'var(--txt3)')+';';
+      liBtn.textContent = liDone ? '✓ LI' : 'LI';
+      liBtn.addEventListener('click', (function(id){ return function(e){ e.stopPropagation(); toggleContentPosted(id,'li'); }; })(post.id));
+
+      ticks.appendChild(igBtn);
+      ticks.appendChild(liBtn);
+
+      cardHead.appendChild(pillarBadge);
+      cardHead.appendChild(headText);
+      cardHead.appendChild(ticks);
+
+      // Expandable body with IG + LI briefs
+      var cardBody = document.createElement('div');
+      cardBody.style.cssText = 'display:none;border-top:1px solid var(--brd);padding:12px 14px;display:none;';
+
+      var bodyGrid = document.createElement('div');
+      bodyGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px;';
+
+      var igBox = document.createElement('div');
+      igBox.style.cssText = 'background:#312e5522;border:1px solid #a78bfa33;border-radius:var(--r);padding:10px 12px;';
+      igBox.innerHTML = '<div style="font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#a78bfa;margin-bottom:6px;">Instagram</div>'+
+        '<div style="font-size:12px;color:var(--txt2);line-height:1.6;">'+post.ig+'</div>';
+
+      var liBox = document.createElement('div');
+      liBox.style.cssText = 'background:#1e3a5f22;border:1px solid #60a5fa33;border-radius:var(--r);padding:10px 12px;';
+      liBox.innerHTML = '<div style="font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#60a5fa;margin-bottom:6px;">LinkedIn</div>'+
+        '<div style="font-size:12px;color:var(--txt2);line-height:1.6;">'+post.li+'</div>';
+
+      bodyGrid.appendChild(igBox);
+      bodyGrid.appendChild(liBox);
+      cardBody.appendChild(bodyGrid);
+
+      // Toggle expand
+      var isOpen = false;
+      cardHead.addEventListener('click', function() {
+        isOpen = !isOpen;
+        cardBody.style.display = isOpen ? 'block' : 'none';
+      });
+
+      card.appendChild(cardHead);
+      card.appendChild(cardBody);
+      el.appendChild(card);
+    });
+  });
 }
 
 
