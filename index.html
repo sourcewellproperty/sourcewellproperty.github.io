@@ -349,12 +349,14 @@ a.link:hover{text-decoration:underline;}
     </button>
     <button class="sb-item" id="nav-daily" onclick="showPage('daily')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 1v2M11 1v2M2 6h12M5 9h1M8 9h1M11 9h1M5 12h1M8 12h1"/></svg>Daily Tracker
-    </button>
-    <button class="sb-item" id="nav-playbook" onclick="showPage('playbook')">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2h10a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M5 6l1.5 1.5L9 5M5 10l1.5 1.5L9 9"/></svg>Playbook
-    </button>
-    <button class="sb-item" id="nav-content" onclick="showPage('content')">
+    </button>    <button class="sb-item" id="nav-content" onclick="showPage('content')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M4 7h5M4 10h3"/><circle cx="11.5" cy="9" r="2"/></svg>Content
+    </button>
+    <button class="sb-item" id="nav-dtv" onclick="showPage('dtv')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 2h12v12H2z"/><path d="M5 6h6M5 9h4"/><path d="M11 11l2 2"/></svg>DTV Log
+    </button>
+    <button class="sb-item" id="nav-visits" onclick="showPage('visits')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Agent Visits
     </button>
     <div class="sb-sec" style="margin-top:8px;">Config</div>
     <button class="sb-item" id="nav-settings" onclick="showPage('settings')">
@@ -585,7 +587,7 @@ a.link:hover{text-decoration:underline;}
 
 <!-- ═══ TRACKER PAGE ═══ -->
 <div id="page-tracker" class="page">
-  <div class="pg-hdr"><div><div class="pg-title">Territory Tracker</div><div class="pg-sub" id="tracker-sub">M4 Corridor · 7 locations · Newport &amp; Swansea priority</div></div><button class="btn btn-ghost" id="btn-edit-locations" style="font-size:9px;">Edit Locations</button></div>
+  <div class="pg-hdr"><div><div class="pg-title">Territory Tracker</div><div class="pg-sub" id="tracker-sub">M4 Corridor · 4 locations · Newport &amp; Morriston priority</div></div><button class="btn btn-ghost" id="btn-edit-locations" style="font-size:9px;">Edit Locations</button></div>
   <div class="stat-grid">
     <div class="stat-box"><div class="stat-val" id="ts-total">—</div><div class="stat-lbl">Total reviews</div></div>
     <div class="stat-box"><div class="stat-val" id="ts-week">—</div><div class="stat-lbl">This week</div></div>
@@ -754,25 +756,57 @@ a.link:hover{text-decoration:underline;}
 
 
 <!-- PLAYBOOK PAGE -->
-<div id="page-playbook" class="page">
-  <div class="pg-hdr">
-    <div><div class="pg-title">Daily Playbook</div><div class="pg-sub">Your working routines · Resets each day</div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;" id="pb-switcher"></div>
-  </div>
-  <div id="pb-content"></div>
-  <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--brd);">
-    <div style="font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--txt3);margin-bottom:14px;font-weight:700;">Edit Playbooks</div>
-    <div id="pb-editor"></div>
-  </div>
-</div>
+
+
 
 <!-- CONTENT CALENDAR PAGE -->
 <div id="page-content" class="page">
   <div class="pg-hdr">
-    <div><div class="pg-title">Content Calendar</div><div class="pg-sub">10 weeks · Instagram + LinkedIn · Build in Public</div></div>
-    <div id="content-progress-strip" style="display:flex;gap:8px;align-items:center;"></div>
+    <div><div class="pg-title">Content Bank</div><div class="pg-sub">Capture thoughts and experiences · Post when ready</div></div>
+    <button class="btn btn-amber" id="btn-add-content">+ Add Idea</button>
   </div>
-  <div id="content-calendar"></div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="content-filters">
+    <button class="f-btn on" data-cf="all">All</button>
+    <button class="f-btn" data-cf="unposted">Not Posted</button>
+    <button class="f-btn" data-cf="partial">Partial</button>
+    <button class="f-btn" data-cf="posted">Both Posted</button>
+  </div>
+  <div id="content-bank-stats" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;"></div>
+  <div id="content-bank-list"></div>
+  <div id="content-bank-empty" class="empty" style="display:none;">
+    <div class="empty-title">No ideas yet</div>
+    <div class="empty-sub">Click + Add Idea to capture a thought, observation or experience to post about later</div>
+  </div>
+</div>
+
+<!-- DTV LOG PAGE -->
+<div id="page-dtv" class="page">
+  <div class="pg-hdr">
+    <div><div class="pg-title">Direct to Vendor Log</div><div class="pg-sub">Track every letter drop by street and area</div></div>
+    <button class="btn btn-amber" id="btn-add-dtv">+ Log Drop</button>
+  </div>
+  <div id="dtv-stats" class="stat-grid" style="margin-bottom:16px;"></div>
+  <div style="overflow-x:auto;">
+    <table class="dt"><thead><tr>
+      <th>Date</th><th>Area</th><th>Street / Location</th><th>Letters</th><th>Type</th><th>Notes</th><th>Responses</th><th></th>
+    </tr></thead><tbody id="dtv-body"></tbody></table>
+  </div>
+  <div id="dtv-empty" class="empty" style="display:none;"><div class="empty-title">No drops logged yet</div><div class="empty-sub">Click + Log Drop to record your first letter drop</div></div>
+</div>
+
+<!-- AGENT VISITS PAGE -->
+<div id="page-visits" class="page">
+  <div class="pg-hdr">
+    <div><div class="pg-title">Agent Visit Tracker</div><div class="pg-sub">Log every office visit and build your relationship map</div></div>
+    <button class="btn btn-amber" id="btn-add-visit">+ Log Visit</button>
+  </div>
+  <div id="visits-stats" class="stat-grid" style="margin-bottom:16px;"></div>
+  <div style="overflow-x:auto;">
+    <table class="dt"><thead><tr>
+      <th>Date</th><th>Agency</th><th>Contact</th><th>Area</th><th>Outcome</th><th>Follow-up</th><th>Notes</th><th></th>
+    </tr></thead><tbody id="visits-body"></tbody></table>
+  </div>
+  <div id="visits-empty" class="empty" style="display:none;"><div class="empty-title">No visits logged yet</div><div class="empty-sub">Click + Log Visit to record your first agent office visit</div></div>
 </div>
 
 <!-- SETTINGS PAGE -->
@@ -1433,8 +1467,9 @@ function showPage(name){
   if(nb) nb.classList.add('active');
   if(name==='settings') loadSettingsPage();
   if(name==='analyser') populateAnalyserDealSelect();
-  if(name==='content') renderContentCalendar();
-  if(name==='playbook') renderPlaybook();
+  if(name==='content') renderContentBank();
+  if(name==='dtv') renderDtvLog();
+  if(name==='visits') renderVisits();
 }
 
 // ═══════════════ MODALS ═══════════════
@@ -2173,16 +2208,12 @@ function renderAgents(){
 
 // ═══════════════ TERRITORY TRACKER ═══════════════
 var TOWNS=[
-  // ── PRIORITY: SA-viable M4 Corridor locations ──────────────────────────────
-  {id:'newport',       label:'Newport',              postcode:'NP19/NP20', pipeline:'brr-sa',  tier:'p1', valley:'Priority — SA Viable', color:'#f5a623', def:'not_started', note:'Royal Gwent, Amazon logistics, M4. Primary SA target.'},
-  {id:'swansea',       label:'Swansea',              postcode:'SA1/SA2',   pipeline:'brr-sa',  tier:'p1', valley:'Priority — SA Viable', color:'#f5a623', def:'not_started', note:'DVLA, Swansea University, city centre demand. Primary SA target.'},
-
-  // ── SECONDARY: M4 Corridor BRR locations ────────────────────────────────────
-  {id:'cwmbran',       label:'Cwmbran',              postcode:'NP44',      pipeline:'brr-btl', tier:'t1', valley:'M4 Corridor',          color:'#60a5fa', def:'not_started', note:'Grange Hospital, post-war stock, strong rental demand.'},
-  {id:'bridgend_town', label:'Bridgend',             postcode:'CF31',      pipeline:'brr-btl', tier:'t1', valley:'M4 Corridor',          color:'#60a5fa', def:'not_started', note:'Princess of Wales Hospital, good BTL fundamentals.'},
-  {id:'neath',         label:'Neath',                postcode:'SA11',      pipeline:'brr-btl', tier:'t1', valley:'M4 Corridor',          color:'#60a5fa', def:'not_started', note:'Strong BTL market, affordable stock, M4 access.'},
-  {id:'port_talbot',   label:'Port Talbot',          postcode:'SA13',      pipeline:'brr-btl', tier:'t1', valley:'M4 Corridor',          color:'#60a5fa', def:'not_started', note:'Tata regeneration, hospital, improving fundamentals.'},
-  {id:'morriston',     label:'Morriston',            postcode:'SA6',       pipeline:'brr-btl', tier:'t1', valley:'M4 Corridor',          color:'#60a5fa', def:'not_started', note:'Morriston Hospital, M4 J45, contractor demand.'}
+  // ── PRIORITY: SA-viable M4 Corridor ──────────────────────────────────────
+  {id:'newport',    label:'Newport',          postcode:'NP19/NP20', pipeline:'brr-sa',  tier:'p1', valley:'Priority — SA Viable', color:'#f5a623', def:'not_started', note:'Royal Gwent, Amazon logistics, M4. Primary SA target.'},
+  {id:'morriston',  label:'Morriston / Swansea', postcode:'SA6/SA1', pipeline:'brr-sa',  tier:'p1', valley:'Priority — SA Viable', color:'#f5a623', def:'not_started', note:'Morriston Hospital, M4 J45, Swansea city demand. Primary SA target.'},
+  // ── BRR to BTL ────────────────────────────────────────────────────────────
+  {id:'bridgend_town', label:'Bridgend',      postcode:'CF31',      pipeline:'brr-btl', tier:'t1', valley:'BRR to BTL', color:'#60a5fa', def:'not_started', note:'Princess of Wales Hospital, strong BTL fundamentals.'},
+  {id:'port_talbot',   label:'Port Talbot',   postcode:'SA13',      pipeline:'brr-btl', tier:'t1', valley:'BRR to BTL', color:'#60a5fa', def:'not_started', note:'Tata regeneration, hospital, improving fundamentals.'}
 ]
 var ZSL={not_started:'Not started',active:'Active',reviewed:'Reviewed',complete:'Complete'};
 var ZSS={not_started:'background:#1e2d45;color:#475569;',active:'background:#1e3a5f;color:#60a5fa;',reviewed:'background:#052e16;color:#4ade80;',complete:'background:#1a1206;color:#fbbf24;'};
@@ -2336,13 +2367,13 @@ function renderTracker(){
     {
       key:'p1', pipeline:'brr-sa',
       label:'Priority — SA Viable',
-      sublabel:'Newport + Swansea · Primary focus · BRR with SA exit potential',
+      sublabel:'Newport + Morriston/Swansea · Primary focus · BRR with SA exit',
       color:'#f5a623', bg:'#78350f22'
     },
     {
       key:'t1', pipeline:'brr-btl',
-      label:'M4 Corridor — BRR to BTL',
-      sublabel:'Cwmbran · Bridgend · Neath · Port Talbot · Morriston · Secondary focus',
+      label:'BRR to BTL',
+      sublabel:'Bridgend · Port Talbot · Secondary focus',
       color:'#60a5fa', bg:'#1e3a5f22'
     }
   ];
@@ -5021,8 +5052,447 @@ function renderContentCalendar() {
 }
 
 
+// ═══════════════ DTV LOG ═══════════════
+
+function openDtvModal(id) {
+  var existing = document.getElementById('_dtv_overlay');
+  if(existing) document.body.removeChild(existing);
+  var towns = getTowns();
+  var townOpts = '<option value="">— Select area —</option>';
+  towns.forEach(function(t){ townOpts += '<option value="'+t.label+'">'+t.label+'</option>'; });
+  var entry = id ? (retrieve('sw-dtv',[]).find(function(x){return x.id===id;})||{}) : {};
+  var overlay = document.createElement('div');
+  overlay.id = '_dtv_overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#2c2c2e;border:1px solid #ffffff18;border-radius:12px;padding:24px;width:90%;max-width:540px;max-height:90vh;overflow-y:auto;font-family:Inter,sans-serif;';
+  box.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #ffffff0f;">'+
+      '<span style="font-family:var(--fm);font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--amber2);font-weight:700;">'+(id?'Edit':'Log')+' DTV Drop</span>'+
+      '<button id="_dtv_x" style="background:none;border:none;color:#636366;font-size:22px;cursor:pointer;">\xd7</button>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'+
+      '<div class="field"><label>Date</label><input type="date" id="_dtv_date" value="'+(entry.date||today())+'"></div>'+
+      '<div class="field"><label>Area</label><select id="_dtv_area">'+townOpts+'</select></div>'+
+    '</div>'+
+    '<div class="field" style="margin-bottom:12px;"><label>Street / Location</label><input type="text" id="_dtv_street" placeholder="e.g. Caerleon Road, NP19" value="'+(entry.street||'')+'"></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">'+
+      '<div class="field"><label>Letters Posted</label><input type="number" id="_dtv_count" value="'+(entry.count||0)+'" min="0"></div>'+
+      '<div class="field"><label>Type</label><select id="_dtv_type"><option value="standard"'+(entry.type==='standard'?' selected':'')+'>Standard</option><option value="probate"'+(entry.type==='probate'?' selected':'')+'>Probate</option><option value="empty"'+(entry.type==='empty'?' selected':'')+'>Empty Homes</option></select></div>'+
+      '<div class="field"><label>Responses</label><input type="number" id="_dtv_responses" value="'+(entry.responses||0)+'" min="0"></div>'+
+    '</div>'+
+    '<div class="field" style="margin-bottom:16px;"><label>Notes</label><textarea id="_dtv_notes" style="min-height:52px;" placeholder="Streets covered, any callbacks, observations...">'+(entry.notes||'')+'</textarea></div>'+
+    '<div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #ffffff0f;">'+
+      '<button id="_dtv_cancel" style="font-family:var(--fm);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:9px 18px;border-radius:8px;cursor:pointer;background:transparent;color:#8b95a8;border:1.5px solid #ffffff18;">Cancel</button>'+
+      '<button id="_dtv_save" style="font-family:var(--fm);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:9px 18px;border-radius:8px;cursor:pointer;background:var(--amber);color:#0a0f1a;border:1.5px solid var(--amber);">Save Drop</button>'+
+    '</div>';
+  if(entry.area){ setTimeout(function(){ var s=document.getElementById('_dtv_area');if(s)s.value=entry.area; },10); }
+  function destroy(){ var el=document.getElementById('_dtv_overlay');if(el)document.body.removeChild(el); }
+  box.querySelector('#_dtv_x').addEventListener('click',destroy);
+  box.querySelector('#_dtv_cancel').addEventListener('click',destroy);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)destroy();});
+  box.querySelector('#_dtv_save').addEventListener('click',function(){
+    var street=box.querySelector('#_dtv_street').value.trim();
+    if(!street){alert('Enter a street or location.');return;}
+    var drops=retrieve('sw-dtv',[]);
+    var rec={
+      id:id||uid('dtv'),
+      date:box.querySelector('#_dtv_date').value,
+      area:box.querySelector('#_dtv_area').value,
+      street:street,
+      count:parseInt(box.querySelector('#_dtv_count').value)||0,
+      type:box.querySelector('#_dtv_type').value,
+      responses:parseInt(box.querySelector('#_dtv_responses').value)||0,
+      notes:box.querySelector('#_dtv_notes').value.trim()
+    };
+    if(id){var i=drops.findIndex(function(x){return x.id===id;});if(i>-1)drops[i]=rec;else drops.unshift(rec);}
+    else drops.unshift(rec);
+    drops.sort(function(a,b){return b.date.localeCompare(a.date);});
+    store('sw-dtv',drops);
+    destroy();renderDtvLog();toast('Drop logged');
+  });
+  overlay.appendChild(box);document.body.appendChild(overlay);
+}
+
+function renderDtvLog(){
+  var drops=retrieve('sw-dtv',[]);
+  var body=document.getElementById('dtv-body');
+  var empty=document.getElementById('dtv-empty');
+  if(!body)return;
+  body.innerHTML='';
+  empty.style.display=drops.length?'none':'block';
+  var totalLetters=0,totalResponses=0;
+  drops.forEach(function(d){totalLetters+=d.count||0;totalResponses+=d.responses||0;});
+  var statsEl=document.getElementById('dtv-stats');
+  if(statsEl)statsEl.innerHTML=
+    '<div class="stat-box"><div class="stat-val">'+drops.length+'</div><div class="stat-lbl">Total drops</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+totalLetters+'</div><div class="stat-lbl">Letters posted</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+totalResponses+'</div><div class="stat-lbl">Responses</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+(totalLetters>0?((totalResponses/totalLetters*100).toFixed(1)+'%'):'—')+'</div><div class="stat-lbl">Response rate</div></div>';
+  drops.forEach(function(d){
+    var tr=document.createElement('tr');tr.className='dr';
+    var TYPE_LABELS={standard:'Standard',probate:'Probate',empty:'Empty Homes'};
+    var cells=[
+      ['<div style="font-weight:500;font-size:12px;">'+fmtD(d.date)+'</div>',''],
+      [d.area||'—','color:var(--txt3);font-size:12px;'],
+      [d.street||'—','font-size:12px;'],
+      ['<span style="font-family:var(--fm);font-weight:700;color:var(--amber2);">'+d.count+'</span>','text-align:center;'],
+      [TYPE_LABELS[d.type]||d.type||'—','font-size:11px;color:var(--txt3);'],
+      [d.notes||'—','font-size:11px;color:var(--txt3);max-width:160px;'],
+      [d.responses>0?'<span style="color:var(--green);font-weight:700;">'+d.responses+'</span>':'—','text-align:center;']
+    ];
+    cells.forEach(function(c){var td=document.createElement('td');td.innerHTML=c[0];if(c[1])td.style.cssText=c[1];tr.appendChild(td);});
+    var tdAct=document.createElement('td');
+    var btnE=document.createElement('button');btnE.className='btn btn-ghost btn-sm';btnE.textContent='Edit';btnE.style.marginRight='4px';
+    btnE.addEventListener('click',(function(id){return function(){openDtvModal(id);};})(d.id));
+    var btnD=document.createElement('button');btnD.className='btn btn-danger btn-sm';btnD.textContent='Del';
+    btnD.addEventListener('click',(function(id){return function(){if(!confirm('Delete this drop?'))return;store('sw-dtv',retrieve('sw-dtv',[]).filter(function(x){return x.id!==id;}));renderDtvLog();toast('Deleted');};})(d.id));
+    tdAct.appendChild(btnE);tdAct.appendChild(btnD);tr.appendChild(tdAct);
+    body.appendChild(tr);
+  });
+}
+
+// ═══════════════ AGENT VISIT TRACKER ═══════════════
+
+function openVisitModal(id){
+  var existing=document.getElementById('_visit_overlay');if(existing)document.body.removeChild(existing);
+  var ags=retrieve('sw-agents',[]).filter(function(a){return a.role==='Agency'||a.role==='Branch';});
+  var agOpts='<option value="">— Select agency —</option>';
+  ags.forEach(function(a){agOpts+='<option value="'+a.id+'">'+a.name+'</option>';});
+  var entry=id?(retrieve('sw-visits',[]).find(function(x){return x.id===id;})||{}):{};
+  var OUTCOMES=['Good relationship','Left details','No decision maker','Will call back','Not interested','Exclusive agents'];
+  var outcomeOpts=OUTCOMES.map(function(o){return '<option value="'+o+'"'+(entry.outcome===o?' selected':'')+'>'+o+'</option>';}).join('');
+  var overlay=document.createElement('div');
+  overlay.id='_visit_overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var box=document.createElement('div');
+  box.style.cssText='background:#2c2c2e;border:1px solid #ffffff18;border-radius:12px;padding:24px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;font-family:Inter,sans-serif;';
+  box.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #ffffff0f;">'+
+      '<span style="font-family:var(--fm);font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--amber2);font-weight:700;">'+(id?'Edit':'Log')+' Agent Visit</span>'+
+      '<button id="_visit_x" style="background:none;border:none;color:#636366;font-size:22px;cursor:pointer;">\xd7</button>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'+
+      '<div class="field"><label>Date</label><input type="date" id="_visit_date" value="'+(entry.date||today())+'"></div>'+
+      '<div class="field"><label>Agency</label><select id="_visit_agency">'+agOpts+'</select></div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'+
+      '<div class="field"><label>Contact Name</label><input type="text" id="_visit_contact" placeholder="Who did you speak to?" value="'+(entry.contact||'')+'"></div>'+
+      '<div class="field"><label>Area</label><input type="text" id="_visit_area" placeholder="e.g. Newport NP19" value="'+(entry.area||'')+'"></div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'+
+      '<div class="field"><label>Outcome</label><select id="_visit_outcome"><option value="">— Select —</option>'+outcomeOpts+'</select></div>'+
+      '<div class="field"><label>Follow-up Date</label><input type="date" id="_visit_followup" value="'+(entry.followup||'')+'"></div>'+
+    '</div>'+
+    '<div class="field" style="margin-bottom:16px;"><label>Notes</label><textarea id="_visit_notes" style="min-height:64px;" placeholder="What was discussed, relationship quality, intel gathered...">'+(entry.notes||'')+'</textarea></div>'+
+    '<div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #ffffff0f;">'+
+      '<button id="_visit_cancel" style="font-family:var(--fm);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:9px 18px;border-radius:8px;cursor:pointer;background:transparent;color:#8b95a8;border:1.5px solid #ffffff18;">Cancel</button>'+
+      '<button id="_visit_save" style="font-family:var(--fm);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:9px 18px;border-radius:8px;cursor:pointer;background:var(--amber);color:#0a0f1a;border:1.5px solid var(--amber);">Save Visit</button>'+
+    '</div>';
+  if(entry.agentId){setTimeout(function(){var s=document.getElementById('_visit_agency');if(s)s.value=entry.agentId;},10);}
+  function destroy(){var el=document.getElementById('_visit_overlay');if(el)document.body.removeChild(el);}
+  box.querySelector('#_visit_x').addEventListener('click',destroy);
+  box.querySelector('#_visit_cancel').addEventListener('click',destroy);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)destroy();});
+  box.querySelector('#_visit_save').addEventListener('click',function(){
+    var agId=box.querySelector('#_visit_agency').value;
+    var contact=box.querySelector('#_visit_contact').value.trim();
+    if(!agId&&!contact){alert('Select an agency or enter a contact name.');return;}
+    var ags=retrieve('sw-agents',[]);
+    var ag=ags.find(function(a){return a.id===agId;});
+    var visits=retrieve('sw-visits',[]);
+    var rec={
+      id:id||uid('vis'),
+      date:box.querySelector('#_visit_date').value,
+      agentId:agId,
+      agencyName:ag?ag.name:'',
+      contact:contact,
+      area:box.querySelector('#_visit_area').value.trim(),
+      outcome:box.querySelector('#_visit_outcome').value,
+      followup:box.querySelector('#_visit_followup').value,
+      notes:box.querySelector('#_visit_notes').value.trim()
+    };
+    if(id){var i=visits.findIndex(function(x){return x.id===id;});if(i>-1)visits[i]=rec;else visits.unshift(rec);}
+    else visits.unshift(rec);
+    visits.sort(function(a,b){return b.date.localeCompare(a.date);});
+    store('sw-visits',visits);
+    destroy();renderVisits();toast('Visit logged');
+  });
+  overlay.appendChild(box);document.body.appendChild(overlay);
+}
+
+function renderVisits(){
+  var visits=retrieve('sw-visits',[]);
+  var body=document.getElementById('visits-body');
+  var empty=document.getElementById('visits-empty');
+  if(!body)return;
+  body.innerHTML='';
+  empty.style.display=visits.length?'none':'block';
+  var thisWeekSw=startOfWeek();
+  var weekCount=visits.filter(function(v){return new Date(v.date)>=thisWeekSw;}).length;
+  var statsEl=document.getElementById('visits-stats');
+  if(statsEl)statsEl.innerHTML=
+    '<div class="stat-box"><div class="stat-val">'+visits.length+'</div><div class="stat-lbl">Total visits</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+weekCount+'</div><div class="stat-lbl">This week</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+[...new Set(visits.map(function(v){return v.agentId;}).filter(Boolean))].length+'</div><div class="stat-lbl">Agencies visited</div></div>';
+  var OUTCOME_COLORS={'Good relationship':'var(--green)','Left details':'var(--amber2)','Will call back':'var(--blue)','Not interested':'var(--red)','No decision maker':'var(--txt3)','Exclusive agents':'var(--purple)'};
+  visits.forEach(function(v){
+    var tr=document.createElement('tr');tr.className='dr';
+    var cells=[
+      ['<div style="font-weight:500;font-size:12px;">'+fmtD(v.date)+'</div>',''],
+      [v.agencyName||'—','font-size:12px;'],
+      [v.contact||'—','font-size:12px;color:var(--txt2);'],
+      [v.area||'—','font-size:11px;color:var(--txt3);'],
+      [v.outcome?'<span style="font-family:var(--fm);font-size:9px;font-weight:700;padding:3px 7px;border-radius:3px;background:'+(OUTCOME_COLORS[v.outcome]||'var(--txt3)')+'22;color:'+(OUTCOME_COLORS[v.outcome]||'var(--txt3)')+';">'+v.outcome+'</span>':'—',''],
+      [v.followup?fmtD(v.followup):'—','font-size:11px;color:'+(v.followup&&new Date(v.followup)<=new Date()?'var(--amber2)':'var(--txt3)')+';'],
+      [v.notes||'—','font-size:11px;color:var(--txt3);max-width:180px;']
+    ];
+    cells.forEach(function(c){var td=document.createElement('td');td.innerHTML=c[0];if(c[1])td.style.cssText=c[1];tr.appendChild(td);});
+    var tdAct=document.createElement('td');
+    var btnE=document.createElement('button');btnE.className='btn btn-ghost btn-sm';btnE.textContent='Edit';btnE.style.marginRight='4px';
+    btnE.addEventListener('click',(function(id){return function(){openVisitModal(id);};})(v.id));
+    var btnD=document.createElement('button');btnD.className='btn btn-danger btn-sm';btnD.textContent='Del';
+    btnD.addEventListener('click',(function(id){return function(){if(!confirm('Delete this visit?'))return;store('sw-visits',retrieve('sw-visits',[]).filter(function(x){return x.id!==id;}));renderVisits();toast('Deleted');};})(v.id));
+    tdAct.appendChild(btnE);tdAct.appendChild(btnD);tr.appendChild(tdAct);
+    body.appendChild(tr);
+  });
+}
+
+function setupDtvVisits(){
+  var dtvBtn=document.getElementById('btn-add-dtv');if(dtvBtn)dtvBtn.addEventListener('click',function(){openDtvModal();});
+  var visitBtn=document.getElementById('btn-add-visit');if(visitBtn)visitBtn.addEventListener('click',function(){openVisitModal();});
+}
+
+
+// ═══════════════ CONTENT BANK ═══════════════
+
+var CONTENT_PILLARS_BANK = [
+  'Build in Public', 'Viewing / Deal', 'Market Intel',
+  'Lesson Learned', 'SA Operator', 'JV & Networking', 'Other'
+];
+
+var _contentFilter = 'all';
+
+function openContentModal(id) {
+  var existing = document.getElementById('_cb_overlay');
+  if(existing) document.body.removeChild(existing);
+  var entry = id ? (retrieve('sw-content-bank',[]).find(function(x){return x.id===id;})||{}) : {};
+
+  var pillarOpts = CONTENT_PILLARS_BANK.map(function(p){
+    return '<option value="'+p+'"'+(entry.pillar===p?' selected':'')+'>'+p+'</option>';
+  }).join('');
+
+  var overlay = document.createElement('div');
+  overlay.id = '_cb_overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var box = document.createElement('div');
+  box.style.cssText = 'background:#2c2c2e;border:1px solid #ffffff18;border-radius:12px;padding:24px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;font-family:Inter,sans-serif;';
+  box.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #ffffff0f;">'+
+      '<span style="font-family:var(--fm);font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--amber2);font-weight:700;">'+(id?'Edit Idea':'New Content Idea')+'</span>'+
+      '<button id="_cb_x" style="background:none;border:none;color:#636366;font-size:22px;cursor:pointer;">\xd7</button>'+
+    '</div>'+
+    '<div class="field" style="margin-bottom:12px;"><label>Title / Hook</label>'+
+      '<input type="text" id="_cb_title" placeholder="The one line that makes someone stop scrolling" value="'+(entry.title||'').replace(/"/g,'&quot;')+'">'+
+    '</div>'+
+    '<div class="field" style="margin-bottom:12px;"><label>Pillar</label>'+
+      '<select id="_cb_pillar"><option value="">— Select —</option>'+pillarOpts+'</select>'+
+    '</div>'+
+    '<div class="field" style="margin-bottom:16px;"><label>The Idea / Experience</label>'+
+      '<textarea id="_cb_body" style="min-height:100px;" placeholder="What happened, what you observed, what you learned, what would be useful to share...">'+(entry.body||'')+'</textarea>'+
+    '</div>'+
+    '<div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #ffffff0f;">'+
+      '<button id="_cb_cancel" style="font-family:var(--fm);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:9px 18px;border-radius:8px;cursor:pointer;background:transparent;color:#8b95a8;border:1.5px solid #ffffff18;">Cancel</button>'+
+      '<button id="_cb_save" style="font-family:var(--fm);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:9px 18px;border-radius:8px;cursor:pointer;background:var(--amber);color:#0a0f1a;border:1.5px solid var(--amber);">Save Idea</button>'+
+    '</div>';
+
+  function destroy(){ var el=document.getElementById('_cb_overlay');if(el)document.body.removeChild(el); }
+  box.querySelector('#_cb_x').addEventListener('click',destroy);
+  box.querySelector('#_cb_cancel').addEventListener('click',destroy);
+  overlay.addEventListener('click',function(e){if(e.target===overlay)destroy();});
+  box.querySelector('#_cb_save').addEventListener('click',function(){
+    var title = box.querySelector('#_cb_title').value.trim();
+    if(!title){alert('Enter a title or hook line.');return;}
+    var bank = retrieve('sw-content-bank',[]);
+    var rec = {
+      id: id||uid('cb'),
+      createdAt: entry.createdAt||today(),
+      title: title,
+      pillar: box.querySelector('#_cb_pillar').value,
+      body: box.querySelector('#_cb_body').value.trim(),
+      ig: entry.ig||false,
+      igDate: entry.igDate||'',
+      li: entry.li||false,
+      liDate: entry.liDate||''
+    };
+    if(id){var i=bank.findIndex(function(x){return x.id===id;});if(i>-1)bank[i]=rec;else bank.unshift(rec);}
+    else bank.unshift(rec);
+    store('sw-content-bank',bank);
+    destroy();renderContentBank();toast('Idea saved');
+  });
+  overlay.appendChild(box);document.body.appendChild(overlay);
+}
+
+function markPosted(id, platform) {
+  var bank = retrieve('sw-content-bank',[]);
+  var item = bank.find(function(x){return x.id===id;});
+  if(!item) return;
+  if(item[platform]) {
+    // Already posted — unmark
+    item[platform] = false;
+    item[platform+'Date'] = '';
+  } else {
+    item[platform] = true;
+    item[platform+'Date'] = today();
+  }
+  store('sw-content-bank', bank);
+  renderContentBank();
+}
+
+var PILLAR_COLORS = {
+  'Build in Public':'#f5a623',
+  'Viewing / Deal':'#34d399',
+  'Market Intel':'#60a5fa',
+  'Lesson Learned':'#f87171',
+  'SA Operator':'#a78bfa',
+  'JV & Networking':'#2dd4bf',
+  'Other':'#636366'
+};
+
+function renderContentBank() {
+  var bank = retrieve('sw-content-bank',[]);
+  var list = document.getElementById('content-bank-list');
+  var empty = document.getElementById('content-bank-empty');
+  var statsEl = document.getElementById('content-bank-stats');
+  if(!list) return;
+
+  // Stats
+  var total = bank.length;
+  var bothPosted = bank.filter(function(x){return x.ig&&x.li;}).length;
+  var partial = bank.filter(function(x){return (x.ig||x.li)&&!(x.ig&&x.li);}).length;
+  var unposted = bank.filter(function(x){return !x.ig&&!x.li;}).length;
+  if(statsEl) statsEl.innerHTML =
+    '<div class="stat-box"><div class="stat-val">'+total+'</div><div class="stat-lbl">Ideas</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+unposted+'</div><div class="stat-lbl">To post</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+partial+'</div><div class="stat-lbl">Partial</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+bothPosted+'</div><div class="stat-lbl">Both posted</div></div>';
+
+  // Filter
+  var filtered = bank.filter(function(x){
+    if(_contentFilter==='unposted') return !x.ig&&!x.li;
+    if(_contentFilter==='partial') return (x.ig||x.li)&&!(x.ig&&x.li);
+    if(_contentFilter==='posted') return x.ig&&x.li;
+    return true;
+  });
+
+  list.innerHTML='';
+  empty.style.display = filtered.length ? 'none' : 'block';
+
+  filtered.forEach(function(item) {
+    var bothDone = item.ig && item.li;
+    var pillarColor = PILLAR_COLORS[item.pillar] || 'var(--txt3)';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--surf);border:1px solid '+(bothDone?'#34d39933':'var(--brd)')+';border-radius:var(--r2);padding:14px 16px;margin-bottom:8px;opacity:'+(bothDone?'.5':'1')+';transition:opacity .2s;';
+
+    // Header row
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;align-items:flex-start;gap:12px;margin-bottom:10px;';
+
+    var left = document.createElement('div');
+    left.style.flex = '1';
+
+    if(item.pillar) {
+      var pillarBadge = document.createElement('div');
+      pillarBadge.style.cssText = 'display:inline-block;font-family:var(--fm);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 7px;border-radius:3px;background:'+pillarColor+'22;color:'+pillarColor+';margin-bottom:5px;';
+      pillarBadge.textContent = item.pillar;
+      left.appendChild(pillarBadge);
+    }
+
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:14px;font-weight:600;color:var(--txt);line-height:1.4;margin-bottom:'+(item.body?'6px':'0')+';';
+    title.textContent = item.title;
+    left.appendChild(title);
+
+    if(item.body) {
+      var body = document.createElement('div');
+      body.style.cssText = 'font-size:12px;color:var(--txt2);line-height:1.6;';
+      body.textContent = item.body;
+      left.appendChild(body);
+    }
+
+    var right = document.createElement('div');
+    right.style.cssText = 'display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:flex-end;';
+
+    // Edit button
+    var editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-ghost btn-sm';
+    editBtn.style.cssText = 'font-size:8px;padding:3px 8px;';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', (function(id){return function(){openContentModal(id);};})(item.id));
+
+    // Delete button
+    var delBtn = document.createElement('button');
+    delBtn.className = 'act-del';
+    delBtn.textContent = '\u2715';
+    delBtn.addEventListener('click', (function(id){return function(){
+      if(!confirm('Delete this idea?')) return;
+      store('sw-content-bank', retrieve('sw-content-bank',[]).filter(function(x){return x.id!==id;}));
+      renderContentBank(); toast('Deleted');
+    };})(item.id));
+
+    right.appendChild(editBtn);
+    right.appendChild(delBtn);
+    hdr.appendChild(left);
+    hdr.appendChild(right);
+    card.appendChild(hdr);
+
+    // Post status row
+    var postRow = document.createElement('div');
+    postRow.style.cssText = 'display:flex;gap:8px;align-items:center;padding-top:10px;border-top:1px solid var(--brd);';
+
+    var addedLbl = document.createElement('span');
+    addedLbl.style.cssText = 'font-family:var(--fm);font-size:9px;color:var(--txt3);flex:1;';
+    addedLbl.textContent = 'Added '+fmtD(item.createdAt);
+    postRow.appendChild(addedLbl);
+
+    // IG button
+    var igBtn = document.createElement('button');
+    igBtn.style.cssText = 'font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:5px 12px;border-radius:5px;cursor:pointer;transition:all .15s;border:1.5px solid '+(item.ig?'#a78bfa':'var(--brd2)')+';background:'+(item.ig?'#312e5533':'transparent')+';color:'+(item.ig?'#a78bfa':'var(--txt3)')+';';
+    igBtn.innerHTML = item.ig ? ('\u2713 IG '+(item.igDate?'<span style="opacity:.6;font-weight:400;">'+fmtD(item.igDate)+'</span>':'')) : 'Post to IG';
+    igBtn.addEventListener('click', (function(id){return function(){markPosted(id,'ig');};})(item.id));
+
+    // LI button
+    var liBtn = document.createElement('button');
+    liBtn.style.cssText = 'font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:5px 12px;border-radius:5px;cursor:pointer;transition:all .15s;border:1.5px solid '+(item.li?'#60a5fa':'var(--brd2)')+';background:'+(item.li?'#1e3a5f33':'transparent')+';color:'+(item.li?'#60a5fa':'var(--txt3)')+';';
+    liBtn.innerHTML = item.li ? ('\u2713 LI '+(item.liDate?'<span style="opacity:.6;font-weight:400;">'+fmtD(item.liDate)+'</span>':'')) : 'Post to LI';
+    liBtn.addEventListener('click', (function(id){return function(){markPosted(id,'li');};})(item.id));
+
+    postRow.appendChild(igBtn);
+    postRow.appendChild(liBtn);
+    card.appendChild(postRow);
+    list.appendChild(card);
+  });
+}
+
+function setupContentBank() {
+  var addBtn = document.getElementById('btn-add-content');
+  if(addBtn) addBtn.addEventListener('click', function(){ openContentModal(); });
+
+  // Filter buttons
+  document.querySelectorAll('#content-filters .f-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.querySelectorAll('#content-filters .f-btn').forEach(function(b){b.classList.remove('on');});
+      btn.classList.add('on');
+      _contentFilter = btn.getAttribute('data-cf');
+      renderContentBank();
+    });
+  });
+}
+
+
 function init(){
-  renderPipeline();renderCRM();renderAgents();renderContacts();tLoad();renderDailyLog();renderKpiStrip();renderTasks();renderCallLog();updateSidebar();
+  renderPipeline();renderCRM();renderAgents();renderContacts();renderDtvLog();renderVisits();tLoad();renderDailyLog();renderKpiStrip();renderTasks();renderCallLog();updateSidebar();
 }
 document.addEventListener('DOMContentLoaded',function(){
   // Tab visibility / focus — silently refresh token when user returns
@@ -5106,6 +5576,8 @@ document.addEventListener('DOMContentLoaded',function(){
   setupCallLog();
   setupSettings();
   setupLocationEditor();
+  setupDtvVisits();
+  setupContentBank();
   // Agent search wired via initAgentSearch() called from openDealModal
   // Wire agc-add-btn (sub-contact)
   var agcBtn = document.getElementById('agc-add-btn');
