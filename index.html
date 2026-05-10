@@ -302,7 +302,7 @@ a.link:hover{text-decoration:underline;}
 .tog-mini{font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:5px 12px;border-radius:var(--r);cursor:pointer;background:var(--surf2);border:1.5px solid var(--brd);color:var(--txt3);transition:all .15s;flex:1;}
 .tog-mini.on{background:#052e16;border-color:#16a34a;color:var(--green);}
 /* MOBILE */
-@media(max-width:900px){
+@media(max-width:768px){
   #mob-menu-btn{display:flex!important;}
   .sb{display:none;z-index:9997;position:fixed;top:0;left:0;height:100vh;width:260px;}
   .main{margin-left:0!important;padding:16px 12px!important;}
@@ -323,7 +323,7 @@ a.link:hover{text-decoration:underline;}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:3px;}
-@media(max-width:900px){
+@media(max-width:768px){
   .sb{width:100%;position:static;height:auto;flex-direction:row;flex-wrap:wrap;}
   .main{margin-left:0;}
   .da-wrap{grid-template-columns:1fr;}
@@ -5536,7 +5536,7 @@ function closeMobileMenu() {
 
 function setupMobileMenu() {
   // Only apply on mobile
-  if(window.innerWidth > 900) return;
+  if(window.innerWidth > 768) return;
   var sb = document.querySelector('.sb');
   var btn = document.getElementById('mob-menu-btn');
   var overlay = document.getElementById('mob-overlay');
@@ -5560,7 +5560,7 @@ function setupMobileMenu() {
     }, {passive:false});
   }
   window.addEventListener('resize', function(){
-    if(window.innerWidth > 900) {
+    if(window.innerWidth > 768) {
       if(sb) sb.style.display = '';
       if(btn) btn.style.display = 'none';
     }
