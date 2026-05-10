@@ -304,9 +304,7 @@ a.link:hover{text-decoration:underline;}
 /* MOBILE */
 @media(max-width:900px){
   #mob-menu-btn{display:flex!important;}
-  .sb{transform:translateX(-230px);transition:transform .3s ease;z-index:160;}
-  body.mob-open .sb{transform:translateX(0)!important;}
-  body.mob-open #mob-overlay{display:block!important;}
+  .sb{display:none;z-index:9997;position:fixed;top:0;left:0;height:100vh;width:260px;}
   .main{margin-left:0!important;padding:16px 12px!important;}
   .pg-hdr{flex-wrap:wrap;gap:10px;padding-top:56px;}
   .pg-title{font-size:18px;}
@@ -5521,34 +5519,52 @@ function setupContentBank() {
 
 // ═══════════════ MOBILE MENU ═══════════════
 function toggleMobileMenu() {
-  document.body.classList.toggle('mob-open');
+  var sb = document.querySelector('.sb');
+  var overlay = document.getElementById('mob-overlay');
+  if(!sb) return;
+  var isOpen = sb.style.display === 'flex';
+  sb.style.display = isOpen ? 'none' : 'flex';
+  if(overlay) overlay.style.display = isOpen ? 'none' : 'block';
 }
 
 function closeMobileMenu() {
-  document.body.classList.remove('mob-open');
+  var sb = document.querySelector('.sb');
+  var overlay = document.getElementById('mob-overlay');
+  if(sb) sb.style.display = 'none';
+  if(overlay) overlay.style.display = 'none';
 }
 
 function setupMobileMenu() {
+  // Only apply on mobile
+  if(window.innerWidth > 900) return;
+  var sb = document.querySelector('.sb');
   var btn = document.getElementById('mob-menu-btn');
   var overlay = document.getElementById('mob-overlay');
+  // Hide sidebar initially
+  if(sb) sb.style.display = 'none';
+  // Show hamburger
+  if(btn) btn.style.display = 'flex';
+  // Wire events
   if(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      toggleMobileMenu();
-    });
-    btn.addEventListener('touchend', function(e) {
+    btn.addEventListener('click', toggleMobileMenu);
+    btn.addEventListener('touchend', function(e){
       e.preventDefault();
-      e.stopPropagation();
       toggleMobileMenu();
-    });
+    }, {passive:false});
   }
   if(overlay) {
     overlay.addEventListener('click', closeMobileMenu);
     overlay.addEventListener('touchend', function(e){
       e.preventDefault();
       closeMobileMenu();
-    });
+    }, {passive:false});
   }
+  window.addEventListener('resize', function(){
+    if(window.innerWidth > 900) {
+      if(sb) sb.style.display = '';
+      if(btn) btn.style.display = 'none';
+    }
+  });
 }
 
 
