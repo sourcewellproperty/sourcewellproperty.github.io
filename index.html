@@ -12,8 +12,7 @@
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://apis.google.com/js/api.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- Supabase integration (no external scripts needed) -->
 <style>
 :root{
   --bg:#1c1c1e;--surf:#2c2c2e;--surf2:#3a3a3c;--surf3:#48484a;
@@ -316,7 +315,7 @@ a.link:hover{text-decoration:underline;}
   .tabs{overflow-x:auto;flex-wrap:nowrap;}
   .tab-btn{white-space:nowrap;padding:8px 12px;}
   .ex-card{margin-bottom:6px;}
-  #drive-reconnect-banner{font-size:10px;}
+  #sb-error-banner{font-size:10px;}
   .fbar{flex-wrap:wrap;gap:4px;}
 }
 /* SCROLLBAR */
@@ -333,10 +332,9 @@ a.link:hover{text-decoration:underline;}
 </style>
 </head>
 <body>
-<div id="drive-reconnect-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#92400e;color:#fef3c7;font-family:var(--fm);font-size:11px;font-weight:600;padding:9px 16px;align-items:center;gap:12px;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.5);">
-  <span>&#9888; Drive session expired &mdash; your data is saved locally</span>
-  <button id="drive-reconnect-btn" style="background:#fef3c7;color:#92400e;border:none;border-radius:4px;font-family:var(--fm);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:4px 12px;cursor:pointer;">Reconnect</button>
-  <button id="drive-reconnect-dismiss" style="background:none;border:none;color:#fef3c7;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;opacity:.8;">&#215;</button>
+<div id="sb-error-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:#7f1d1d;color:#fef2f2;font-family:var(--fm);font-size:11px;font-weight:600;padding:9px 16px;align-items:center;gap:12px;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.5);">
+  <span>&#9888; Could not reach cloud &#8212; your data is saved locally and will sync when reconnected</span>
+  <button id="sb-error-dismiss" onclick="document.getElementById('sb-error-banner').style.display='none';" style="background:none;border:none;color:#fef2f2;font-size:18px;cursor:pointer;padding:0 4px;line-height:1;opacity:.8;">&#215;</button>
 </div>
 <div class="app">
 <button id="mob-menu-btn" style="position:fixed;top:14px;left:14px;z-index:9998;background:#f5a623;border:none;border-radius:8px;width:44px;height:44px;cursor:pointer;align-items:center;justify-content:center;flex-direction:column;gap:5px;padding:0;display:none;box-shadow:0 2px 8px rgba(0,0,0,.4);">
@@ -387,15 +385,12 @@ a.link:hover{text-decoration:underline;}
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>Settings
     </button>
   </nav>
-  <div id="drive-panel" style="padding:10px;border-top:1px solid var(--brd);">
-    <div id="drive-status-bar" style="display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--r);background:var(--surf2);border:1px solid var(--brd);margin-bottom:6px;">
-      <div id="drive-dot" style="width:7px;height:7px;border-radius:50%;background:var(--txt3);flex-shrink:0;"></div>
-      <span id="drive-status-txt" style="font-family:var(--fm);font-size:9px;color:var(--txt3);flex:1;">Not connected</span>
-      <span id="drive-save-spinner" style="display:none;font-family:var(--fm);font-size:8px;color:var(--txt3);">saving…</span>
+  <div id="sb-panel" style="padding:10px;border-top:1px solid var(--brd);">
+    <div id="sb-status-bar" style="display:flex;align-items:center;gap:7px;padding:7px 8px;border-radius:var(--r);background:var(--surf2);border:1px solid var(--brd);">
+      <div id="sb-dot" style="width:7px;height:7px;border-radius:50%;background:var(--amber2);flex-shrink:0;"></div>
+      <span id="sb-status-txt" style="font-family:var(--fm);font-size:9px;color:var(--txt3);flex:1;">Connecting…</span>
+      <span id="sb-save-spinner" style="display:none;font-family:var(--fm);font-size:8px;color:var(--txt3);">saving…</span>
     </div>
-    <button id="btn-drive-connect" class="btn btn-ghost btn-sm" style="width:100%;text-align:center;margin-bottom:4px;">Connect Google Drive</button>
-    <button id="btn-drive-disconnect" class="btn btn-ghost btn-sm" style="width:100%;text-align:center;display:none;color:var(--txt3);font-size:8px;">Disconnect</button>
-    <div id="drive-setup-hint" style="font-family:var(--fm);font-size:8px;color:var(--txt3);line-height:1.5;margin-top:4px;display:none;">Enter your Google Client ID in Settings first.</div>
   </div>
   <div class="sb-stats">
     <div class="sb-stat"><span class="sb-stat-lbl">Active deals</span><span class="sb-stat-val" id="sb-deals">0</span></div>
@@ -1226,40 +1221,6 @@ a.link:hover{text-decoration:underline;}
   </div>
 </div>
 
-<!-- DRIVE SETUP MODAL -->
-<div class="modal-bg" id="drive-setup-modal">
-  <div class="modal" style="max-width:560px;">
-    <div class="modal-hdr">
-      <span class="modal-title">Google Drive Setup</span>
-      <button class="modal-x" id="drive-setup-x">×</button>
-    </div>
-    <div style="font-size:12px;color:var(--txt2);line-height:1.7;margin-bottom:16px;">
-      To connect Google Drive you need a free Google Cloud OAuth Client ID. Follow these steps — it takes about 5 minutes and you only do it once.
-    </div>
-    <div style="background:var(--surf2);border-radius:var(--r);padding:14px;margin-bottom:16px;">
-      <div style="font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--txt3);margin-bottom:10px;font-weight:700;">Setup Steps</div>
-      <ol style="font-size:12px;color:var(--txt2);line-height:2;padding-left:18px;">
-        <li>Go to <a href="https://console.cloud.google.com" target="_blank" class="link">console.cloud.google.com</a></li>
-        <li>Create a new project — name it <strong style="color:var(--txt);">Sourcewell</strong></li>
-        <li>Go to <strong style="color:var(--txt);">APIs &amp; Services → Library</strong>, search for <strong style="color:var(--txt);">Google Drive API</strong> and enable it</li>
-        <li>Go to <strong style="color:var(--txt);">APIs &amp; Services → OAuth consent screen</strong> → choose <strong style="color:var(--txt);">External</strong> → fill in app name as <strong style="color:var(--txt);">Sourcewell</strong> → add your email → save</li>
-        <li>Go to <strong style="color:var(--txt);">APIs &amp; Services → Credentials → Create Credentials → OAuth Client ID</strong></li>
-        <li>Application type: <strong style="color:var(--txt);">Web application</strong></li>
-        <li>Under <strong style="color:var(--txt);">Authorised JavaScript origins</strong>, add your Netlify URL (e.g. <code style="color:var(--amber2);">https://sourcewell-luke.netlify.app</code>)</li>
-        <li>Click Create — copy the <strong style="color:var(--amber2);">Client ID</strong> and paste it below</li>
-      </ol>
-    </div>
-    <div class="field" style="margin-bottom:4px;">
-      <label>Google OAuth Client ID</label>
-      <input type="text" id="drive-client-id-input" placeholder="1234567890-abc...apps.googleusercontent.com" style="font-size:12px;">
-    </div>
-    <div style="font-family:var(--fm);font-size:9px;color:var(--txt3);margin-bottom:4px;" id="drive-setup-msg"></div>
-    <div class="modal-ftr">
-      <button class="btn btn-ghost btn-sm" id="drive-setup-cancel">Cancel</button>
-      <button class="btn btn-amber btn-sm" id="drive-setup-save">Save & Connect</button>
-    </div>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -1415,39 +1376,16 @@ function addAgModalContact() {
 
 
 // ═══════════════ CORE UTILITIES ═══════════════
-// ── DRIVE-BACKED STORAGE ──────────────────────────────────────────────────
+// ── SUPABASE-BACKED STORAGE ────────────────────────────────────────────────
 var _mem = {};           // in-memory cache — single source of truth
-var _driveReady = false;
-var _driveFileId = null;
-var _saveTimer = null;
-var _tokenClient = null;
-var _accessToken = null;
-var _tokenExpiresAt = 0;    // timestamp when current token expires
-var _refreshTimer = null;   // proactive refresh timer
-var _saveQueue = [];        // queued saves waiting for token
-var DRIVE_FILE_NAME = 'sourcewell-data.json';
-var TOKEN_LIFETIME_MS = 55 * 60 * 1000; // refresh after 55 min (token lasts 60)
-var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-last-backup','sw-banner-dismissed'];
+var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-calls','sw-dtv','sw-visits','sw-content-bank','sw-contacts','sw-content-status','sw-locations','sw-last-backup','sw-banner-dismissed'];
 
-// Synchronous store — writes to memory + localStorage cache, queues Drive save
+// Synchronous store — writes to memory + localStorage, queues Supabase save
 var store = function(k, v) {
   _mem[k] = v;
   try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {}
-  if(_driveReady && _accessToken) {
-    // Check token hasn't expired before scheduling save
-    if(_tokenExpiresAt && Date.now() >= _tokenExpiresAt) {
-      // Token expired — mark pending, show banner, don't attempt save
-      _pendingSave = true;
-      _driveReady = false;
-      _accessToken = null;
-      showReconnectBanner();
-    } else {
-      scheduleDriveSave();
-    }
-  } else if(localStorage.getItem('sw-drive-connected')) {
-    // Was connected — mark pending so it syncs on reconnect
-    _pendingSave = true;
-  }
+  _sbPendingSave = true;
+  scheduleSbSave();
 };
 
 // Synchronous retrieve — reads from memory first, then localStorage fallback
@@ -2857,395 +2795,148 @@ function updateCompSummary(){var trs=document.getElementById('sold-body').queryS
 
 
 
-// ═══════════════ GOOGLE DRIVE INTEGRATION ═══════════════
+// ═══════════════ SUPABASE INTEGRATION ═══════════════
 
-function getDriveClientId() {
-  return localStorage.getItem('sw-client-id') || '';
+var _SB_URL = 'https://szijqwjcysbaexgcnfq.supabase.co';
+var _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6c2lqcXdqY3lzYmFleGdjbmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg0MjE0MjgsImV4cCI6MjA5Mzk5NzQyOH0.AGWL1hiOYOwapX76MkReuZFLG0B1RAIRBb5VSPWbbkg';
+var _SB_ROW_ID = 'luke';
+var _sbSaveTimer = null;
+var _sbSaving = false;
+var _sbReady = false;
+var _sbPendingSave = false;
+
+function sbGetHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'apikey': _SB_KEY,
+    'Authorization': 'Bearer ' + _SB_KEY,
+    'Prefer': 'resolution=merge-duplicates'
+  };
 }
 
-function setDriveStatus(state, msg) {
-  // state: 'disconnected' | 'connecting' | 'connected' | 'saving' | 'saved' | 'error'
-  var dot = document.getElementById('drive-dot');
-  var txt = document.getElementById('drive-status-txt');
-  var spinner = document.getElementById('drive-save-spinner');
-  var connectBtn = document.getElementById('btn-drive-connect');
-  var disconnectBtn = document.getElementById('btn-drive-disconnect');
+function setSbStatus(state, msg) {
+  var dot = document.getElementById('sb-dot');
+  var txt = document.getElementById('sb-status-txt');
+  var spinner = document.getElementById('sb-save-spinner');
   if(!dot) return;
-  var colors = {disconnected:'var(--txt3)',connecting:'var(--amber2)',connected:'var(--green)',saving:'var(--amber2)',saved:'var(--green)',error:'var(--red)',pending:'#f59e0b'};
+  var colors = {
+    disconnected: 'var(--txt3)',
+    connecting: 'var(--amber2)',
+    connected: 'var(--green)',
+    saving: 'var(--amber2)',
+    saved: 'var(--green)',
+    error: 'var(--red)'
+  };
   dot.style.background = colors[state] || 'var(--txt3)';
   if(txt) txt.textContent = msg || state;
-  if(spinner) spinner.style.display = (state === 'saving') ? 'inline' : 'none';
-  if(connectBtn) connectBtn.style.display = (state === 'connected' || state === 'saving' || state === 'saved') ? 'none' : 'block';
-  if(disconnectBtn) disconnectBtn.style.display = (state === 'connected' || state === 'saving' || state === 'saved') ? 'block' : 'none';
+  if(spinner) spinner.style.display = state === 'saving' ? 'inline' : 'none';
 }
 
-function scheduleDriveSave() {
-  if(_saveTimer) clearTimeout(_saveTimer);
-  if(_driveReady && _accessToken) {
-    // Check if token is about to expire — refresh first if so
-    if(_tokenExpiresAt && Date.now() > _tokenExpiresAt - 60000) {
-      _pendingSave = true;
-      refreshToken(function(){ scheduleDriveSave(); });
-      return;
-    }
-    setDriveStatus('saving', 'Saving…');
-    _saveTimer = setTimeout(saveToDrive, 1500);
-  } else {
-    _pendingSave = true;
-    setDriveStatus('pending', 'Drive offline — data safe locally, will sync on reconnect');
-  }
+function scheduleSbSave() {
+  if(_sbSaveTimer) clearTimeout(_sbSaveTimer);
+  setSbStatus('saving', 'Saving…');
+  _sbSaveTimer = setTimeout(saveToSupabase, 1500);
 }
 
-var _pendingSave = false;  // tracks if there's unsaved data Drive hasn't confirmed
-
-function saveToDrive() {
-  if(!_accessToken || !_driveReady) {
-    // Not connected — mark as pending, will save when reconnected
-    _pendingSave = true;
-    setDriveStatus('pending', 'Drive offline — data safe locally, will sync on reconnect');
-    return;
-  }
-  var content = JSON.stringify(_mem, null, 2);
-  if(_driveFileId) {
-    // Update existing file
-    fetch('https://www.googleapis.com/upload/drive/v3/files/' + _driveFileId + '?uploadType=media', {
-      method: 'PATCH',
-      headers: {'Authorization': 'Bearer ' + _accessToken, 'Content-Type': 'application/json'},
-      body: content
-    }).then(function(r) {
-      if(r.ok) {
-        _pendingSave = false;
-        setDriveStatus('saved', 'Saved to Drive ✓');
-        setTimeout(function(){setDriveStatus('connected','Connected to Drive');}, 2000);
-      } else if(r.status === 401) {
-        // Token expired mid-save — mark disconnected and show banner
-        // The save data is already in localStorage, nothing is lost
-        _pendingSave = true;
-        _driveReady = false;
-        _accessToken = null;
-        showReconnectBanner();
-      } else {
-        _pendingSave = true;
-        setDriveStatus('pending', 'Save queued — data safe locally');
-        // Auto retry after 10s
-        setTimeout(function(){ if(_pendingSave) scheduleDriveSave(); }, 10000);
-      }
-    }).catch(function(){
-      _pendingSave = true;
-      setDriveStatus('pending', 'No connection — data safe locally, will sync');
-      // Auto retry after 15s
-      setTimeout(function(){ if(_pendingSave && _driveReady) scheduleDriveSave(); }, 15000);
-    });
-  } else {
-    // Create new file
-    var meta = JSON.stringify({name: DRIVE_FILE_NAME, mimeType: 'application/json'});
-    var boundary = '-------sourcewellboundary';
-    var body = '--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + meta + '\r\n--' + boundary + '\r\nContent-Type: application/json\r\n\r\n' + content + '\r\n--' + boundary + '--';
-    fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-      method: 'POST',
-      headers: {'Authorization': 'Bearer ' + _accessToken, 'Content-Type': 'multipart/related; boundary=' + boundary},
-      body: body
-    }).then(function(r){return r.json();}).then(function(data){
-      if(data.id) {
-        _driveFileId = data.id;
-        localStorage.setItem('sw-drive-file-id', _driveFileId);
-        setDriveStatus('saved','Saved to Drive ✓');
-        setTimeout(function(){setDriveStatus('connected','Connected to Drive');}, 2000);
-      }
-    }).catch(function(){setDriveStatus('error','Could not create file');});
-  }
-}
-
-function loadFromDrive(onDone) {
-  if(!_accessToken) { if(onDone) onDone(false); return; }
-  // Try cached file ID first
-  var cachedId = localStorage.getItem('sw-drive-file-id');
-  function loadById(fileId) {
-    fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', {
-      headers: {'Authorization': 'Bearer ' + _accessToken}
-    }).then(function(r){
-      if(r.status === 404) { _driveFileId = null; localStorage.removeItem('sw-drive-file-id'); findOrCreateFile(onDone); return; }
-      return r.json();
-    }).then(function(data){
-      if(!data) return;
-      _driveFileId = fileId;
-      // If we have unsaved local changes, local data is newer — push to Drive instead of loading
-      if(_pendingSave) {
-        _driveReady = true;
-        setDriveStatus('connected', 'Connected to Drive');
-        scheduleDriveSave(); // push local → Drive
-        toast('Drive reconnected — syncing your changes');
-        if(onDone) onDone(true);
-        return;
-      }
-      // No pending local changes — load Drive data (it may be from another device/session)
-      ALL_KEYS.forEach(function(k){ if(k in data) { _mem[k] = data[k]; try{localStorage.setItem(k,JSON.stringify(data[k]));}catch(e){} } });
-      _driveReady = true;
-      setDriveStatus('connected','Connected to Drive');
-      if(onDone) onDone(true);
-    }).catch(function(){ if(onDone) onDone(false); });
-  }
-  if(cachedId) { loadById(cachedId); return; }
-  findOrCreateFile(onDone);
-}
-
-function findOrCreateFile(onDone) {
-  // Search Drive for existing file
-  fetch('https://www.googleapis.com/drive/v3/files?q=name%3D%27' + DRIVE_FILE_NAME + '%27+and+trashed%3Dfalse&fields=files(id,name)', {
-    headers: {'Authorization': 'Bearer ' + _accessToken}
-  }).then(function(r){return r.json();}).then(function(data){
-    if(data.files && data.files.length > 0) {
-      // File exists — load it
-      var fileId = data.files[0].id;
-      localStorage.setItem('sw-drive-file-id', fileId);
-      fetch('https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media', {
-        headers: {'Authorization': 'Bearer ' + _accessToken}
-      }).then(function(r){return r.json();}).then(function(fileData){
-        _driveFileId = fileId;
-        if(_pendingSave) {
-          _driveReady = true;
-          setDriveStatus('connected', 'Connected to Drive');
-          scheduleDriveSave();
-          toast('Drive reconnected — syncing your changes');
-          if(onDone) onDone(true);
-          return;
-        }
-        ALL_KEYS.forEach(function(k){ if(k in fileData) { _mem[k] = fileData[k]; try{localStorage.setItem(k,JSON.stringify(fileData[k]));}catch(e){} } });
-        _driveReady = true;
-        setDriveStatus('connected','Connected to Drive');
-        if(onDone) onDone(true);
-      });
+function saveToSupabase() {
+  if(_sbSaving) { _sbPendingSave = true; return; }
+  _sbSaving = true;
+  _sbPendingSave = false;
+  setSbStatus('saving', 'Saving…');
+  var payload = { id: _SB_ROW_ID, data: _mem, updated_at: new Date().toISOString() };
+  fetch(_SB_URL + '/rest/v1/app_data', {
+    method: 'POST',
+    headers: sbGetHeaders(),
+    body: JSON.stringify(payload)
+  }).then(function(r) {
+    _sbSaving = false;
+    if(r.ok || r.status === 201) {
+      _sbReady = true;
+      setSbStatus('saved', 'Saved ✓');
+      setTimeout(function(){ setSbStatus('connected', 'Synced to cloud'); }, 2000);
+      if(_sbPendingSave) scheduleSbSave();
     } else {
-      // No file yet — will be created on first save
-      _driveReady = true;
-      _driveFileId = null;
-      setDriveStatus('connected','Connected — will create file on first save');
-      if(onDone) onDone(true);
+      setSbStatus('error', 'Save failed — data safe locally');
+      _sbPendingSave = true;
+      setTimeout(scheduleSbSave, 10000);
+      showSbErrorBanner('Save error (status ' + r.status + ') — retrying…');
     }
-  }).catch(function(){ if(onDone) onDone(false); });
+  }).catch(function() {
+    _sbSaving = false;
+    _sbPendingSave = true;
+    setSbStatus('error', 'Offline — will sync when connected');
+    setTimeout(function(){ if(_sbPendingSave) scheduleSbSave(); }, 15000);
+  });
 }
 
-function showReconnectBanner() {
-  var banner = document.getElementById('drive-reconnect-banner');
-  if(banner) banner.style.display = 'flex';
-  setDriveStatus('pending', 'Session expired — click Reconnect above');
-}
-
-function hideReconnectBanner() {
-  var banner = document.getElementById('drive-reconnect-banner');
-  if(banner) banner.style.display = 'none';
-}
-
-function reconnectDrive() {
-  hideReconnectBanner();
-  if(!_tokenClient) { connectDrive(); return; }
-  setDriveStatus('connecting', 'Reconnecting…');
-  // Go straight to account selector — user explicitly clicked Reconnect
-  // so we have a user gesture and the popup won't be blocked
-  var originalCallback = _tokenClient.callback;
-  _tokenClient.callback = function(response) {
-    _tokenClient.callback = originalCallback;
-    if(response.error) {
-      setDriveStatus('pending', 'Session expired — click Reconnect above');
-      showReconnectBanner();
-      return;
-    }
-    _accessToken = response.access_token;
-    _tokenExpiresAt = Date.now() + TOKEN_LIFETIME_MS;
-    scheduleProactiveRefresh();
-    _driveReady = true;
-    setDriveStatus('connected', 'Connected to Drive');
-    if(_pendingSave) { scheduleDriveSave(); toast('Drive reconnected — syncing your changes'); }
-    else { toast('Reconnected to Drive ✓'); }
-  };
-  _tokenClient.requestAccessToken({prompt: 'select_account'});
-}
-
-function refreshToken(onDone) {
-  if(!_tokenClient) {
-    showReconnectBanner();
-    return;
+function showSbErrorBanner(msg) {
+  var banner = document.getElementById('sb-error-banner');
+  if(banner) {
+    var sp = banner.querySelector('span');
+    if(sp && msg) sp.textContent = '⚠ ' + msg;
+    banner.style.display = 'flex';
   }
-  var originalCallback = _tokenClient.callback;
-  _tokenClient.callback = function(response) {
-    _tokenClient.callback = originalCallback;
-    if(response.error) {
-      // Silent refresh failed — show non-blocking banner, keep data safe
-      showReconnectBanner();
-      _pendingSave = true;
-      if(onDone) onDone(); // still call onDone so caller doesn't hang
-      return;
-    }
-    hideReconnectBanner();
-    _accessToken = response.access_token;
-    _tokenExpiresAt = Date.now() + TOKEN_LIFETIME_MS;
-    scheduleProactiveRefresh();
-    setDriveStatus('connected', 'Connected to Drive');
-    if(_pendingSave) scheduleDriveSave();
-    if(onDone) onDone();
-  };
-  _tokenClient.requestAccessToken({prompt: 'none'});
 }
 
-function scheduleProactiveRefresh() {
-  if(_refreshTimer) clearTimeout(_refreshTimer);
-  var msUntilRefresh = (_tokenExpiresAt - Date.now()) - (5 * 60 * 1000);
-  if(msUntilRefresh < 0) msUntilRefresh = 0;
-  _refreshTimer = setTimeout(function() {
-    if(_driveReady && _tokenClient) {
-      // Silent refresh — prompt:none means no UI shown at all
-      // If it fails (e.g. session truly expired) we handle gracefully
-      var originalCallback = _tokenClient.callback;
-      _tokenClient.callback = function(response) {
-        _tokenClient.callback = originalCallback;
-        if(response.error) {
-          // Silent refresh failed — mark properly so store() doesn't try to save
-          _driveReady = false;
-          _accessToken = null;
-          showReconnectBanner();
-          return;
+function loadFromSupabase(onDone) {
+  setSbStatus('connecting', 'Loading from cloud…');
+  fetch(_SB_URL + '/rest/v1/app_data?id=eq.' + _SB_ROW_ID + '&select=data', {
+    headers: {
+      'apikey': _SB_KEY,
+      'Authorization': 'Bearer ' + _SB_KEY
+    }
+  }).then(function(r) {
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(rows) {
+    if(rows && rows.length > 0 && rows[0].data) {
+      var cloudData = rows[0].data;
+      // Cloud data wins — merge into memory and localStorage
+      ALL_KEYS.forEach(function(k) {
+        if(k in cloudData) {
+          _mem[k] = cloudData[k];
+          try { localStorage.setItem(k, JSON.stringify(cloudData[k])); } catch(e) {}
         }
-        _accessToken = response.access_token;
-        _tokenExpiresAt = Date.now() + TOKEN_LIFETIME_MS;
-        scheduleProactiveRefresh();
-        if(_pendingSave) scheduleDriveSave();
-      };
-      _tokenClient.requestAccessToken({prompt: 'none'});
-    }
-  }, msUntilRefresh);
-}
-
-function initDriveAuth(clientId, onSuccess, onFail) {
-  if(!window.google || !window.google.accounts) {
-    setTimeout(function(){ initDriveAuth(clientId, onSuccess, onFail); }, 500);
-    return;
-  }
-  _tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: clientId,
-    scope: 'https://www.googleapis.com/auth/drive.file',
-    callback: function(response) {
-      if(response.error) { setDriveStatus('error', 'Auth failed: ' + response.error); if(onFail) onFail(); return; }
-      _accessToken = response.access_token;
-      _tokenExpiresAt = Date.now() + TOKEN_LIFETIME_MS;
-      scheduleProactiveRefresh();
-      localStorage.setItem('sw-drive-connected', '1');
-      setDriveStatus('connecting', 'Loading data…');
-      loadFromDrive(function(ok) {
-        if(ok) { if(onSuccess) onSuccess(); }
-        else { setDriveStatus('error','Could not load data'); if(onFail) onFail(); }
       });
+      _sbReady = true;
+      setSbStatus('connected', 'Synced to cloud');
+    } else {
+      // No cloud data — push local data up to initialise the row
+      _sbReady = true;
+      setSbStatus('connected', 'Connected — first sync');
+      _sbPendingSave = true;
+      scheduleSbSave();
     }
-  });
-  _tokenClient.requestAccessToken({prompt: 'consent'});
-}
-
-function connectDrive() {
-  var clientId = getDriveClientId();
-  if(!clientId) {
-    // Show setup modal
-    document.getElementById('drive-client-id-input').value = '';
-    document.getElementById('drive-setup-msg').textContent = '';
-    openModal('drive-setup-modal');
-    return;
-  }
-  setDriveStatus('connecting', 'Connecting…');
-  initDriveAuth(clientId, function() {
-    // Reload all sections with Drive data
-    init();
-    updateBackupStatus();
-    toast('Connected to Google Drive ✓');
-  }, function() {
-    setDriveStatus('disconnected', 'Connection failed');
+    if(onDone) onDone(true);
+  }).catch(function(err) {
+    _sbReady = false;
+    setSbStatus('error', 'Cloud unavailable — using local data');
+    showSbErrorBanner('Could not reach cloud (' + (err.message||'network error') + ') — running on local data. Will retry automatically.');
+    if(onDone) onDone(false);
+    // Auto-retry every 30s when offline
+    setTimeout(function(){
+      loadFromSupabase(function(ok){ if(ok){ init(); updateBackupStatus(); } });
+    }, 30000);
   });
 }
 
-function disconnectDrive() {
-  if(!confirm('Disconnect Google Drive? The app will revert to browser storage. Your local data is still saved.')) return;
-  _driveReady = false;
-  _driveFileId = null;
-  _accessToken = null;
-  localStorage.removeItem('sw-drive-connected');
-  localStorage.removeItem('sw-drive-file-id');
-  setDriveStatus('disconnected', 'Not connected');
-  toast('Disconnected from Google Drive');
-}
-
-function saveClientIdAndConnect() {
-  var input = document.getElementById('drive-client-id-input').value.trim();
-  var msg = document.getElementById('drive-setup-msg');
-  if(!input || !input.includes('.apps.googleusercontent.com')) {
-    msg.style.color = 'var(--red)';
-    msg.textContent = "That does not look like a valid Client ID — it should end in .apps.googleusercontent.com";
-    return;
-  }
-  localStorage.setItem('sw-client-id', input);
-  closeModal('drive-setup-modal');
-  connectDrive();
-}
-
-function tryReconnectOnLoad() {
-  var wasConnected = localStorage.getItem('sw-drive-connected');
-  var clientId = getDriveClientId();
-  if(!wasConnected || !clientId) return;
-
-  // Render from localStorage immediately — user sees their data right away
-  // Drive sync happens in background and refreshes when ready
+function initSupabase() {
+  seedMemFromLocal();  // render immediately from cache
   init();
-
-  if(!window.google || !window.google.accounts) {
-    // Google script not loaded yet — retry, but cap at 5 attempts
-    var attempt = parseInt(localStorage.getItem('sw-reconnect-attempt') || '0');
-    if(attempt >= 5) {
-      localStorage.removeItem('sw-reconnect-attempt');
-      setDriveStatus('disconnected', 'Not connected — click to reconnect');
-      return;
-    }
-    localStorage.setItem('sw-reconnect-attempt', attempt + 1);
-    setTimeout(tryReconnectOnLoad, 1000);
-    return;
-  }
-  localStorage.removeItem('sw-reconnect-attempt');
-  setDriveStatus('connecting', 'Reconnecting…');
-
-  // Set a hard timeout — if Drive hasn't responded in 8s, give up gracefully
-  var reconnectTimeout = setTimeout(function() {
-    if(!_driveReady) {
-      setDriveStatus('disconnected', 'Not connected — click to reconnect');
-    }
-  }, 8000);
-
-  var silentClient = google.accounts.oauth2.initTokenClient({
-    client_id: clientId,
-    scope: 'https://www.googleapis.com/auth/drive.file',
-    prompt: '',
-    callback: function(response) {
-      clearTimeout(reconnectTimeout);
-      if(response.error) {
-        setDriveStatus('disconnected', 'Not connected — click to reconnect');
-        return;
-      }
-      _accessToken = response.access_token;
-      _tokenExpiresAt = Date.now() + TOKEN_LIFETIME_MS;
-      scheduleProactiveRefresh();
-      setDriveStatus('connecting', 'Syncing from Drive…');
-      // Mark as pending if localStorage has data newer than last Drive sync
-      // This ensures we push local → Drive rather than Drive → local
-      var localPipeline = localStorage.getItem('sw-pipeline');
-      if(localPipeline) _pendingSave = true;
-      loadFromDrive(function(ok) {
-        if(ok) {
-          if(!_pendingSave) init(); // only re-render if we loaded fresh Drive data
-          else init(); // render from local (which we kept)
-          updateBackupStatus();
-        } else {
-          setDriveStatus('disconnected', 'Could not sync — click to reconnect');
-        }
-      });
+  // Then load & sync from Supabase in background
+  loadFromSupabase(function(ok) {
+    if(ok) {
+      init();
+      updateBackupStatus();
     }
   });
-  silentClient.requestAccessToken({prompt: 'none'});
+  // Retry pending save when user returns to tab
+  document.addEventListener('visibilitychange', function() {
+    if(document.visibilityState === 'visible' && !_sbSaving && _sbPendingSave) {
+      scheduleSbSave();
+    }
+  });
 }
-
 
 // ═══════════════ BACKUP SYSTEM ═══════════════
 function getLastBackup() {
@@ -3268,13 +2959,13 @@ function daysSinceBackup() {
 function updateBackupStatus() {
   var el = document.getElementById('backup-status');
   if(!el) return;
-  // If Drive is connected, backup status shows Drive state instead
-  if(_driveReady) {
+  // If Supabase is connected, show cloud sync state
+  if(_sbReady) {
     el.style.display = 'block';
     el.style.background = 'var(--green-dim)';
     el.style.color = 'var(--green)';
     el.style.border = '1px solid #34d39933';
-    el.textContent = '✓ Auto-saving to Drive';
+    el.textContent = '✓ Auto-saving to cloud';
     return;
   }
   var last = getLastBackup();
@@ -5573,42 +5264,6 @@ function init(){
 }
 document.addEventListener('DOMContentLoaded',function(){
   setupMobileMenu();
-  // Tab visibility / focus — silently refresh token when user returns
-  // Wire reconnect banner
-  var reconnectBtn = document.getElementById('drive-reconnect-btn');
-  if(reconnectBtn) reconnectBtn.addEventListener('click', reconnectDrive);
-  var dismissBtn = document.getElementById('drive-reconnect-dismiss');
-  if(dismissBtn) dismissBtn.addEventListener('click', function(){
-    document.getElementById('drive-reconnect-banner').style.display = 'none';
-  });
-
-  document.addEventListener('visibilitychange', function() {
-    if(document.visibilityState !== 'visible' || !_tokenClient || !_driveReady) return;
-    var timeLeft = _tokenExpiresAt ? _tokenExpiresAt - Date.now() : 0;
-    if(timeLeft < 10 * 60 * 1000) {
-      refreshToken(function(){ if(_pendingSave) scheduleDriveSave(); });
-    }
-  });
-  window.addEventListener('focus', function() {
-    if(!_tokenClient || !_driveReady) return;
-    var timeLeft = _tokenExpiresAt ? _tokenExpiresAt - Date.now() : 0;
-    if(timeLeft < 10 * 60 * 1000) {
-      refreshToken(function(){ if(_pendingSave) scheduleDriveSave(); });
-    }
-  });
-  // Seed memory from localStorage before anything renders
-  seedMemFromLocal();
-  // Drive UI bindings
-  var btnConnect = document.getElementById('btn-drive-connect');
-  if(btnConnect) btnConnect.addEventListener('click', connectDrive);
-  var btnDisconnect = document.getElementById('btn-drive-disconnect');
-  if(btnDisconnect) btnDisconnect.addEventListener('click', disconnectDrive);
-  bindClose('drive-setup-modal','drive-setup-cancel','drive-setup-x');
-  var dsave = document.getElementById('drive-setup-save');
-  if(dsave) dsave.addEventListener('click', saveClientIdAndConnect);
-  // Show hint if no client ID saved yet
-  var hint = document.getElementById('drive-setup-hint');
-  if(hint) hint.style.display = getDriveClientId() ? 'none' : 'block';
   // Backup system
   var btnExport = document.getElementById('btn-export');
   if(btnExport) btnExport.addEventListener('click', exportData);
@@ -5664,13 +5319,11 @@ document.addEventListener('DOMContentLoaded',function(){
   bindTabs('#page-analyser');bindTabs('#page-daily');bindTabs('#page-agents');
   // Setup comparables
   setupComparables();
-  // Initial render
-  init();
   // Initial calc
   calc();
   setupAnalyserSave();
-  // Try silent Drive reconnect if was previously connected
-  setTimeout(tryReconnectOnLoad, 800);
+  // Initialise Supabase sync
+  initSupabase();
 });
 
 </script>
