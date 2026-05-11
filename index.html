@@ -5219,6 +5219,7 @@ function toggleMobileMenu() {
 }
 
 function closeMobileMenu() {
+  if(window.innerWidth > 768) return;
   var sb = document.querySelector('.sb');
   var overlay = document.getElementById('mob-overlay');
   if(sb) sb.style.display = 'none';
