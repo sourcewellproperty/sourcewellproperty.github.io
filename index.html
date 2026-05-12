@@ -2528,7 +2528,7 @@ function renderKpiStrip() {
   var weekDays = days.filter(function(d){return new Date(d.date)>=sw;});
 
   // This week totals
-  var wShort = 0, wLi = 0, wIg = 0;
+  var wShort = 0, wLi = 0, wIg = 0, wVisits = 0, wDtv = 0;
   weekDays.forEach(function(d){
     wShort += d.short||0;
     if(d.linkedin==='1'||d.linkedin===1) wLi++;
