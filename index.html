@@ -2803,6 +2803,8 @@ function updateCompSummary(){var trs=document.getElementById('sold-body').queryS
 
 // ═══════════════ INVESTMENT PACK GENERATOR ═══════════════
 
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
 function generateInvestmentPack(dealId){
   var deals=retrieve('sw-pipeline',[]);
   var deal=deals.find(function(d){return d.id===dealId;});
