@@ -575,11 +575,8 @@ a.link:hover{text-decoration:underline;}
       <button id="analyser-load-comps-btn" class="btn btn-ghost btn-sm" style="font-size:9px;white-space:nowrap;display:none;">Load Comps</button>
     </div>
     <div class="chips">
-      <div class="chip"><div class="chip-lbl">Purchase Price</div><div class="chip-val fail" id="c-ask">—</div><div class="chip-st fail" id="c-ask-s">target: &lt; £150k</div></div>
-      <div class="chip"><div class="chip-lbl">Capital Required</div><div class="chip-val fail" id="c-cap">—</div><div class="chip-st fail" id="c-cap-s">target: &lt; £70k</div></div>
-      <div class="chip"><div class="chip-lbl">Money Left In</div><div class="chip-val fail" id="c-left">—</div><div class="chip-st fail" id="c-left-s">target: &lt; £20k</div></div>
       <div class="chip"><div class="chip-lbl">Monthly Cashflow</div><div class="chip-val fail" id="c-cf">—</div><div class="chip-st fail" id="c-cf-s">target: £250+</div></div>
-      <div class="chip"><div class="chip-lbl">ROCE (bridging)</div><div class="chip-val fail" id="c-roce">—</div><div class="chip-st fail" id="c-roce-s">target: &gt; 20%</div></div>
+      <div class="chip"><div class="chip-lbl">ROCE (bridging)</div><div class="chip-val fail" id="c-roce">—</div><div class="chip-st fail" id="c-roce-s">target: &gt; 15%</div></div>
     </div>
     <div class="roi-boxes">
       <div class="roi-box"><div class="roi-title bt">Bridging</div><div class="kv"><span>Capital in</span><span class="v amb" id="b-cap">—</span></div><div class="kv"><span>Left in after refi</span><span class="v" id="b-left">—</span></div><div class="kv"><span>Monthly cashflow</span><span class="v" id="b-cf">—</span></div><div class="kv"><span>Annual cashflow</span><span class="v" id="b-acf">—</span></div><div class="kv"><span>ROCE</span><span class="v" id="b-roce">—</span></div></div>
@@ -644,7 +641,7 @@ a.link:hover{text-decoration:underline;}
 
 <!-- ═══ TRACKER PAGE ═══ -->
 <div id="page-tracker" class="page">
-  <div class="pg-hdr"><div><div class="pg-title">Territory Tracker</div><div class="pg-sub" id="tracker-sub">M4 Corridor · 4 locations · Newport &amp; Morriston priority</div></div><button class="btn btn-ghost" id="btn-edit-locations" style="font-size:9px;">Edit Locations</button></div>
+  <div class="pg-hdr"><div><div class="pg-title">Territory Tracker</div><div class="pg-sub" id="tracker-sub">BRR to SA · Newport &amp; Morriston · Nitton Capital JV</div></div><button class="btn btn-ghost" id="btn-edit-locations" style="font-size:9px;">Edit Locations</button></div>
   <div class="stat-grid">
     <div class="stat-box"><div class="stat-val" id="ts-total">—</div><div class="stat-lbl">Total reviews</div></div>
     <div class="stat-box"><div class="stat-val" id="ts-week">—</div><div class="stat-lbl">This week</div></div>
@@ -873,11 +870,8 @@ a.link:hover{text-decoration:underline;}
     <div class="sh"><span class="sh-title amber">BRR Deal Criteria</span></div>
     <div style="font-size:12px;color:var(--txt3);margin-bottom:14px;line-height:1.6;">The pass/fail thresholds shown on the Deal Analyser. Change these when you adjust your sourcing criteria.</div>
     <div class="g3">
-      <div class="field"><label>Max Purchase Price (£)</label><input type="number" id="st-max-purchase" placeholder="150000"></div>
-      <div class="field"><label>Max Capital Required (£)</label><input type="number" id="st-max-capital" placeholder="70000"></div>
-      <div class="field"><label>Max Money Left In (£)</label><input type="number" id="st-max-leftin" placeholder="20000"></div>
       <div class="field"><label>Min Monthly Cashflow (£)</label><input type="number" id="st-min-cashflow" placeholder="250"></div>
-      <div class="field"><label>Min ROCE (%)</label><input type="number" id="st-min-roce" placeholder="20" step="1"></div>
+      <div class="field"><label>Min ROCE (%)</label><input type="number" id="st-min-roce" placeholder="15" step="1"></div>
     </div>
     <div style="margin-top:14px;"><button class="btn btn-amber btn-sm" id="st-save-criteria">Save Criteria</button></div>
   </div>
@@ -995,7 +989,7 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Branch</label><input type="text" id="ag-branch" placeholder="e.g. Treorchy"></div>
       <div class="field"><label>Phone</label><input type="text" id="ag-phone" placeholder="e.g. 01443 000000"></div>
       <div class="field"><label>Email</label><input type="email" id="ag-email" placeholder="e.g. sarah@peteralan.co.uk"></div>
-      <div class="field"><label>Zone Coverage</label><input type="text" id="ag-zones" placeholder="e.g. Zone 3 — Rhondda"></div>
+      <div class="field"><label>Zone Coverage</label><input type="text" id="ag-zones" placeholder="e.g. Newport, Morriston"></div>
       <div class="field"><label>Relationship</label><select id="ag-status"><option value="cold">Cold — Not yet spoken</option><option value="warm">Warm — Building</option><option value="hot">Hot — Active</option></select></div>
       <div class="field"><label>Last Contact</label><input type="date" id="ag-contact"></div>
       <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea id="ag-notes" placeholder="How you met, specialisms, deals discussed..."></textarea></div>
@@ -1591,23 +1585,11 @@ function openDealModal(id){
   // Populate area/town dropdown grouped by pipeline
   var zoneSel=document.getElementById('d-zone');
   zoneSel.innerHTML='';
-  var PIPE_LABELS={'p1':'Pipeline 1 — BRR to SA','t1':'Pipeline 2 Tier 1 — BTL','t2':'Pipeline 2 Tier 2 — BTL','co':'Co-Source Only'};
-  var pipeGroups={};
   getTowns().forEach(function(t){
-    var key=t.tier||'t2';
-    if(!pipeGroups[key])pipeGroups[key]=[];
-    pipeGroups[key].push(t);
-  });
-  ['p1','t1'].forEach(function(key){
-    if(!pipeGroups[key]||!pipeGroups[key].length) return;
-    var og=document.createElement('optgroup');og.label=PIPE_LABELS[key]||'';
-    pipeGroups[key].forEach(function(t){
-      var o=document.createElement('option');
-      o.value=t.label;
-      o.textContent=t.label+(t.postcode?' ('+t.postcode+')':'');
-      og.appendChild(o);
-    });
-    zoneSel.appendChild(og);
+    var o=document.createElement('option');
+    o.value=t.label;
+    o.textContent=t.label+(t.postcode?' ('+t.postcode+')':'');
+    zoneSel.appendChild(o);
   });
   agSel.innerHTML='<option value="">— None —</option>';
   invSel.innerHTML='<option value="">— None —</option>';
@@ -1639,7 +1621,7 @@ function openDealModal(id){
     var d=retrieve('sw-pipeline',[]).find(function(x){return x.id===id;});
     if(d){
       document.getElementById('d-addr').value=d.addr||'';
-      document.getElementById('d-zone').value=d.zone||'Zone 3 — Central (Taff, Rhondda & Cynon)';
+      document.getElementById('d-zone').value=d.zone||'Newport';
       document.getElementById('d-type').value=d.type||'brr-btl';
       document.getElementById('d-stage').value=d.stage||'shortlisted';
       document.getElementById('d-ask').value=d.ask||'';
@@ -2215,12 +2197,8 @@ function renderAgents(){
 
 // ═══════════════ TERRITORY TRACKER ═══════════════
 var TOWNS=[
-  // ── PRIORITY: SA-viable M4 Corridor ──────────────────────────────────────
-  {id:'newport',    label:'Newport',          postcode:'NP19/NP20', pipeline:'brr-sa',  tier:'p1', valley:'Priority — SA Viable', color:'#f5a623', def:'not_started', note:'Royal Gwent, Amazon logistics, M4. Primary SA target.'},
-  {id:'morriston',  label:'Morriston / Swansea', postcode:'SA6/SA1', pipeline:'brr-sa',  tier:'p1', valley:'Priority — SA Viable', color:'#f5a623', def:'not_started', note:'Morriston Hospital, M4 J45, Swansea city demand. Primary SA target.'},
-  // ── BRR to BTL ────────────────────────────────────────────────────────────
-  {id:'bridgend_town', label:'Bridgend',      postcode:'CF31',      pipeline:'brr-btl', tier:'t1', valley:'BRR to BTL', color:'#60a5fa', def:'not_started', note:'Princess of Wales Hospital, strong BTL fundamentals.'},
-  {id:'port_talbot',   label:'Port Talbot',   postcode:'SA13',      pipeline:'brr-btl', tier:'t1', valley:'BRR to BTL', color:'#60a5fa', def:'not_started', note:'Tata regeneration, hospital, improving fundamentals.'}
+  {id:'newport',    label:'Newport',          postcode:'NP19/NP20', pipeline:'brr-sa',  tier:'p1', valley:'BRR to SA', color:'#f5a623', def:'not_started', note:'Royal Gwent, Amazon logistics, M4. Primary SA target.'},
+  {id:'morriston',  label:'Morriston / Swansea', postcode:'SA6/SA1', pipeline:'brr-sa',  tier:'p1', valley:'BRR to SA', color:'#f5a623', def:'not_started', note:'Morriston Hospital, M4 J45, Swansea city demand. Primary SA target.'}
 ]
 var ZSL={not_started:'Not started',active:'Active',reviewed:'Reviewed',complete:'Complete'};
 var ZSS={not_started:'background:#1e2d45;color:#475569;',active:'background:#1e3a5f;color:#60a5fa;',reviewed:'background:#052e16;color:#4ade80;',complete:'background:#1a1206;color:#fbbf24;'};
@@ -2815,14 +2793,14 @@ function calc(){
   document.getElementById('refurb-sub').textContent='Build '+fmt(rb.con)+' · Labour '+fmt(rb.lab)+' · VAT '+fmt(rb.vat);
   var mr=(a.mr*100).toFixed(2);document.getElementById('lbl-mr').textContent=mr;document.getElementById('lbl-mr2').textContent=mr;document.getElementById('lbl-br').textContent=(a.br*100).toFixed(2);document.getElementById('lbl-bm').textContent=a.bm;document.getElementById('lbl-af').textContent=(a.af*100).toFixed(2);
   var br=bBridge(ask,gdv,rent,mgmt,rb.total,af,furn,a),cr=bCash(ask,gdv,rent,mgmt,rb.total,af,furn,a);
-  var _sc=getSettingsCriteria();var p1=ask<=_sc.maxPurchase,p2=br.cap<=_sc.maxCapital,p3=br.left<=_sc.maxLeftIn,p4=br.cf>=_sc.minCashflow,roce=br.left<=0?999:(br.cf*12)/br.left,p5=br.left<=0||roce>=(_sc.minRoce/100);
-  var passes=[p1,p2,p3,p4,p5].filter(Boolean).length,vc=passes===5?'g':passes>=3?'a':'r';
-  document.getElementById('verdict-bar').className='verdict '+vc;document.getElementById('v-title').textContent=passes===5?'✓ Deal Stacks':passes>=3?'⚡ Borderline':'✕ Doesn\'t Stack';document.getElementById('v-sub').textContent=passes+' / 5 criteria met';
-  setChip('ask',fmt(ask),p1,'< £'+_sc.maxPurchase.toLocaleString());setChip('cap',fmt(br.cap),p2,'< £'+_sc.maxCapital.toLocaleString());setChip('left',fmt(br.left),p3,'< £'+_sc.maxLeftIn.toLocaleString());setChip('cf',fmt(br.cf)+'/mo',p4,'£'+_sc.minCashflow+'+');setChip('roce',br.left<=0?'Full recycle':pct(roce),p5,'> '+_sc.minRoce+'%');
+  var _sc=getSettingsCriteria();var p4=br.cf>=_sc.minCashflow,roce=br.left<=0?999:(br.cf*12)/br.left,p5=br.left<=0||roce>=(_sc.minRoce/100);
+  var passes=[p4,p5].filter(Boolean).length,vc=passes===2?'g':passes>=1?'a':'r';
+  document.getElementById('verdict-bar').className='verdict '+vc;document.getElementById('v-title').textContent=passes===2?'✓ Deal Stacks':passes>=1?'⚡ Borderline':'✕ Doesn\'t Stack';document.getElementById('v-sub').textContent=passes+' / 2 criteria met';
+  setChip('cf',fmt(br.cf)+'/mo',p4,'£'+_sc.minCashflow+'+');setChip('roce',br.left<=0?'Full recycle':pct(roce),p5,'> '+_sc.minRoce+'%');
   setRoi('b',br.cap,br.left,br.cf);setRoi('c2',cr.cap,cr.left,cr.cf);
-  var maxOffer=0;for(var pp=5000;pp<=300000;pp+=500){var t=bBridge(pp,gdv,rent,mgmt,rb.total,af,furn,a),tR=t.left<=0?999:(t.cf*12)/t.left;if(t.left<=_sc.maxLeftIn&&t.cap<=_sc.maxCapital&&t.cf>=_sc.minCashflow&&(t.left<=0||tR>=(_sc.minRoce/100))&&pp<=_sc.maxPurchase)maxOffer=pp;}
-  document.getElementById('max-offer').textContent=maxOffer>0?fmt(maxOffer):'N/A';document.getElementById('max-sub').textContent=maxOffer>0?'All 5 BRR criteria satisfied at this price':'No viable price — adjust inputs';
-  sv('ask',fmt(ask),'');sv('sd',fmt(br.stamp),'');sv('ref',fmt(rb.total),'');sv('furn',furn>0?fmt(furn):'£0',furn>0?'purple':'');sv('auct',af>0?fmt(af):'—','amb');sv('src',fmt(a.sf),'');sv('hold',fmt(a.hc),'');sv('loan',fmt(br.loan),'');sv('bint','-'+fmt(br.bint),'neg');sv('arr','-'+fmt(br.arr),'neg');sv('dep',fmt(br.dep),'');sv('cap',fmt(br.cap),p2?'hi pos':'hi neg');sv('cap-cash',fmt(cr.cap),cr.cap<=70000?'hi pos':'hi neg');sv('gdv',fmt(gdv),'');sv('refi',fmt(br.refi),'amb');sv('left',fmt(br.left),p3?'hi pos':'hi neg');sv('left-cash',fmt(cr.left),cr.left<=20000?'hi pos':'hi neg');sv('rent',fmt(rent),'');sv('mort','-'+fmt(br.mort),'neg');sv('mgmt','-'+fmt(br.mf),'neg');sv('cf',fmt(br.cf)+'/mo',p4?'hi pos':'hi neg');
+  var maxOffer=0;for(var pp=5000;pp<=300000;pp+=500){var t=bBridge(pp,gdv,rent,mgmt,rb.total,af,furn,a),tR=t.left<=0?999:(t.cf*12)/t.left;if(t.cf>=_sc.minCashflow&&(t.left<=0||tR>=(_sc.minRoce/100)))maxOffer=pp;}
+  document.getElementById('max-offer').textContent=maxOffer>0?fmt(maxOffer):'N/A';document.getElementById('max-sub').textContent=maxOffer>0?'Both criteria satisfied at this price':'No viable price — adjust inputs';
+  sv('ask',fmt(ask),'');sv('sd',fmt(br.stamp),'');sv('ref',fmt(rb.total),'');sv('furn',furn>0?fmt(furn):'£0',furn>0?'purple':'');sv('auct',af>0?fmt(af):'—','amb');sv('src',fmt(a.sf),'');sv('hold',fmt(a.hc),'');sv('loan',fmt(br.loan),'');sv('bint','-'+fmt(br.bint),'neg');sv('arr','-'+fmt(br.arr),'neg');sv('dep',fmt(br.dep),'');sv('cap',fmt(br.cap),'');sv('cap-cash',fmt(cr.cap),'');sv('gdv',fmt(gdv),'');sv('refi',fmt(br.refi),'amb');sv('left',fmt(br.left),'');sv('left-cash',fmt(cr.left),'');sv('rent',fmt(rent),'');sv('mort','-'+fmt(br.mort),'neg');sv('mgmt','-'+fmt(br.mf),'neg');sv('cf',fmt(br.cf)+'/mo',p4?'hi pos':'hi neg');
   updateCompSummary();
 }
 function setupComparables(){
@@ -4095,7 +4073,7 @@ function updateSidebar(){
 }
 
 // ═══════════════ SETTINGS ═══════════════
-var DEFAULT_CRITERIA = {maxPurchase:150000,maxCapital:70000,maxLeftIn:20000,minCashflow:250,minRoce:20};
+var DEFAULT_CRITERIA = {minCashflow:250,minRoce:15};
 var DEFAULT_ANALYSER = {srcFee:4000,mortRate:5.00,bridgeRate:0.90,arrFee:2.00,bridgeMonths:6,holding:1000};
 var DEFAULT_DEAL_TYPES = [{id:'brr-btl',label:'BRR to BTL'},{id:'brr-sa',label:'BRR to SA'},{id:'flip',label:'Flip'},{id:'btl',label:'BTL Only'}];
 
@@ -4119,11 +4097,8 @@ function getSettingsCriteria(){return getSettings().criteria||DEFAULT_CRITERIA;}
 
 function loadSettingsPage(){
   var s=getSettings();var c=s.criteria||DEFAULT_CRITERIA;var a=s.analyser||DEFAULT_ANALYSER;
-  document.getElementById('st-max-purchase').value=c.maxPurchase||150000;
-  document.getElementById('st-max-capital').value=c.maxCapital||70000;
-  document.getElementById('st-max-leftin').value=c.maxLeftIn||20000;
   document.getElementById('st-min-cashflow').value=c.minCashflow||250;
-  document.getElementById('st-min-roce').value=c.minRoce||20;
+  document.getElementById('st-min-roce').value=c.minRoce||15;
   document.getElementById('st-src-fee').value=a.srcFee||4000;
   document.getElementById('st-mort-rate').value=a.mortRate||5.00;
   document.getElementById('st-bridge-rate').value=a.bridgeRate||0.90;
@@ -4142,7 +4117,7 @@ function loadSettingsPage(){
 
 function saveCriteria(){
   var s=getSettings();
-  s.criteria={maxPurchase:parseFloat(document.getElementById('st-max-purchase').value)||150000,maxCapital:parseFloat(document.getElementById('st-max-capital').value)||70000,maxLeftIn:parseFloat(document.getElementById('st-max-leftin').value)||20000,minCashflow:parseFloat(document.getElementById('st-min-cashflow').value)||250,minRoce:parseFloat(document.getElementById('st-min-roce').value)||20};
+  s.criteria={minCashflow:parseFloat(document.getElementById('st-min-cashflow').value)||250,minRoce:parseFloat(document.getElementById('st-min-roce').value)||15};
   store('sw-settings',s);toast('Criteria saved');calc();
 }
 
@@ -4350,8 +4325,8 @@ function getTowns(){
     return TOWNS.slice();
   }
   // Check first 3 towns have tier — if not, reset
-  // Version 2: M4 corridor only — force reset if more than 7 towns saved
-  if(saved.length > 7) {
+  // Version 3: Newport & Morriston only — force reset if more than 2 towns saved
+  if(saved.length > 2) {
     store('sw-towns',TOWNS.slice());
     return TOWNS.slice();
   }
