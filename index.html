@@ -337,6 +337,7 @@ a.link:hover{text-decoration:underline;}
   .dt{font-size:11px;}
   .dt th,.dt td{padding:8px 6px;}
   .modal{width:96%!important;max-width:96%!important;padding:16px!important;}
+  #bulk-bar{left:0!important;}
   .tabs{overflow-x:auto;flex-wrap:nowrap;}
   .tab-btn{white-space:nowrap;padding:8px 12px;}
   .ex-card{margin-bottom:6px;}
@@ -446,7 +447,10 @@ a.link:hover{text-decoration:underline;}
 <div id="page-pipeline" class="page active">
   <div class="pg-hdr">
     <div><div class="pg-title">Deal Pipeline</div><div class="pg-sub">Sourcewell · South Wales</div></div>
+    <div style="display:flex;gap:8px;">
+    <button class="btn btn-ghost" id="btn-bulk-select" onclick="toggleBulkMode()" style="font-size:9px;letter-spacing:1px;">☐ Select</button>
     <button class="btn btn-amber" id="btn-add-deal">+ Add Deal</button>
+    </div>
   </div>
   <div id="pl-strip" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;"></div>
   <div class="stat-grid" id="pl-stats"></div>
@@ -481,6 +485,13 @@ a.link:hover{text-decoration:underline;}
   </table>
   </div>
   <div id="pl-empty" class="empty" style="display:none;"><div class="empty-title">No deals yet</div><div class="empty-sub">Add your first deal to get started</div></div>
+  <div id="bulk-bar" style="display:none;position:fixed;bottom:0;left:220px;right:0;background:#1c0606;border-top:2px solid var(--red);padding:12px 20px;display:none;align-items:center;justify-content:space-between;z-index:999;">
+    <span style="font-family:var(--fm);font-size:12px;font-weight:700;color:#fca5a5;"><span id="bulk-count">0</span> deal(s) selected</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost btn-sm" onclick="toggleBulkMode()" style="font-size:9px;">Cancel</button>
+      <button class="btn btn-sm" onclick="deleteBulkDeals()" style="font-size:9px;background:#991b1b;color:#fff;border:none;">🗑 Delete Selected</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══ ANALYSER PAGE ═══ -->
@@ -1708,6 +1719,50 @@ function saveDeal(){
   toast('Deal saved');
 }
 
+var _bulkMode=false,_bulkSelected={};
+
+function toggleBulkMode(){
+  _bulkMode=!_bulkMode;
+  _bulkSelected={};
+  var btn=document.getElementById('btn-bulk-select');
+  var bar=document.getElementById('bulk-bar');
+  if(_bulkMode){
+    btn.textContent='✕ Cancel';btn.style.cssText='font-size:9px;letter-spacing:1px;background:#991b1b;color:#fff;border-color:#991b1b;';
+    bar.style.display='flex';
+  } else {
+    btn.textContent='☐ Select';btn.style.cssText='font-size:9px;letter-spacing:1px;';
+    bar.style.display='none';
+  }
+  updateBulkCount();
+  renderPipeline();
+}
+
+function updateBulkCount(){
+  var n=Object.keys(_bulkSelected).filter(function(k){return _bulkSelected[k];}).length;
+  var el=document.getElementById('bulk-count');if(el)el.textContent=n;
+}
+
+function toggleBulkSelect(id){
+  _bulkSelected[id]=!_bulkSelected[id];
+  updateBulkCount();
+  var cb=document.getElementById('bulk-cb-'+id);if(cb)cb.checked=_bulkSelected[id];
+  var row=cb?cb.closest('tr'):null;if(row)row.style.background=_bulkSelected[id]?'#2d1215':'';
+}
+
+function deleteBulkDeals(){
+  var ids=Object.keys(_bulkSelected).filter(function(k){return _bulkSelected[k];});
+  if(!ids.length){toast('No deals selected',true);return;}
+  if(!confirm('Delete '+ids.length+' deal'+(ids.length>1?'s':'')+'? This cannot be undone.'))return;
+  var deals=retrieve('sw-pipeline',[]).filter(function(d){return ids.indexOf(d.id)===-1;});
+  store('sw-pipeline',deals);
+  _bulkMode=false;_bulkSelected={};
+  var btn=document.getElementById('btn-bulk-select');
+  btn.textContent='☐ Select';btn.style.cssText='font-size:9px;letter-spacing:1px;';
+  document.getElementById('bulk-bar').style.display='none';
+  renderPipeline();updateSidebar();
+  toast(ids.length+' deal'+(ids.length>1?'s':'')+' deleted');
+}
+
 function deleteDeal(id){
   if(!confirm('Delete this deal?'))return;
   store('sw-pipeline',retrieve('sw-pipeline',[]).filter(function(x){return x.id!==id;}));
@@ -1786,6 +1841,17 @@ function renderPipeline(){
     var tdArea=document.createElement('td');
     if(d.zone){var areaEl=document.createElement('span');areaEl.style.cssText='font-family:var(--fm);font-size:10px;color:var(--txt3);';areaEl.textContent=d.zone;tdArea.appendChild(areaEl);}
     else{tdArea.innerHTML='<span class="dt-muted">—</span>';}
+    if(_bulkMode){
+      var tdCb=document.createElement('td');tdCb.style.cssText='width:30px;text-align:center;';
+      var cb=document.createElement('input');cb.type='checkbox';cb.id='bulk-cb-'+d.id;cb.checked=!!_bulkSelected[d.id];
+      cb.style.cssText='width:16px;height:16px;cursor:pointer;accent-color:#dc2626;';
+      cb.addEventListener('click',function(e){e.stopPropagation();});
+      cb.addEventListener('change',(function(did){return function(){toggleBulkSelect(did);};})(d.id));
+      tdCb.addEventListener('click',(function(did){return function(e){e.stopPropagation();toggleBulkSelect(did);};})(d.id));
+      tdCb.appendChild(cb);
+      tr.appendChild(tdCb);
+      if(_bulkSelected[d.id])tr.style.background='#2d1215';
+    }
     tr.appendChild(tdAddr);tr.appendChild(tdType);tr.appendChild(tdStage);tr.appendChild(tdAsk);tr.appendChild(tdMax);tr.appendChild(tdAg);tr.appendChild(tdInv);tr.appendChild(tdArea);tr.appendChild(tdDate);tr.appendChild(tdAct);
     body.appendChild(tr);
     // Log row
@@ -1793,7 +1859,7 @@ function renderPipeline(){
     logTr.id='dlog-'+d.id;
     logTr.className='deal-log-row';
     var logTd=document.createElement('td');
-    logTd.colSpan=10;
+    logTd.colSpan=_bulkMode?11:10;
     logTd.style.cssText='padding:0;background:#1c1c1e;border-bottom:2px solid var(--brd2);';
     var logWrap=document.createElement('div');
     logWrap.style.cssText='display:grid;grid-template-columns:1fr 300px;';
