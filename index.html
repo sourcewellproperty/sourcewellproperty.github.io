@@ -3254,15 +3254,30 @@ function loadFromSupabase(onDone) {
   }).then(function(rows) {
     if(rows && rows.length > 0 && rows[0].data) {
       var cloudData = rows[0].data;
-      // Cloud data wins — merge into memory and localStorage
-      ALL_KEYS.forEach(function(k) {
-        if(k in cloudData) {
-          _mem[k] = cloudData[k];
-          try { localStorage.setItem(k, JSON.stringify(cloudData[k])); } catch(e) {}
+      // Check if cloud actually has meaningful data
+      var cloudHasData = ALL_KEYS.some(function(k){ return k in cloudData; });
+      if(cloudHasData) {
+        // Cloud data wins — merge into memory and localStorage
+        ALL_KEYS.forEach(function(k) {
+          if(k in cloudData) {
+            _mem[k] = cloudData[k];
+            try { localStorage.setItem(k, JSON.stringify(cloudData[k])); } catch(e) {}
+          }
+        });
+        _sbReady = true;
+        setSbStatus('connected', 'Synced to cloud');
+      } else {
+        // Cloud row exists but is empty — push local data up
+        _sbReady = true;
+        var localHasData = ALL_KEYS.some(function(k){ return _mem[k] && (Array.isArray(_mem[k]) ? _mem[k].length > 0 : typeof _mem[k] === 'object' && Object.keys(_mem[k]).length > 0); });
+        if(localHasData) {
+          setSbStatus('connected', 'Pushing local data to cloud...');
+          _sbPendingSave = true;
+          scheduleSbSave();
+        } else {
+          setSbStatus('connected', 'Synced to cloud');
         }
-      });
-      _sbReady = true;
-      setSbStatus('connected', 'Synced to cloud');
+      }
     } else {
       // No cloud data — push local data up to initialise the row
       _sbReady = true;
