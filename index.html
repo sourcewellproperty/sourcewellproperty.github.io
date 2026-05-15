@@ -586,6 +586,7 @@ a.link:hover{text-decoration:underline;}
       <button id="analyser-load-comps-btn" class="btn btn-ghost btn-sm" style="font-size:9px;white-space:nowrap;display:none;">Load Comps</button>
     </div>
     <div class="chips">
+      <div class="chip"><div class="chip-lbl">Capital Needed (bridging)</div><div class="chip-val" id="c-cap">—</div><div class="chip-st" id="c-cap-s" style="opacity:0.5;">for reference</div></div>
       <div class="chip"><div class="chip-lbl">Monthly Cashflow</div><div class="chip-val fail" id="c-cf">—</div><div class="chip-st fail" id="c-cf-s">target: £250+</div></div>
       <div class="chip"><div class="chip-lbl">ROCE (bridging)</div><div class="chip-val fail" id="c-roce">—</div><div class="chip-st fail" id="c-roce-s">target: &gt; 15%</div></div>
     </div>
@@ -1633,7 +1634,7 @@ function openDealModal(id){
     if(d){
       document.getElementById('d-addr').value=d.addr||'';
       document.getElementById('d-zone').value=d.zone||'Newport';
-      document.getElementById('d-type').value=d.type||'brr-btl';
+      document.getElementById('d-type').value=d.type||'brr-sa';
       document.getElementById('d-stage').value=d.stage||'shortlisted';
       document.getElementById('d-ask').value=d.ask||'';
       document.getElementById('d-max').value=d.max||'';
@@ -1661,7 +1662,7 @@ function openDealModal(id){
     document.getElementById('d-url').value='';
     document.getElementById('d-notes').value='';
     document.getElementById('d-stage').value='shortlisted';
-    document.getElementById('d-type').value='brr-btl';
+    document.getElementById('d-type').value='brr-sa';
     document.getElementById('d-agent').value='';
     document.getElementById('d-investor').value='';
   }
@@ -2862,7 +2863,7 @@ function calc(){
   var _sc=getSettingsCriteria();var p4=br.cf>=_sc.minCashflow,roce=br.left<=0?999:(br.cf*12)/br.left,p5=br.left<=0||roce>=(_sc.minRoce/100);
   var passes=[p4,p5].filter(Boolean).length,vc=passes===2?'g':passes>=1?'a':'r';
   document.getElementById('verdict-bar').className='verdict '+vc;document.getElementById('v-title').textContent=passes===2?'✓ Deal Stacks':passes>=1?'⚡ Borderline':'✕ Doesn\'t Stack';document.getElementById('v-sub').textContent=passes+' / 2 criteria met';
-  setChip('cf',fmt(br.cf)+'/mo',p4,'£'+_sc.minCashflow+'+');setChip('roce',br.left<=0?'Full recycle':pct(roce),p5,'> '+_sc.minRoce+'%');
+  setChip('cap',fmt(br.cap),'','for reference');setChip('cf',fmt(br.cf)+'/mo',p4,'£'+_sc.minCashflow+'+');setChip('roce',br.left<=0?'Full recycle':pct(roce),p5,'> '+_sc.minRoce+'%');
   setRoi('b',br.cap,br.left,br.cf);setRoi('c2',cr.cap,cr.left,cr.cf);
   var maxOffer=0;for(var pp=5000;pp<=300000;pp+=500){var t=bBridge(pp,gdv,rent,mgmt,rb.total,af,furn,a),tR=t.left<=0?999:(t.cf*12)/t.left;if(t.cf>=_sc.minCashflow&&(t.left<=0||tR>=(_sc.minRoce/100)))maxOffer=pp;}
   document.getElementById('max-offer').textContent=maxOffer>0?fmt(maxOffer):'N/A';document.getElementById('max-sub').textContent=maxOffer>0?'Both criteria satisfied at this price':'No viable price — adjust inputs';
