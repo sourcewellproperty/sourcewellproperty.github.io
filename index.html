@@ -3252,38 +3252,35 @@ function loadFromSupabase(onDone) {
     if(!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   }).then(function(rows) {
-    if(rows && rows.length > 0 && rows[0].data) {
-      var cloudData = rows[0].data;
-      // Check if cloud actually has meaningful data
-      var cloudHasData = ALL_KEYS.some(function(k){ return k in cloudData; });
-      if(cloudHasData) {
-        // Cloud data wins — merge into memory and localStorage
-        ALL_KEYS.forEach(function(k) {
-          if(k in cloudData) {
-            _mem[k] = cloudData[k];
-            try { localStorage.setItem(k, JSON.stringify(cloudData[k])); } catch(e) {}
-          }
-        });
-        _sbReady = true;
-        setSbStatus('connected', 'Synced to cloud');
-      } else {
-        // Cloud row exists but is empty — push local data up
-        _sbReady = true;
-        var localHasData = ALL_KEYS.some(function(k){ return _mem[k] && (Array.isArray(_mem[k]) ? _mem[k].length > 0 : typeof _mem[k] === 'object' && Object.keys(_mem[k]).length > 0); });
-        if(localHasData) {
-          setSbStatus('connected', 'Pushing local data to cloud...');
-          _sbPendingSave = true;
-          scheduleSbSave();
-        } else {
-          setSbStatus('connected', 'Synced to cloud');
+    // Helper: does a dataset have real content?
+    function hasContent(d){
+      var MAIN=['sw-pipeline','sw-agents','sw-tasks','sw-daily','sw-content-bank','sw-crm'];
+      return MAIN.some(function(k){return d[k]&&Array.isArray(d[k])&&d[k].length>0;});
+    }
+    var cloudData=(rows&&rows.length>0&&rows[0].data)?rows[0].data:{};
+    var cloudOK=hasContent(cloudData);
+    var localOK=hasContent(_mem);
+
+    if(cloudOK){
+      // Cloud has real data — pull it down
+      ALL_KEYS.forEach(function(k){
+        if(k in cloudData){
+          _mem[k]=cloudData[k];
+          try{localStorage.setItem(k,JSON.stringify(cloudData[k]));}catch(e){}
         }
-      }
-    } else {
-      // No cloud data — push local data up to initialise the row
-      _sbReady = true;
-      setSbStatus('connected', 'Connected — first sync');
-      _sbPendingSave = true;
+      });
+      _sbReady=true;
+      setSbStatus('connected','Synced to cloud');
+    } else if(localOK){
+      // Cloud is empty but local has data — push local up
+      _sbReady=true;
+      setSbStatus('connected','Pushing local data to cloud...');
+      _sbPendingSave=true;
       scheduleSbSave();
+    } else {
+      // Both empty — just connect
+      _sbReady=true;
+      setSbStatus('connected','Connected — no data yet');
     }
     if(onDone) onDone(true);
   }).catch(function(err) {
@@ -3417,7 +3414,22 @@ function checkBannerDismissed() {
 
 // ═══════════════ EXPORT / IMPORT ═══════════════
 function exportData(){var backup={exportedAt:new Date().toISOString(),version:3,pipeline:retrieve('sw-pipeline',[]),crm:retrieve('sw-crm',[]),agents:retrieve('sw-agents',[]),tracker:retrieve('sw-tracker',{}),daily:retrieve('sw-daily',[]),targets:retrieve('sw-targets',{}),tasks:retrieve('sw-tasks',[]),calls:retrieve('sw-calls',[]),contacts:retrieve('sw-contacts',[])};var blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});var url=URL.createObjectURL(blob);var a=document.createElement('a');var d=new Date();a.href=url;a.download='sourcewell-backup-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);recordBackup();toast('Backup exported — save it to Google Drive or iCloud');}
-function importData(){var raw=document.getElementById('import-json').value.trim();var msg=document.getElementById('import-msg');if(!raw){msg.style.color='var(--red)';msg.textContent='Paste a backup JSON first.';return;}var backup;try{backup=JSON.parse(raw);}catch(e){msg.style.color='var(--red)';msg.textContent='Invalid JSON — check the file.';return;}if(!backup.pipeline&&!backup.crm&&!backup.agents&&!backup.tracker){msg.style.color='var(--red)';msg.textContent='Doesn\'t look like a Sourcewell backup.';return;}if(!confirm('Replace all current data with this backup?'))return;if(backup.pipeline)store('sw-pipeline',backup.pipeline);if(backup.crm)store('sw-crm',backup.crm);if(backup.agents)store('sw-agents',backup.agents);if(backup.tracker)store('sw-tracker',backup.tracker);if(backup.daily)store('sw-daily',backup.daily);if(backup.targets)store('sw-targets',backup.targets);if(backup.tasks)store('sw-tasks',backup.tasks);if(backup.calls)store('sw-calls',backup.calls);if(backup.contacts)store('sw-contacts',backup.contacts);msg.style.color='var(--green)';msg.textContent='Restored successfully.';setTimeout(function(){closeModal('import-modal');document.getElementById('import-json').value='';msg.textContent='';init();},1200);}
+function importData(){var raw=document.getElementById('import-json').value.trim();var msg=document.getElementById('import-msg');if(!raw){msg.style.color='var(--red)';msg.textContent='Paste a backup JSON first.';return;}var backup;try{backup=JSON.parse(raw);}catch(e){msg.style.color='var(--red)';msg.textContent='Invalid JSON — check the file.';return;}
+// Accept both sw-prefixed and non-prefixed keys
+function g(k1,k2){return backup[k1]||backup[k2]||null;}
+var pipe=g('pipeline','sw-pipeline'),crm=g('crm','sw-crm'),ags=g('agents','sw-agents'),trk=g('tracker','sw-tracker');
+if(!pipe&&!crm&&!ags&&!trk){msg.style.color='var(--red)';msg.textContent='Doesn\'t look like a Sourcewell backup.';return;}
+if(!confirm('Replace all current data with this backup?'))return;
+if(pipe)store('sw-pipeline',pipe);if(crm)store('sw-crm',crm);if(ags)store('sw-agents',ags);if(trk)store('sw-tracker',trk);
+var dy=g('daily','sw-daily');if(dy)store('sw-daily',dy);
+var tg=g('targets','sw-targets');if(tg)store('sw-targets',tg);
+var tk=g('tasks','sw-tasks');if(tk)store('sw-tasks',tk);
+var cl=g('calls','sw-calls');if(cl)store('sw-calls',cl);
+var co=g('contacts','sw-contacts');if(co)store('sw-contacts',co);
+var cb=g('content_bank','sw-content-bank')||g('contentBank',null);if(cb)store('sw-content-bank',cb);
+// Force full Supabase sync
+_sbPendingSave=true;scheduleSbSave();
+msg.style.color='var(--green)';msg.textContent='Restored successfully — syncing to cloud...';setTimeout(function(){closeModal('import-modal');document.getElementById('import-json').value='';msg.textContent='';init();},1500);}
 
 
 
