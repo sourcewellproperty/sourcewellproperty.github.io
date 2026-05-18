@@ -3782,17 +3782,48 @@ function renderCallLog() {
     var tdDate = document.createElement('td');
     tdDate.innerHTML = '<div style="font-weight:500;font-size:12px;">'+fmtD(c.date)+'</div>'+(c.time?'<div class="dt-muted">'+c.time+'</div>':'');
 
-    // Contact
+    // Agent/Contact
     var tdContact = document.createElement('td');
     var contactHtml = '<span class="dt-muted">—</span>';
-    if(c.contactRef) {
-      var isAg = c.contactRef.startsWith('ag_');
-      var cid = c.contactRef.replace(/^(inv_|ag_)/,'');
-      var contact = isAg ? ags.find(function(x){return x.id===cid;}) : invs.find(function(x){return x.id===cid;});
-      if(contact) {
-        var nameEl = '<div style="font-size:12px;font-weight:500;color:'+(isAg?'var(--green)':'var(--blue)')+';">'+contact.name+'</div>';
-        var subEl = isAg ? '<div class="dt-muted">'+(contact.agency||'')+(contact.branch?', '+contact.branch:'')+'</div>' : '<div class="dt-muted">'+(contact.role||'')+'</div>';
+    
+    // Show company first (from companyRef)
+    if(c.companyRef) {
+      var isAg = c.companyRef.startsWith('ag_');
+      var isInv = c.companyRef.startsWith('inv_');
+      var compId = c.companyRef.replace(/^(inv_|ag_)/,'');
+      var company = isAg ? ags.find(function(x){return x.id===compId;}) : isInv ? invs.find(function(x){return x.id===compId;}) : null;
+      
+      if(company) {
+        var nameEl = '<div style="font-size:12px;font-weight:500;color:'+(isAg?'var(--green)':'var(--blue)')+';">'+company.name+'</div>';
+        var subEl = isAg ? '<div class="dt-muted">'+(company.agency||'')+(company.branch?', '+company.branch:'')+'</div>' : '<div class="dt-muted">'+(company.role||'')+'</div>';
+        
+        // Add specific contact if selected
+        if(c.contactRef && c.contactRef.startsWith('c_')) {
+          var cIdx = parseInt(c.contactRef.replace('c_',''));
+          if(company.contacts && company.contacts[cIdx]) {
+            var cont = company.contacts[cIdx];
+            subEl = '<div class="dt-muted">'+cont.name+(cont.role?' ('+cont.role+')':'')+'</div>';
+          }
+        } else if(c.contactRef && c.contactRef.startsWith('ag_')) {
+          var standId = c.contactRef.replace('ag_','');
+          var stand = ags.find(function(x){return x.id===standId;});
+          if(stand) {
+            subEl = '<div class="dt-muted">'+stand.name+(stand.role?' ('+stand.role+')':'')+'</div>';
+          }
+        }
+        
         contactHtml = nameEl + subEl;
+      }
+    }
+    // Fallback: legacy calls with only contactRef (no companyRef)
+    else if(c.contactRef) {
+      var isAg2 = c.contactRef.startsWith('ag_');
+      var cid = c.contactRef.replace(/^(inv_|ag_)/,'');
+      var contact = isAg2 ? ags.find(function(x){return x.id===cid;}) : invs.find(function(x){return x.id===cid;});
+      if(contact) {
+        var nameEl2 = '<div style="font-size:12px;font-weight:500;color:'+(isAg2?'var(--green)':'var(--blue)')+';">'+contact.name+'</div>';
+        var subEl2 = isAg2 ? '<div class="dt-muted">'+(contact.agency||'')+(contact.branch?', '+contact.branch:'')+'</div>' : '<div class="dt-muted">'+(contact.role||'')+'</div>';
+        contactHtml = nameEl2 + subEl2;
       }
     }
     tdContact.innerHTML = contactHtml;
