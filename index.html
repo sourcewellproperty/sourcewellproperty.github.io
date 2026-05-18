@@ -1037,6 +1037,8 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Role / Job Title</label><input type="text" id="ct-role" placeholder="e.g. Senior Negotiator"></div>
       <div class="field"><label>Direct Phone</label><input type="text" id="ct-phone" placeholder="e.g. 07700 900000"></div>
       <div class="field"><label>Email</label><input type="email" id="ct-email" placeholder="e.g. sarah@peteralan.co.uk"></div>
+      <div class="field"><label>LinkedIn URL</label><input type="url" id="ct-linkedin" placeholder="e.g. linkedin.com/in/sarahjones"></div>
+      <div class="field"><label>How Met / Source</label><input type="text" id="ct-source" placeholder="e.g. Cold call, Referral, Event"></div>
       <div class="field"><label>Relationship</label>
         <select id="ct-status">
           <option value="cold">Cold — Not yet spoken</option>
@@ -3534,10 +3536,30 @@ function openCallModal(id, prefAgentId, prefDealId) {
   var dealSel = document.getElementById('cl-deal');
 
   contactSel.innerHTML = '<option value="">— General / Unknown —</option>';
-  ags.forEach(function(a) {
+  // Add agencies and their nested contacts
+  ags.filter(function(a){return a.role==='Agency'||a.role==='Branch';}).forEach(function(a) {
     var o = document.createElement('option');
     o.value = 'ag_' + a.id;
-    o.textContent = a.name + ' — ' + (a.agency||'') + (a.branch?', '+a.branch:'') + ' (Agent)';
+    o.textContent = a.name + ' — ' + (a.agency||'') + (a.branch?', '+a.branch:'') + ' (Agency)';
+    if(prefAgentId && 'ag_'+a.id === prefAgentId) o.selected = true;
+    contactSel.appendChild(o);
+    // Add individual contacts from this agency
+    if(a.contacts && a.contacts.length > 0) {
+      a.contacts.forEach(function(c, idx) {
+        var co = document.createElement('option');
+        co.value = 'agc_' + a.id + '_' + idx;
+        co.textContent = '  ↳ ' + c.name + (c.role ? ' (' + c.role + ')' : '');
+        co.style.paddingLeft = '20px';
+        if(prefAgentId && 'agc_'+a.id+'_'+idx === prefAgentId) co.selected = true;
+        contactSel.appendChild(co);
+      });
+    }
+  });
+  // Add standalone individual contacts (not agencies/branches)
+  ags.filter(function(a){return a.role!=='Agency'&&a.role!=='Branch'&&a.name!==a.agency;}).forEach(function(a) {
+    var o = document.createElement('option');
+    o.value = 'ag_' + a.id;
+    o.textContent = a.name + (a.role?' ('+a.role+')':'') + ' — ' + (a.agency||'Independent');
     if(prefAgentId && 'ag_'+a.id === prefAgentId) o.selected = true;
     contactSel.appendChild(o);
   });
@@ -4684,7 +4706,7 @@ function openContactModal(id, prefCompanyId) {
       document.getElementById('ct-notes').value = c.notes||'';
     }
   } else {
-    ['ct-fname','ct-lname','ct-role','ct-phone','ct-email','ct-notes'].forEach(function(fid){document.getElementById(fid).value='';});
+    ['ct-fname','ct-lname','ct-role','ct-phone','ct-email','ct-linkedin','ct-source','ct-notes'].forEach(function(fid){document.getElementById(fid).value='';});
     document.getElementById('ct-status').value = 'cold';
     document.getElementById('ct-contact').value = today();
     if(prefCompanyId) document.getElementById('ct-company').value = prefCompanyId;
@@ -4710,6 +4732,8 @@ function saveContact() {
     role: role,
     phone: phone,
     email: email,
+    linkedin: document.getElementById('ct-linkedin').value.trim(),
+    source: document.getElementById('ct-source').value.trim(),
     notes: notes
   };
 
