@@ -1831,7 +1831,15 @@ function renderPipeline(){
     if(d.url){var uBtn=document.createElement('a');uBtn.href=d.url;uBtn.target='_blank';uBtn.style.cssText='font-family:var(--fm);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--blue-dim);color:var(--blue);text-decoration:none;display:inline-block;margin-top:3px;';uBtn.textContent='View listing →';uBtn.addEventListener('click',function(e){e.stopPropagation();});tdAddr.appendChild(uBtn);}
     tdAddr.addEventListener('click',function(){toggleDealLog(d.id);});
     // Type
-    var tdType=document.createElement('td');tdType.appendChild(makePill(TYPE_LABELS[d.type]||d.type,TYPE_STYLES[d.type]||''));
+    var tdType=document.createElement('td');
+    tdType.appendChild(makePill(TYPE_LABELS[d.type]||d.type,TYPE_STYLES[d.type]||''));
+    if(d.saleType){
+      var stBadge=document.createElement('div');
+      stBadge.style.cssText='font-family:var(--fm);font-size:9px;color:var(--txt3);margin-top:4px;';
+      var stLabel = d.saleType==='traditional'?'Traditional':d.saleType==='traditional_auction'?'Trad. Auction':'MMoA';
+      stBadge.textContent=stLabel;
+      tdType.appendChild(stBadge);
+    }
     // Stage
     var tdStage=document.createElement('td');tdStage.appendChild(makePill(STAGE_LABELS[d.stage]||d.stage,STAGE_STYLES[d.stage]||''));
     // Asking
