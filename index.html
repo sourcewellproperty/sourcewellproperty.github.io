@@ -955,6 +955,10 @@ a.link:hover{text-decoration:underline;}
         <label>Rightmove / Zoopla URL</label>
         <input type="url" id="d-url" placeholder="https://www.rightmove.co.uk/properties/...">
       </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label>Photo URL <span style="font-size:10px;opacity:0.6;">(right-click Rightmove photo → Copy image address)</span></label>
+        <input type="url" id="d-photo" placeholder="Paste image URL here">
+      </div>
       <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea id="d-notes" placeholder="Key observations, next steps, investor match..."></textarea></div>
     </div>
     <div style="padding:10px 0 0;border-top:1px solid var(--brd);margin-top:12px;display:flex;justify-content:space-between;align-items:center;position:sticky;bottom:-24px;background:var(--surf);z-index:1;">
@@ -1115,7 +1119,8 @@ a.link:hover{text-decoration:underline;}
     <div class="g2" style="margin-bottom:12px;overflow-y:auto;flex:1;">
       <div class="field"><label>Date</label><input type="date" id="cl-date"></div>
       <div class="field"><label>Time (optional)</label><input type="time" id="cl-time" placeholder="e.g. 09:30"></div>
-      <div class="field"><label>Agent / Contact</label><select id="cl-contact"><option value="">— General / Unknown —</option></select></div>
+      <div class="field"><label>Agent / Company</label><select id="cl-company"><option value="">— General / Unknown —</option></select></div>
+      <div class="field"><label>Contact Person</label><select id="cl-contact" disabled><option value="">— Select company first —</option></select></div>
       <div class="field"><label>Linked Deal (optional)</label><select id="cl-deal"><option value="">— None —</option></select></div>
       <div class="field"><label>Outcome</label>
         <select id="cl-outcome">
@@ -1654,6 +1659,7 @@ function openDealModal(id){
       document.getElementById('d-date').value=d.date||today();
       document.getElementById('d-source').value=d.source||'Rightmove';
       document.getElementById('d-url').value=d.url||'';
+      document.getElementById('d-photo').value=d.photo||'';
       document.getElementById('d-notes').value=d.notes||'';
     }
   } else {
@@ -1662,6 +1668,7 @@ function openDealModal(id){
     document.getElementById('d-max').value='';
     document.getElementById('d-date').value=today();
     document.getElementById('d-url').value='';
+    document.getElementById('d-photo').value='';
     document.getElementById('d-notes').value='';
     document.getElementById('d-stage').value='shortlisted';
     document.getElementById('d-type').value='brr-sa';
@@ -1710,6 +1717,7 @@ function saveDeal(){
     date:document.getElementById('d-date').value,
     source:document.getElementById('d-source').value,
     url:document.getElementById('d-url').value.trim(),
+    photo:document.getElementById('d-photo').value.trim(),
     notes:document.getElementById('d-notes').value.trim(),
     activities:(existing&&existing.activities)||[]
   };
@@ -1795,6 +1803,19 @@ function renderPipeline(){
     var tr=document.createElement('tr');
     tr.className='dr';
     tr.style.cursor='pointer';
+    // Photo cell
+    var tdPhoto=document.createElement('td');
+    tdPhoto.style.cssText='width:60px;padding:4px;';
+    if(d.photo){
+      var img=document.createElement('img');
+      img.src=d.photo;
+      img.style.cssText='width:52px;height:52px;object-fit:cover;border-radius:4px;display:block;';
+      img.onerror=function(){this.style.display='none';};
+      tdPhoto.appendChild(img);
+    } else {
+      tdPhoto.innerHTML='<div style="width:52px;height:52px;background:var(--surf2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:20px;opacity:0.3;">🏠</div>';
+    }
+    tdPhoto.addEventListener('click',function(){toggleDealLog(d.id);});
     // Address cell
     var tdAddr=document.createElement('td');
     var aDiv=document.createElement('div');aDiv.className='dt-addr';aDiv.textContent=d.addr;
@@ -1855,14 +1876,14 @@ function renderPipeline(){
       tr.appendChild(tdCb);
       if(_bulkSelected[d.id])tr.style.background='#2d1215';
     }
-    tr.appendChild(tdAddr);tr.appendChild(tdType);tr.appendChild(tdStage);tr.appendChild(tdAsk);tr.appendChild(tdMax);tr.appendChild(tdAg);tr.appendChild(tdInv);tr.appendChild(tdArea);tr.appendChild(tdDate);tr.appendChild(tdAct);
+    tr.appendChild(tdPhoto);tr.appendChild(tdAddr);tr.appendChild(tdType);tr.appendChild(tdStage);tr.appendChild(tdAsk);tr.appendChild(tdMax);tr.appendChild(tdAg);tr.appendChild(tdInv);tr.appendChild(tdArea);tr.appendChild(tdDate);tr.appendChild(tdAct);
     body.appendChild(tr);
     // Log row
     var logTr=document.createElement('tr');
     logTr.id='dlog-'+d.id;
     logTr.className='deal-log-row';
     var logTd=document.createElement('td');
-    logTd.colSpan=_bulkMode?11:10;
+    logTd.colSpan=_bulkMode?12:11;
     logTd.style.cssText='padding:0;background:#1c1c1e;border-bottom:2px solid var(--brd2);';
     var logWrap=document.createElement('div');
     logWrap.style.cssText='display:grid;grid-template-columns:1fr 300px;';
@@ -3532,43 +3553,57 @@ function openCallModal(id, prefAgentId, prefDealId) {
   var ags = retrieve('sw-agents', []);
   var invs = retrieve('sw-crm', []);
   var deals = retrieve('sw-pipeline', []);
+  var companySel = document.getElementById('cl-company');
   var contactSel = document.getElementById('cl-contact');
   var dealSel = document.getElementById('cl-deal');
 
-  contactSel.innerHTML = '<option value="">— General / Unknown —</option>';
-  // Add agencies and their nested contacts
+  // Populate company dropdown (agencies + investors)
+  companySel.innerHTML = '<option value="">— General / Unknown —</option>';
   ags.filter(function(a){return a.role==='Agency'||a.role==='Branch';}).forEach(function(a) {
     var o = document.createElement('option');
     o.value = 'ag_' + a.id;
-    o.textContent = a.name + ' — ' + (a.agency||'') + (a.branch?', '+a.branch:'') + ' (Agency)';
-    if(prefAgentId && 'ag_'+a.id === prefAgentId) o.selected = true;
-    contactSel.appendChild(o);
-    // Add individual contacts from this agency
-    if(a.contacts && a.contacts.length > 0) {
-      a.contacts.forEach(function(c, idx) {
-        var co = document.createElement('option');
-        co.value = 'agc_' + a.id + '_' + idx;
-        co.textContent = '  ↳ ' + c.name + (c.role ? ' (' + c.role + ')' : '');
-        co.style.paddingLeft = '20px';
-        if(prefAgentId && 'agc_'+a.id+'_'+idx === prefAgentId) co.selected = true;
-        contactSel.appendChild(co);
-      });
-    }
-  });
-  // Add standalone individual contacts (not agencies/branches)
-  ags.filter(function(a){return a.role!=='Agency'&&a.role!=='Branch'&&a.name!==a.agency;}).forEach(function(a) {
-    var o = document.createElement('option');
-    o.value = 'ag_' + a.id;
-    o.textContent = a.name + (a.role?' ('+a.role+')':'') + ' — ' + (a.agency||'Independent');
-    if(prefAgentId && 'ag_'+a.id === prefAgentId) o.selected = true;
-    contactSel.appendChild(o);
+    o.textContent = a.name + (a.branch?' ('+a.branch+')':'');
+    if(prefAgentId && prefAgentId.startsWith('ag_') && !prefAgentId.includes('_c_') && 'ag_'+a.id === prefAgentId) o.selected = true;
+    companySel.appendChild(o);
   });
   invs.forEach(function(inv) {
     var o = document.createElement('option');
     o.value = 'inv_' + inv.id;
     o.textContent = inv.name + ' (Investor)';
-    contactSel.appendChild(o);
+    if(prefAgentId && 'inv_'+inv.id === prefAgentId) o.selected = true;
+    companySel.appendChild(o);
   });
+
+  // Contact dropdown change handler
+  function updateContactDropdown() {
+    var compVal = companySel.value;
+    contactSel.innerHTML = '<option value="">— No specific contact —</option>';
+    contactSel.disabled = !compVal || compVal.startsWith('inv_');
+    
+    if(compVal && compVal.startsWith('ag_')) {
+      var agId = compVal.replace('ag_', '');
+      var agency = ags.find(function(a){return a.id === agId;});
+      if(agency && agency.contacts && agency.contacts.length) {
+        agency.contacts.forEach(function(c, idx) {
+          var o = document.createElement('option');
+          o.value = 'c_' + idx;
+          o.textContent = c.name + (c.role?' ('+c.role+')':'');
+          contactSel.appendChild(o);
+        });
+        contactSel.disabled = false;
+      }
+      // Also add standalone contacts for this company
+      ags.filter(function(a){return a.role!=='Agency'&&a.role!=='Branch'&&a.agency===agency.agency;}).forEach(function(a) {
+        var o = document.createElement('option');
+        o.value = 'ag_' + a.id;
+        o.textContent = a.name + (a.role?' ('+a.role+')':'');
+        contactSel.appendChild(o);
+      });
+    }
+  }
+  
+  companySel.onchange = updateContactDropdown;
+  updateContactDropdown();
 
   dealSel.innerHTML = '<option value="">— None —</option>';
   deals.filter(function(d){return d.stage!=='sold'&&d.stage!=='lost';}).forEach(function(d) {
@@ -3588,7 +3623,12 @@ function openCallModal(id, prefAgentId, prefDealId) {
     if(call) {
       document.getElementById('cl-date').value = call.date || '';
       document.getElementById('cl-time').value = call.time || '';
-      document.getElementById('cl-contact').value = call.contactRef || '';
+      // Parse company and contact from contactRef
+      var companyRef = call.companyRef || '';
+      var contactRef = call.contactRef || '';
+      document.getElementById('cl-company').value = companyRef;
+      updateContactDropdown();
+      document.getElementById('cl-contact').value = contactRef;
       document.getElementById('cl-deal').value = call.dealId || '';
       document.getElementById('cl-outcome').value = call.outcome || 'answered';
       document.getElementById('cl-duration').value = call.duration || '';
@@ -3607,7 +3647,10 @@ function openCallModal(id, prefAgentId, prefDealId) {
     document.getElementById('cl-followup').value = '';
     document.getElementById('cl-followup-date').value = '';
     document.getElementById('cl-notes').value = '';
-    if(prefAgentId) document.getElementById('cl-contact').value = prefAgentId;
+    if(prefAgentId) {
+      document.getElementById('cl-company').value = prefAgentId;
+      updateContactDropdown();
+    }
     if(prefDealId) document.getElementById('cl-deal').value = prefDealId;
   }
   openModal('call-modal');
@@ -3629,6 +3672,7 @@ function saveCall() {
     id: eid || uid('cl'),
     date: date,
     time: document.getElementById('cl-time').value,
+    companyRef: document.getElementById('cl-company').value,
     contactRef: document.getElementById('cl-contact').value,
     dealId: document.getElementById('cl-deal').value,
     outcome: document.getElementById('cl-outcome').value,
