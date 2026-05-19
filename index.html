@@ -1123,7 +1123,7 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Time (optional)</label><input type="time" id="cl-time" placeholder="e.g. 09:30"></div>
       <div class="field"><label>Agent / Company</label><select id="cl-company"><option value="">— General / Unknown —</option></select></div>
       <div class="field"><label>Contact Person</label><select id="cl-contact" disabled><option value="">— Select company first —</option></select></div>
-      <div class="field"><label>Linked Deal (optional)</label><select id="cl-deal"><option value="">— None —</option></select></div>
+      <div class="field"><label>Linked Deals (Ctrl/Cmd+Click for multiple)</label><select id="cl-deal" multiple style="height:80px;"><option value="">— None —</option></select></div>
       <div class="field"><label>Outcome</label>
         <select id="cl-outcome">
           <option value="answered">Answered</option>
@@ -3643,7 +3643,12 @@ function openCallModal(id, prefAgentId, prefDealId) {
       document.getElementById('cl-company').value = companyRef;
       updateContactDropdown();
       document.getElementById('cl-contact').value = contactRef;
-      document.getElementById('cl-deal').value = call.dealId || '';
+      // Select multiple deals if dealIds array exists
+      var dealSel = document.getElementById('cl-deal');
+      var dealIds = call.dealIds || (call.dealId ? [call.dealId] : []);
+      Array.from(dealSel.options).forEach(function(opt) {
+        opt.selected = dealIds.indexOf(opt.value) !== -1;
+      });
       document.getElementById('cl-outcome').value = call.outcome || 'answered';
       document.getElementById('cl-duration').value = call.duration || '';
       document.getElementById('cl-purpose').value = call.purpose || 'general';
@@ -3665,7 +3670,12 @@ function openCallModal(id, prefAgentId, prefDealId) {
       document.getElementById('cl-company').value = prefAgentId;
       updateContactDropdown();
     }
-    if(prefDealId) document.getElementById('cl-deal').value = prefDealId;
+    if(prefDealId) {
+      var dealSel = document.getElementById('cl-deal');
+      Array.from(dealSel.options).forEach(function(opt) {
+        if(opt.value === prefDealId) opt.selected = true;
+      });
+    }
   }
   openModal('call-modal');
 }
@@ -3682,13 +3692,17 @@ function saveCall() {
   else if(followup === 'next_week') { var d3=new Date();d3.setDate(d3.getDate()+(8-d3.getDay()));followupDate=d3.toISOString().split('T')[0]; }
   else if(followup === 'custom') { followupDate = document.getElementById('cl-followup-date').value; }
 
+  var dealSel = document.getElementById('cl-deal');
+  var dealIds = Array.from(dealSel.selectedOptions).map(function(opt){return opt.value;}).filter(function(v){return v;});
+  
   var call = {
     id: eid || uid('cl'),
     date: date,
     time: document.getElementById('cl-time').value,
     companyRef: document.getElementById('cl-company').value,
     contactRef: document.getElementById('cl-contact').value,
-    dealId: document.getElementById('cl-deal').value,
+    dealIds: dealIds,
+    dealId: dealIds.length > 0 ? dealIds[0] : '', // Keep legacy single dealId for backwards compat
     outcome: document.getElementById('cl-outcome').value,
     duration: document.getElementById('cl-duration').value,
     purpose: document.getElementById('cl-purpose').value,
@@ -3842,15 +3856,24 @@ function renderCallLog() {
     }
     tdContact.innerHTML = contactHtml;
 
-    // Deal
+    // Deals
     var tdDeal = document.createElement('td');
-    if(c.dealId) {
-      var deal = deals.find(function(x){return x.id===c.dealId;});
-      if(deal) {
-        tdDeal.innerHTML = '<div style="font-size:12px;color:var(--txt);">'+deal.addr.split(',')[0]+'</div><div>';
-        tdDeal.querySelector('div:last-child').appendChild(makePill(STAGE_LABELS[deal.stage]||deal.stage, STAGE_STYLES[deal.stage]||''));
-      } else { tdDeal.innerHTML = '<span class="dt-muted">—</span>'; }
-    } else { tdDeal.innerHTML = '<span class="dt-muted">—</span>'; }
+    var dealIds = c.dealIds || (c.dealId ? [c.dealId] : []);
+    if(dealIds.length > 0) {
+      dealIds.forEach(function(did, idx) {
+        var deal = deals.find(function(x){return x.id===did;});
+        if(deal) {
+          if(idx > 0) { var sep = document.createElement('div'); sep.style.height = '4px'; tdDeal.appendChild(sep); }
+          var dDiv = document.createElement('div');
+          dDiv.innerHTML = '<div style="font-size:12px;color:var(--txt);">'+deal.addr.split(',')[0]+'</div>';
+          dDiv.appendChild(makePill(STAGE_LABELS[deal.stage]||deal.stage, STAGE_STYLES[deal.stage]||''));
+          tdDeal.appendChild(dDiv);
+        }
+      });
+      if(tdDeal.children.length === 0) tdDeal.innerHTML = '<span class="dt-muted">—</span>';
+    } else { 
+      tdDeal.innerHTML = '<span class="dt-muted">—</span>'; 
+    }
 
     // Outcome
     var tdOutcome = document.createElement('td');
