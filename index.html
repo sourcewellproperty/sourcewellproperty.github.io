@@ -469,6 +469,7 @@ a.link:hover{text-decoration:underline;}
     <button class="f-btn" data-filter="packaging">Packaging</button>
     <button class="f-btn" data-filter="sold">Sold</button>
     <button class="f-btn" data-filter="offer_rejected">Rej. Follow-up</button>
+    <button class="f-btn" data-filter="monitor">Monitor</button>
     <button class="f-btn" data-filter="lost">Lost</button>
     <button class="f-btn" data-filter="archive">Archive</button>
     <span class="fbar-lbl" style="margin-left:8px;">Area:</span>
@@ -935,7 +936,7 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Area / Town</label><select id="d-zone"></select></div>
       <div class="field"><label>Deal Type</label><select id="d-type"><option value="brr-btl">BRR → BTL</option><option value="brr-sa">BRR → SA</option><option value="flip">Flip</option><option value="btl">BTL Only</option></select></div>
       <div class="field"><label>Sale Type</label><select id="d-sale-type"><option value="traditional">Traditional Sale</option><option value="traditional_auction">Traditional Auction</option><option value="modern_auction">Modern Method (MMoA)</option></select></div>
-      <div class="field"><label>Stage</label><select id="d-stage"><option value="shortlisted">Shortlisted</option><option value="qualifying">Qualifying</option><option value="viewing">Viewing</option><option value="analysing">Analysing</option><option value="offer_submitted">Offer Submitted</option><option value="offer_accepted">Offer Accepted</option><option value="packaging">Deal Packaging</option><option value="sold">Deal Sold</option><option value="offer_rejected">Offer Rejected — Follow Up</option><option value="lost">Lost / No Deal</option></select></div>
+      <div class="field"><label>Stage</label><select id="d-stage"><option value="shortlisted">Shortlisted</option><option value="qualifying">Qualifying</option><option value="viewing">Viewing</option><option value="analysing">Analysing</option><option value="offer_submitted">Offer Submitted</option><option value="offer_accepted">Offer Accepted</option><option value="packaging">Deal Packaging</option><option value="sold">Deal Sold</option><option value="offer_rejected">Offer Rejected — Follow Up</option><option value="monitor">Monitor</option><option value="lost">Lost / No Deal</option></select></div>
       <div class="field"><label>Asking Price (£)</label><input type="number" id="d-ask" placeholder="e.g. 85000"></div>
       <div class="field"><label>Max Offer (£)</label><input type="number" id="d-max" placeholder="e.g. 72000"></div>
       <div class="field" style="position:relative;">
@@ -1545,6 +1546,7 @@ function bindTabs(containerSel){
 
 // ═══════════════ PILL STYLES ═══════════════
 var STAGE_STYLES={
+  monitor:'background:#1e2d3a;color:#94a3b8;',
   shortlisted:'background:#3a3a3c;color:#aeaeb2;',
   qualifying:'background:#2c2c2e;color:#aeaeb2;',
   viewing:'background:#1e2d45;color:#60a5fa;',
@@ -1556,7 +1558,7 @@ var STAGE_STYLES={
   sold:'background:#052e16;color:#4ade80;',
   lost:'background:#1c0606;color:#f87171;'
 };
-var STAGE_LABELS={shortlisted:'Shortlisted',qualifying:'Qualifying',viewing:'Viewing',analysing:'Analysing',offer_submitted:'Offer Submitted',offer_accepted:'Offer Accepted',packaging:'Packaging',offer_rejected:'Offer Rejected',sold:'Deal Sold',lost:'Lost'};
+var STAGE_LABELS={monitor:'Monitor',shortlisted:'Shortlisted',qualifying:'Qualifying',viewing:'Viewing',analysing:'Analysing',offer_submitted:'Offer Submitted',offer_accepted:'Offer Accepted',packaging:'Packaging',offer_rejected:'Offer Rejected',sold:'Deal Sold',lost:'Lost'};
 var TYPE_STYLES={'brr-btl':'background:#1e3a5f;color:#60a5fa;','brr-sa':'background:#312e55;color:#a78bfa;','flip':'background:#1c1a06;color:#fbbf24;','btl':'background:#1a2e1a;color:#4ade80;'};
 var TYPE_LABELS={'brr-btl':'BRR→BTL','brr-sa':'BRR→SA','flip':'Flip','btl':'BTL'};
 var INV_STATUS={prospect:'Prospect',warm:'Warm Lead',active:'Active',paused:'Paused'};
