@@ -4746,20 +4746,20 @@ function openAnalyserForDeal(dealId) {
   var d = deals.find(function(x){ return x.id === dealId; });
   if(!d) { toast('Deal not found', true); return; }
   
-  // Populate analyser form with deal data
+  // Populate analyser form with deal data or defaults
   document.getElementById('htype').value = d.htype || '230000';
-  document.getElementById('m2').value = d.m2 || '100';
+  document.getElementById('m2').value = d.m2 || d.m2 || '100';
   document.getElementById('floors').value = d.floors || '1';
-  document.getElementById('rooms').value = d.rooms || '0';
-  document.getElementById('beds').value = d.beds || '0';
-  document.getElementById('baths').value = d.baths || '0';
-  document.getElementById('ask').value = d.ask || '0';
-  document.getElementById('gdv').value = d.gdv || '0';
-  document.getElementById('rent').value = d.rent || '0';
-  document.getElementById('mgmt').value = d.mgmt || '10';
+  document.getElementById('rooms').value = d.rooms || d.rooms || '5';
+  document.getElementById('beds').value = d.beds || d.beds || '3';
+  document.getElementById('baths').value = d.baths || d.baths || '1';
+  document.getElementById('ask').value = d.ask || d.ask || '0';
+  document.getElementById('gdv').value = d.gdv || d.gdv || '0';
+  document.getElementById('rent').value = d.rent || d.rent || '0';
+  document.getElementById('mgmt').value = d.mgmt || d.mgmt || '10';
   document.getElementById('furn').value = d.furn || '0';
   
-  // Refurb options
+  // Refurb options - use deal values if saved, otherwise defaults
   document.getElementById('epc').value = d.epc || '0';
   document.getElementById('elec').value = d.elec || '0';
   document.getElementById('plumb').value = d.plumb || '0';
@@ -4784,7 +4784,7 @@ function openAnalyserForDeal(dealId) {
   // Switch to analyser and calculate
   showPage('analyser');
   calc();
-  toast('Analysis loaded');
+  toast('Analysis loaded for: ' + d.addr.split(',')[0]);
 }
 
 
