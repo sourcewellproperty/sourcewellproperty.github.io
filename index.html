@@ -556,6 +556,9 @@ a.link:hover{text-decoration:underline;}
         <div class="field"><label>Kitchen Flooring</label><select id="kfloor"><option value="648">LVT</option><option value="181.5">Vinyl</option><option value="946.5">Tile</option><option value="0">None</option></select></div>
         <div class="field"><label>Bedroom/Lounge Floor</label><select id="bfloor"><option value="25.1">Carpet</option><option value="43.5">LVT</option><option value="55.38">LVT Herringbone</option><option value="0">None</option></select></div>
         <div class="field"><label>Bathroom Floor</label><select id="bafloor"><option value="345.6">LVT</option><option value="96.8">Vinyl</option><option value="504.8">Tile</option><option value="0">None</option></select></div>
+        <div class="field"><label>First Floor En Suite?</label><select id="ensuite" onchange="calc()"><option value="0">No</option><option value="4320">Yes (£4,320)</option></select></div>
+        <div class="field"></div>
+        <div class="field"><label>Ground Floor Bathroom?</label><select id="gfbath" onchange="calc()"><option value="0">No</option><option value="4800">Yes (£4,800)</option></select></div>
       </div>
       <div class="g4 mt">
         <div class="field"><label>Windows</label><input type="number" id="wins" value="8"></div>
@@ -1079,6 +1082,7 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Answered</label><input type="number" id="dy-ans" value="0" min="0"></div>
       <div class="field"><label>VM Left</label><input type="number" id="dy-vm" value="0" min="0"></div>
       <div class="field"><label>Viewings Booked</label><input type="number" id="dy-view" value="0" min="0"></div>
+      <div class="field"><label>Viewings Attended</label><input type="number" id="dy-viewed" value="0" min="0"></div>
       <div class="field"><label>Offers Submitted</label><input type="number" id="dy-offsub" value="0" min="0"></div>
       <div class="field"><label>Offers Accepted</label><input type="number" id="dy-offacc" value="0" min="0"></div>
       <div class="field"><label>Offers Rejected</label><input type="number" id="dy-offrej" value="0" min="0"></div>
@@ -2607,7 +2611,7 @@ function openDayModal(id) {
       document.getElementById('dy-date').value = d.date||'';
       document.getElementById('dy-focus').value = d.focus||'';
       document.getElementById('dy-notes').value = d.notes||'';
-      ['short','comps','calls','ans','vm','view','offsub','offacc','offrej','visits','dtv','newrel'].forEach(function(f){
+      ['short','comps','calls','ans','vm','view','viewed','offsub','offacc','offrej','visits','dtv','newrel'].forEach(function(f){
         document.getElementById('dy-'+f).value = d[f]||0;
       });
       // Social
@@ -2620,7 +2624,7 @@ function openDayModal(id) {
     document.getElementById('dy-date').value = today();
     document.getElementById('dy-focus').value = '';
     document.getElementById('dy-notes').value = '';
-    ['short','comps','calls','ans','vm','view','offsub','offacc','offrej','visits','dtv','newrel'].forEach(function(f){
+    ['short','comps','calls','ans','vm','view','viewed','offsub','offacc','offrej','visits','dtv','newrel'].forEach(function(f){
       document.getElementById('dy-'+f).value = 0;
     });
     document.getElementById('dy-linkedin').value = '0';
@@ -2642,7 +2646,7 @@ function saveDay() {
     linkedin: document.getElementById('dy-linkedin').value,
     instagram: document.getElementById('dy-instagram').value
   };
-  ['short','comps','calls','ans','vm','view','offsub','offacc','offrej','visits','dtv','newrel'].forEach(function(f){
+  ['short','comps','calls','ans','vm','view','viewed','offsub','offacc','offrej','visits','dtv','newrel'].forEach(function(f){
     entry[f] = parseInt(document.getElementById('dy-'+f).value)||0;
   });
   if(eid){var i=days.findIndex(function(x){return x.id===eid;});if(i>-1)days[i]=entry;else days.unshift(entry);}
@@ -2942,7 +2946,7 @@ var aState={damp:false,roof:false,paint:false,auction:false};
 function togField(k,v){aState[k]=v;document.getElementById(k+'-y').className=v?'on-y':'';document.getElementById(k+'-n').className=v?'':'on-n';calc();}
 function togAuct(v){aState.auction=v;document.getElementById('auct-y').className=v?'on-y':'';document.getElementById('auct-n').className=v?'':'on-n';document.getElementById('auctfee').disabled=!v;document.getElementById('auct-note').style.display=v?'block':'none';document.getElementById('row-auct').style.display=v?'table-row':'none';if(!v)document.getElementById('auctfee').value=0;calc();}
 function sd(p){if(p<=125000)return p*0.05;if(p<=250000)return 125000*0.05+(p-125000)*0.07;if(p<=925000)return 125000*0.05+125000*0.07+(p-250000)*0.10;return 125000*0.05+125000*0.07+675000*0.10+(p-925000)*0.15;}
-function getRefurb(){var hm=parseInt(document.getElementById('htype').value),m2=+document.getElementById('m2').value||0,fl=+document.getElementById('floors').value||1,rooms=+document.getElementById('rooms').value||0,beds=+document.getElementById('beds').value||0,baths=+document.getElementById('baths').value||0,epcV=+document.getElementById('epc').value||0,vatRate=+document.getElementById('vat-rate').value||0.20;var H5=(baths*3636/3)*fl,H6=(beds*1938.1/3)*beds,H8=epcV*hm,H9=aState.damp?(2500/80)*m2:0,H10=aState.roof?(1931/80)*m2:0,H11=+document.getElementById('elec').value||0,H12=+document.getElementById('plumb').value||0,H13=+document.getElementById('btile').value||0,H14=+document.getElementById('kfloor').value||0,ba=Math.max(0,(rooms-2))*15,bfr=+document.getElementById('bfloor').value||0,H15=ba*bfr,H16=+document.getElementById('bafloor').value||0,H17=(+document.getElementById('wins').value||0)*412.49,H18=(+document.getElementById('doors').value||0)*616,H19=+document.getElementById('land').value||0,H20=aState.paint?hm*821:0;var con=H5+H6+H8+H9+H10+H11+H12+H13+H14+H15+H16+H17+H18+H19+H20,lab=(H5+H6+H8+H9+H10+H11+H12+H13+H14+H15+H16+H17+H18+H19)*0.42,vat=(con+lab)*vatRate;return{con:con,lab:lab,vat:vat,total:con+lab+vat};}
+function getRefurb(){var hm=parseInt(document.getElementById('htype').value),m2=+document.getElementById('m2').value||0,fl=+document.getElementById('floors').value||1,rooms=+document.getElementById('rooms').value||0,beds=+document.getElementById('beds').value||0,baths=+document.getElementById('baths').value||0,epcV=+document.getElementById('epc').value||0,vatRate=+document.getElementById('vat-rate').value||0.20;var H5=(baths*3636/3)*fl,H6=(beds*1938.1/3)*beds,H8=epcV*hm,H9=aState.damp?(2500/80)*m2:0,H10=aState.roof?(1931/80)*m2:0,H11=+document.getElementById('elec').value||0,H12=+document.getElementById('plumb').value||0,H13=+document.getElementById('btile').value||0,H14=+document.getElementById('kfloor').value||0,ba=Math.max(0,(rooms-2))*15,bfr=+document.getElementById('bfloor').value||0,H15=ba*bfr,H16=+document.getElementById('bafloor').value||0,ensuite=+document.getElementById('ensuite').value||0,gfbath=+document.getElementById('gfbath').value||0,H17=(+document.getElementById('wins').value||0)*412.49,H18=(+document.getElementById('doors').value||0)*616,H19=+document.getElementById('land').value||0,H20=aState.paint?hm*821:0;var con=H5+H6+H8+H9+H10+H11+H12+H13+H14+H15+H16+ensuite+gfbath+H17+H18+H19+H20,lab=(H5+H6+H8+H9+H10+H11+H12+H13+H14+H15+H16+ensuite+gfbath+H17+H18+H19)*0.42,vat=(con+lab)*vatRate;return{con:con,lab:lab,vat:vat,total:con+lab+vat};}
 function getA(){return{sf:+document.getElementById('sourcefee').value||0,mr:(+document.getElementById('mortrate').value||5)/100,br:(+document.getElementById('bridgerate').value||0.9)/100,bm:+document.getElementById('bridgemonths').value||6,af:(+document.getElementById('arrfee').value||2)/100,hc:+document.getElementById('holding').value||0};}
 function bBridge(pp,gdv,rent,mp,ref,af,furn,a){var stamp=sd(pp),loan=pp*0.75,arr=loan*a.af,bint=loan*a.br*a.bm,bt=bint+arr,dep=pp*0.25,cap=dep+stamp+2000+600+a.sf+a.hc+af+ref+furn+bt,refi=gdv*0.75,left=cap+loan-refi,mort=refi*(a.mr/12),mf=rent*(mp/100),cf=rent-mort-mf-30;return{stamp,loan,arr,bint,bt,dep,cap,refi,left,mort,mf,cf};}
 function bCash(pp,gdv,rent,mp,ref,af,furn,a){var stamp=sd(pp),cap=pp+stamp+2000+600+a.sf+a.hc+af+ref+furn,refi=gdv*0.75,left=cap-refi,mort=refi*(a.mr/12),mf=rent*(mp/100),cf=rent-mort-mf-30;return{cap,refi,left,mort,mf,cf};}
