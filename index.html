@@ -1915,7 +1915,7 @@ function renderPipeline(){
     var logPane=document.createElement('div');
     logPane.style.cssText='padding:14px;';
     var compCount=(d.comparables&&d.comparables.length)||0;
-    logPane.innerHTML='<div class="z-mini" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;"><span>Log Activity</span>'+(compCount?'<button onclick="loadCompsForDealFromPipeline(\''+d.id+'\');" style="font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:4px;background:#1e3a5f;border:1px solid var(--blue);color:var(--blue);cursor:pointer;">'+compCount+' saved comp'+(compCount!==1?'s':'')+'</button>':'')+'</div>';
+    logPane.innerHTML='<div class="z-mini" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:6px;"><span>Log Activity</span><div style="display:flex;gap:6px;">'+(compCount?'<button onclick="loadCompsForDealFromPipeline(\''+d.id+'\');" style="font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:4px;background:#1e3a5f;border:1px solid var(--blue);color:var(--blue);cursor:pointer;">'+compCount+' saved comp'+(compCount!==1?'s':'')+'</button>':'')+'<button onclick="openAnalyserForDeal(\''+d.id+'\');" style="font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:4px;background:#3a2d1e;border:1px solid var(--amber);color:var(--amber);cursor:pointer;">View Analysis</button>'+'</div></div>';
     var logForm=document.createElement('div');
     // Log Call button — opens Call Log modal with deal pre-linked
     var lcBtn=document.createElement('button');lcBtn.className='btn btn-amber btn-sm';lcBtn.style.cssText='width:100%;margin-bottom:8px;';lcBtn.textContent='+ Log Call';
@@ -4740,6 +4740,52 @@ function setupLocationEditor(){
 }
 
 
+// ═══════════════ OPEN ANALYSER FOR DEAL ═══════════════
+function openAnalyserForDeal(dealId) {
+  var deals = retrieve('sw-pipeline', []);
+  var d = deals.find(function(x){ return x.id === dealId; });
+  if(!d) { toast('Deal not found', true); return; }
+  
+  // Populate analyser form with deal data
+  document.getElementById('htype').value = d.htype || '230000';
+  document.getElementById('m2').value = d.m2 || '100';
+  document.getElementById('floors').value = d.floors || '1';
+  document.getElementById('rooms').value = d.rooms || '0';
+  document.getElementById('beds').value = d.beds || '0';
+  document.getElementById('baths').value = d.baths || '0';
+  document.getElementById('ask').value = d.ask || '0';
+  document.getElementById('gdv').value = d.gdv || '0';
+  document.getElementById('rent').value = d.rent || '0';
+  document.getElementById('mgmt').value = d.mgmt || '10';
+  document.getElementById('furn').value = d.furn || '0';
+  
+  // Refurb options
+  document.getElementById('epc').value = d.epc || '0';
+  document.getElementById('elec').value = d.elec || '0';
+  document.getElementById('plumb').value = d.plumb || '0';
+  document.getElementById('btile').value = d.btile || '0';
+  document.getElementById('kfloor').value = d.kfloor || '0';
+  document.getElementById('bfloor').value = d.bfloor || '0';
+  document.getElementById('bafloor').value = d.bafloor || '0';
+  document.getElementById('ensuite').value = d.ensuite || '0';
+  document.getElementById('gfbath').value = d.gfbath || '0';
+  document.getElementById('wins').value = d.wins || '8';
+  document.getElementById('doors').value = d.doors || '6';
+  document.getElementById('land').value = d.land || '0';
+  document.getElementById('vat-rate').value = d.vatRate || '0.20';
+  document.getElementById('auctfee').value = d.auctfee || '0';
+  
+  // Toggles
+  if(d.damp) { togField('damp', true); }
+  if(d.roof) { togField('roof', true); }
+  if(d.paint) { togField('paint', true); }
+  if(d.auction) { togField('auction', true); }
+  
+  // Switch to analyser and calculate
+  showPage('analyser');
+  calc();
+  toast('Analysis loaded');
+}
 
 
 // ═══════════════ ANALYSER SAVE TO DEAL ═══════════════
@@ -4804,6 +4850,30 @@ function saveAnalysisToDeal() {
       if(!deal.activities) deal.activities = [];
       if(!deal.analyses) deal.analyses = [];
       deal.analyses.unshift(snapshot);
+      // Also save form inputs to the deal itself for reopening
+      deal.htype = document.getElementById('htype').value;
+      deal.m2 = document.getElementById('m2').value;
+      deal.floors = document.getElementById('floors').value;
+      deal.rooms = document.getElementById('rooms').value;
+      deal.beds = document.getElementById('beds').value;
+      deal.baths = document.getElementById('baths').value;
+      deal.epc = document.getElementById('epc').value;
+      deal.elec = document.getElementById('elec').value;
+      deal.plumb = document.getElementById('plumb').value;
+      deal.btile = document.getElementById('btile').value;
+      deal.kfloor = document.getElementById('kfloor').value;
+      deal.bfloor = document.getElementById('bfloor').value;
+      deal.bafloor = document.getElementById('bafloor').value;
+      deal.ensuite = document.getElementById('ensuite').value;
+      deal.gfbath = document.getElementById('gfbath').value;
+      deal.wins = document.getElementById('wins').value;
+      deal.doors = document.getElementById('doors').value;
+      deal.land = document.getElementById('land').value;
+      deal.auctfee = document.getElementById('auctfee').value;
+      deal.damp = aState.damp;
+      deal.roof = aState.roof;
+      deal.paint = aState.paint;
+      deal.auction = aState.auction;
       // Also log as activity entry
       deal.activities.unshift({
         id: uid('a'),
