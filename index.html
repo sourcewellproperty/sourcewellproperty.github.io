@@ -3435,13 +3435,28 @@ function loadFromSupabase(onDone) {
     var localOK=hasContent(_mem);
 
     if(cloudOK){
-      // Cloud has real data — pull it down
+      // Cloud has real data — pull it down BUT preserve local comparables
+      var localDeals = _mem['sw-pipeline'] || [];
+      var comparablesMap = {}; // Save local comparables by deal ID
+      localDeals.forEach(function(d){ if(d.id && d.comparables) comparablesMap[d.id] = d.comparables; });
+      
       ALL_KEYS.forEach(function(k){
         if(k in cloudData){
           _mem[k]=cloudData[k];
           try{localStorage.setItem(k,JSON.stringify(cloudData[k]));}catch(e){}
         }
       });
+      
+      // Restore comparables to deals
+      if(_mem['sw-pipeline']) {
+        _mem['sw-pipeline'].forEach(function(d){
+          if(d.id && comparablesMap[d.id]) {
+            d.comparables = comparablesMap[d.id];
+          }
+        });
+        try{localStorage.setItem('sw-pipeline',JSON.stringify(_mem['sw-pipeline']));}catch(e){}
+      }
+      
       _sbReady=true;
       setSbStatus('connected','Synced to cloud');
     } else if(localOK){
