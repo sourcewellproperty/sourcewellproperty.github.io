@@ -4229,13 +4229,145 @@ function renderTasks() {
   var ags = retrieve('sw-agents', []);
   var todayStr = today();
 
-  // Sort: overdue first, then today, then upcoming by date, then done last
-  tasks.sort(function(a, b) {
-    if(a.done !== b.done) return a.done ? 1 : -1;
-    var sa = taskDueStatus(a.due, a.done), sb2 = taskDueStatus(b.due, b.done);
-    var order = {overdue:0, today:1, future:2, done_date:3};
-    if(order[sa] !== order[sb2]) return (order[sa]||2) - (order[sb2]||2);
-    return (a.due||'').localeCompare(b.due||'');
+  // Group tasks by due date status
+  var groups = {
+    overdue: {label: '🔴 OVERDUE', color: '#dc2626', tasks: []},
+    today: {label: '🟠 DUE TODAY', color: '#f59e0b', tasks: []},
+    week: {label: '🟡 THIS WEEK', color: '#eab308', tasks: []},
+    upcoming: {label: '⚪ UPCOMING', color: '#9ca3af', tasks: []},
+    done: {label: '✅ COMPLETED', color: '#10b981', tasks: []}
+  };
+
+  tasks.forEach(function(t) {
+    var status = taskDueStatus(t.due, t.done);
+    if(t.done) {
+      groups.done.tasks.push(t);
+    } else if(status === 'overdue') {
+      groups.overdue.tasks.push(t);
+    } else if(status === 'today') {
+      groups.today.tasks.push(t);
+    } else {
+      // Check if within this week (7 days from today)
+      if(t.due) {
+        var dueDate = new Date(t.due);
+        var todayDate = new Date(todayStr);
+        var daysUntil = (dueDate - todayDate) / (1000 * 60 * 60 * 24);
+        if(daysUntil > 0 && daysUntil <= 7) {
+          groups.week.tasks.push(t);
+        } else if(daysUntil > 7) {
+          groups.upcoming.tasks.push(t);
+        }
+      } else {
+        groups.upcoming.tasks.push(t);
+      }
+    }
+  });
+
+  // Sort tasks within each group by due date
+  Object.keys(groups).forEach(function(key) {
+    groups[key].tasks.sort(function(a, b) {
+      return (a.due||'').localeCompare(b.due||'');
+    });
+  });
+
+  var list = document.getElementById('task-list');
+  var empty = document.getElementById('task-empty');
+  list.innerHTML = '';
+
+  // Count open tasks
+  var openCount = tasks.filter(function(t){return !t.done;}).length;
+  var doneCount = tasks.filter(function(t){return t.done;}).length;
+  var overdueCount = groups.overdue.tasks.length;
+  var todayCount = groups.today.tasks.length;
+
+  document.getElementById('task-stats').innerHTML =
+    '<div class="stat-box"><div class="stat-val" style="color:var(--red);">'+overdueCount+'</div><div class="stat-lbl">Overdue</div></div>'+
+    '<div class="stat-box"><div class="stat-val" style="color:var(--amber2);">'+todayCount+'</div><div class="stat-lbl">Due today</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+openCount+'</div><div class="stat-lbl">Open tasks</div></div>'+
+    '<div class="stat-box"><div class="stat-val" style="color:var(--green);">'+doneCount+'</div><div class="stat-lbl">Completed</div></div>';
+
+  empty.style.display = openCount ? 'none' : 'block';
+
+  // Render each group
+  ['overdue', 'today', 'week', 'upcoming', 'done'].forEach(function(groupKey) {
+    var group = groups[groupKey];
+    if(group.tasks.length === 0) return;
+
+    var groupHeader = document.createElement('div');
+    groupHeader.style.cssText = 'margin-top:20px;margin-bottom:10px;padding:8px 12px;background:'+group.color+';color:#fff;border-radius:6px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;';
+    groupHeader.textContent = group.label + ' (' + group.tasks.length + ')';
+    list.appendChild(groupHeader);
+
+    group.tasks.forEach(function(t) {
+      var card = document.createElement('div');
+      card.className = 'task-card' + (t.done?' done-card':'');
+      card.style.borderLeftColor = group.color;
+      card.style.borderLeftWidth = '4px';
+
+      // Done checkbox
+      var doneBtn = document.createElement('button');
+      doneBtn.className = 'task-done-btn' + (t.done?' done':'');
+      if(t.done) doneBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>';
+      doneBtn.title = t.done ? 'Reopen' : 'Mark done';
+      doneBtn.addEventListener('click', (function(id){return function(){toggleTaskDone(id);};})(t.id));
+
+      // Body
+      var body = document.createElement('div');
+      body.className = 'task-body';
+      var titleEl = document.createElement('div');
+      titleEl.className = 'task-title';
+      titleEl.textContent = t.title;
+      body.appendChild(titleEl);
+
+      var meta = document.createElement('div');
+      meta.className = 'task-meta';
+      meta.appendChild(makePill(TASK_TYPE_LABELS[t.type]||t.type, TASK_TYPE_STYLES[t.type]||''));
+      meta.appendChild(makePill(t.priority||'medium', TASK_PRI_STYLES[t.priority||'medium']||''));
+
+      if(t.due) {
+        var daysLeft = Math.ceil((new Date(t.due) - new Date(todayStr)) / (1000 * 60 * 60 * 24));
+        var dueLabel = daysLeft < 0 ? Math.abs(daysLeft) + 'd overdue' : daysLeft === 0 ? 'TODAY' : daysLeft + 'd left';
+        meta.appendChild(makePill(dueLabel, 'color:#666;background:#eee;'));
+      }
+
+      if(t.dealId) {
+        var d = deals.find(function(x){return x.id === t.dealId;});
+        if(d) meta.appendChild(makePill(d.addr.split(',')[0], 'color:#0369a1;background:#e0f2fe;'));
+      }
+      if(t.invId) {
+        var inv = invs.find(function(x){return x.id === t.invId;});
+        if(inv) meta.appendChild(makePill(inv.name, 'color:#7c3aed;background:#f3e8ff;'));
+      }
+      body.appendChild(meta);
+
+      // Notes
+      if(t.notes) {
+        var notesEl = document.createElement('div');
+        notesEl.className = 'task-notes';
+        notesEl.textContent = t.notes;
+        body.appendChild(notesEl);
+      }
+
+      card.appendChild(doneBtn);
+      card.appendChild(body);
+
+      // Actions
+      var actions = document.createElement('div');
+      actions.className = 'task-actions';
+      var editBtn = document.createElement('button');
+      editBtn.innerHTML = 'EDIT';
+      editBtn.addEventListener('click', (function(id){return function(){openTaskModal(id);};})(t.id));
+      var delBtn = document.createElement('button');
+      delBtn.innerHTML = 'DEL';
+      delBtn.addEventListener('click', (function(id){return function(){if(confirm('Delete task?')) {deleteTask(id);};};})(t.id));
+      actions.appendChild(editBtn);
+      actions.appendChild(delBtn);
+      card.appendChild(actions);
+
+      list.appendChild(card);
+    });
+  });
+}
   });
 
   var filtered = tasks.filter(function(t) {
@@ -4742,49 +4874,16 @@ function setupLocationEditor(){
 
 // ═══════════════ OPEN ANALYSER FOR DEAL ═══════════════
 function openAnalyserForDeal(dealId) {
-  var deals = retrieve('sw-pipeline', []);
-  var d = deals.find(function(x){ return x.id === dealId; });
-  if(!d) { toast('Deal not found', true); return; }
-  
-  // Populate analyser form with deal data or defaults
-  document.getElementById('htype').value = d.htype || '230000';
-  document.getElementById('m2').value = d.m2 || d.m2 || '100';
-  document.getElementById('floors').value = d.floors || '1';
-  document.getElementById('rooms').value = d.rooms || d.rooms || '5';
-  document.getElementById('beds').value = d.beds || d.beds || '3';
-  document.getElementById('baths').value = d.baths || d.baths || '1';
-  document.getElementById('ask').value = d.ask || d.ask || '0';
-  document.getElementById('gdv').value = d.gdv || d.gdv || '0';
-  document.getElementById('rent').value = d.rent || d.rent || '0';
-  document.getElementById('mgmt').value = d.mgmt || d.mgmt || '10';
-  document.getElementById('furn').value = d.furn || '0';
-  
-  // Refurb options - use deal values if saved, otherwise defaults
-  document.getElementById('epc').value = d.epc || '0';
-  document.getElementById('elec').value = d.elec || '0';
-  document.getElementById('plumb').value = d.plumb || '0';
-  document.getElementById('btile').value = d.btile || '0';
-  document.getElementById('kfloor').value = d.kfloor || '0';
-  document.getElementById('bfloor').value = d.bfloor || '0';
-  document.getElementById('bafloor').value = d.bafloor || '0';
-  document.getElementById('ensuite').value = d.ensuite || '0';
-  document.getElementById('gfbath').value = d.gfbath || '0';
-  document.getElementById('wins').value = d.wins || '8';
-  document.getElementById('doors').value = d.doors || '6';
-  document.getElementById('land').value = d.land || '0';
-  document.getElementById('vat-rate').value = d.vatRate || '0.20';
-  document.getElementById('auctfee').value = d.auctfee || '0';
-  
-  // Toggles
-  if(d.damp) { togField('damp', true); }
-  if(d.roof) { togField('roof', true); }
-  if(d.paint) { togField('paint', true); }
-  if(d.auction) { togField('auction', true); }
-  
-  // Switch to analyser and calculate
   showPage('analyser');
-  calc();
-  toast('Analysis loaded for: ' + d.addr.split(',')[0]);
+  // Wait a moment for page to load, then select the deal in the dropdown
+  setTimeout(function(){
+    var sel = document.getElementById('analyser-deal-select');
+    if(sel) {
+      sel.value = dealId;
+      sel.dispatchEvent(new Event('change'));
+      toast('Deal loaded');
+    }
+  }, 100);
 }
 
 
