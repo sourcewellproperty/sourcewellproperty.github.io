@@ -5267,7 +5267,45 @@ function onAnalyserDealChange() {
   if(!dealId) { loadBtn.style.display = 'none'; return; }
   var deals = retrieve('sw-pipeline', []);
   var deal = deals.find(function(d){ return d.id === dealId; });
+  if(!deal) return;
   loadBtn.style.display = (deal && deal.comparables && deal.comparables.length) ? '' : 'none';
+  
+  // Also populate form fields with deal's saved analyser data
+  document.getElementById('htype').value = deal.htype || '230000';
+  document.getElementById('m2').value = deal.m2 || '100';
+  document.getElementById('floors').value = deal.floors || '1';
+  document.getElementById('rooms').value = deal.rooms || '5';
+  document.getElementById('beds').value = deal.beds || '3';
+  document.getElementById('baths').value = deal.baths || '1';
+  document.getElementById('ask').value = deal.ask || '0';
+  document.getElementById('gdv').value = deal.gdv || '0';
+  document.getElementById('rent').value = deal.rent || '0';
+  document.getElementById('mgmt').value = deal.mgmt || '10';
+  document.getElementById('furn').value = deal.furn || '0';
+  document.getElementById('epc').value = deal.epc || '0';
+  document.getElementById('elec').value = deal.elec || '0';
+  document.getElementById('plumb').value = deal.plumb || '0';
+  document.getElementById('btile').value = deal.btile || '0';
+  document.getElementById('kfloor').value = deal.kfloor || '0';
+  document.getElementById('bfloor').value = deal.bfloor || '0';
+  document.getElementById('bafloor').value = deal.bafloor || '0';
+  document.getElementById('ensuite').value = deal.ensuite || '0';
+  document.getElementById('gfbath').value = deal.gfbath || '0';
+  document.getElementById('wins').value = deal.wins || '8';
+  document.getElementById('doors').value = deal.doors || '6';
+  document.getElementById('land').value = deal.land || '0';
+  document.getElementById('addworks').value = deal.addworks || '0';
+  document.getElementById('vat-rate').value = deal.vatRate || '0.20';
+  document.getElementById('auctfee').value = deal.auctfee || '0';
+  
+  // Reset toggles
+  if(deal.damp) togField('damp', true);
+  if(deal.roof) togField('roof', true);
+  if(deal.paint) togField('paint', true);
+  if(deal.auction) togField('auction', true);
+  
+  // Calculate
+  calc();
 }
 
 
