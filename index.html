@@ -4753,15 +4753,17 @@ function setupLocationEditor(){
 // ═══════════════ OPEN ANALYSER FOR DEAL ═══════════════
 function openAnalyserForDeal(dealId) {
   showPage('analyser');
-  // Wait a moment for page to load, then select the deal in the dropdown
+  // Wait longer for page to fully load, then select the deal in the dropdown
   setTimeout(function(){
     var sel = document.getElementById('analyser-deal-select');
     if(sel) {
       sel.value = dealId;
-      sel.dispatchEvent(new Event('change'));
+      // Trigger change event
+      var event = new Event('change', { bubbles: true });
+      sel.dispatchEvent(event);
       toast('Deal loaded');
     }
-  }, 100);
+  }, 500);
 }
 
 
@@ -4828,6 +4830,16 @@ function saveAnalysisToDeal() {
       if(!deal.analyses) deal.analyses = [];
       deal.analyses.unshift(snapshot);
       // Also save form inputs to the deal itself for reopening
+      deal.ask = document.getElementById('ask').value;
+      deal.gdv = document.getElementById('gdv').value;
+      deal.rent = document.getElementById('rent').value;
+      deal.mgmt = document.getElementById('mgmt').value;
+      deal.sourcefee = document.getElementById('sourcefee').value;
+      deal.mortrate = document.getElementById('mortrate').value;
+      deal.bridgerate = document.getElementById('bridgerate').value;
+      deal.bridgemonths = document.getElementById('bridgemonths').value;
+      deal.arrfee = document.getElementById('arrfee').value;
+      deal.holding = document.getElementById('holding').value;
       deal.htype = document.getElementById('htype').value;
       deal.m2 = document.getElementById('m2').value;
       deal.floors = document.getElementById('floors').value;
@@ -5263,46 +5275,58 @@ function onAnalyserDealChange() {
   var sel = document.getElementById('analyser-deal-select');
   var dealId = sel ? sel.value : '';
   var loadBtn = document.getElementById('analyser-load-comps-btn');
-  if(!loadBtn) return;
-  if(!dealId) { loadBtn.style.display = 'none'; return; }
+  if(!loadBtn || !dealId) { 
+    if(loadBtn) loadBtn.style.display = 'none'; 
+    return; 
+  }
+  
   var deals = retrieve('sw-pipeline', []);
   var deal = deals.find(function(d){ return d.id === dealId; });
   if(!deal) return;
-  loadBtn.style.display = (deal && deal.comparables && deal.comparables.length) ? '' : 'none';
   
-  // Also populate form fields with deal's saved analyser data
-  document.getElementById('htype').value = deal.htype || '230000';
-  document.getElementById('m2').value = deal.m2 || '100';
-  document.getElementById('floors').value = deal.floors || '1';
-  document.getElementById('rooms').value = deal.rooms || '5';
-  document.getElementById('beds').value = deal.beds || '3';
-  document.getElementById('baths').value = deal.baths || '1';
-  document.getElementById('ask').value = deal.ask || '0';
-  document.getElementById('gdv').value = deal.gdv || '0';
-  document.getElementById('rent').value = deal.rent || '0';
-  document.getElementById('mgmt').value = deal.mgmt || '10';
-  document.getElementById('furn').value = deal.furn || '0';
-  document.getElementById('epc').value = deal.epc || '0';
-  document.getElementById('elec').value = deal.elec || '0';
-  document.getElementById('plumb').value = deal.plumb || '0';
-  document.getElementById('btile').value = deal.btile || '0';
-  document.getElementById('kfloor').value = deal.kfloor || '0';
-  document.getElementById('bfloor').value = deal.bfloor || '0';
-  document.getElementById('bafloor').value = deal.bafloor || '0';
-  document.getElementById('ensuite').value = deal.ensuite || '0';
-  document.getElementById('gfbath').value = deal.gfbath || '0';
-  document.getElementById('wins').value = deal.wins || '8';
-  document.getElementById('doors').value = deal.doors || '6';
-  document.getElementById('land').value = deal.land || '0';
-  document.getElementById('addworks').value = deal.addworks || '0';
-  document.getElementById('vat-rate').value = deal.vatRate || '0.20';
-  document.getElementById('auctfee').value = deal.auctfee || '0';
+  // Show comps button if available
+  loadBtn.style.display = (deal.comparables && deal.comparables.length) ? '' : 'none';
   
-  // Reset toggles
-  if(deal.damp) togField('damp', true);
-  if(deal.roof) togField('roof', true);
-  if(deal.paint) togField('paint', true);
-  if(deal.auction) togField('auction', true);
+  // Load form values from deal — only if they exist
+  if(deal.ask) document.getElementById('ask').value = deal.ask;
+  if(deal.gdv) document.getElementById('gdv').value = deal.gdv;
+  if(deal.rent) document.getElementById('rent').value = deal.rent;
+  if(deal.mgmt) document.getElementById('mgmt').value = deal.mgmt;
+  if(deal.sourcefee) document.getElementById('sourcefee').value = deal.sourcefee;
+  if(deal.mortrate) document.getElementById('mortrate').value = deal.mortrate;
+  if(deal.bridgerate) document.getElementById('bridgerate').value = deal.bridgerate;
+  if(deal.bridgemonths) document.getElementById('bridgemonths').value = deal.bridgemonths;
+  if(deal.arrfee) document.getElementById('arrfee').value = deal.arrfee;
+  if(deal.holding) document.getElementById('holding').value = deal.holding;
+  if(deal.htype) document.getElementById('htype').value = deal.htype;
+  if(deal.m2) document.getElementById('m2').value = deal.m2;
+  if(deal.floors) document.getElementById('floors').value = deal.floors;
+  if(deal.rooms) document.getElementById('rooms').value = deal.rooms;
+  if(deal.beds) document.getElementById('beds').value = deal.beds;
+  if(deal.baths) document.getElementById('baths').value = deal.baths;
+  if(deal.mgmt) document.getElementById('mgmt').value = deal.mgmt;
+  if(deal.furn) document.getElementById('furn').value = deal.furn;
+  if(deal.epc) document.getElementById('epc').value = deal.epc;
+  if(deal.elec) document.getElementById('elec').value = deal.elec;
+  if(deal.plumb) document.getElementById('plumb').value = deal.plumb;
+  if(deal.btile) document.getElementById('btile').value = deal.btile;
+  if(deal.kfloor) document.getElementById('kfloor').value = deal.kfloor;
+  if(deal.bfloor) document.getElementById('bfloor').value = deal.bfloor;
+  if(deal.bafloor) document.getElementById('bafloor').value = deal.bafloor;
+  if(deal.ensuite) document.getElementById('ensuite').value = deal.ensuite;
+  if(deal.gfbath) document.getElementById('gfbath').value = deal.gfbath;
+  if(deal.wins) document.getElementById('wins').value = deal.wins;
+  if(deal.doors) document.getElementById('doors').value = deal.doors;
+  if(deal.land) document.getElementById('land').value = deal.land;
+  if(deal.addworks) document.getElementById('addworks').value = deal.addworks;
+  if(deal.vatRate) document.getElementById('vat-rate').value = deal.vatRate;
+  if(deal.auctfee) document.getElementById('auctfee').value = deal.auctfee;
+  
+  // Reset toggles only if they're true
+  if(deal.damp) { aState.damp = true; document.getElementById('damp-y').className = 'on-y'; document.getElementById('damp-n').className = ''; }
+  if(deal.roof) { aState.roof = true; document.getElementById('roof-y').className = 'on-y'; document.getElementById('roof-n').className = ''; }
+  if(deal.paint) { aState.paint = true; document.getElementById('paint-y').className = 'on-y'; document.getElementById('paint-n').className = ''; }
+  if(deal.auction) { aState.auction = true; document.getElementById('auction-y').className = 'on-y'; document.getElementById('auction-n').className = ''; }
   
   // Calculate
   calc();
