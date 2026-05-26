@@ -4892,6 +4892,8 @@ function saveAnalysisToDeal() {
         note: snapshot.verdict + ' · Max offer: ' + snapshot.maxOffer + ' · Ask: £' + parseInt(snapshot.ask).toLocaleString() + ' · GDV: £' + parseInt(snapshot.gdv).toLocaleString()
       });
       store('sw-pipeline', deals);
+      // ALSO explicitly save to localStorage to prevent Supabase overwrite
+      try { localStorage.setItem('sw-pipeline', JSON.stringify(deals)); } catch(e) {}
       renderPipeline();
       toast('Analysis saved to: ' + deal.addr.split(',')[0]);
     }
@@ -5242,6 +5244,8 @@ function saveComparablesToDeal() {
   });
 
   store('sw-pipeline', deals);
+  // ALSO explicitly save to localStorage to prevent Supabase overwrite
+  try { localStorage.setItem('sw-pipeline', JSON.stringify(deals)); } catch(e) {}
   renderActivityLog(dealId);
   toast('Comparables saved to: ' + deal.addr.split(',')[0]);
 }
