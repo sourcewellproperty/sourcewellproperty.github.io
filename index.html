@@ -410,6 +410,9 @@ a.link:hover{text-decoration:underline;}
     <button class="sb-item" id="nav-visits" onclick="showPage('visits')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>Agent Visits
     </button>
+    <button class="sb-item" id="nav-scripts" onclick="showPage('scripts')">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12v10H2z"/><path d="M5 6h6M5 9h4M5 12h3"/></svg>Scripts & Templates
+    </button>
     <div class="sb-sec" style="margin-top:8px;">Config</div>
     <button class="sb-item" id="nav-settings" onclick="showPage('settings')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg>Settings
@@ -878,6 +881,14 @@ a.link:hover{text-decoration:underline;}
     </tr></thead><tbody id="visits-body"></tbody></table>
   </div>
   <div id="visits-empty" class="empty" style="display:none;"><div class="empty-title">No visits logged yet</div><div class="empty-sub">Click + Log Visit to record your first agent office visit</div></div>
+</div>
+
+<!-- SCRIPTS & TEMPLATES PAGE -->
+<div id="page-scripts" class="page">
+  <div class="pg-hdr">
+    <div><div class="pg-title">Scripts & Templates</div><div class="pg-sub">Manage your calling, offer, and email templates</div></div>
+  </div>
+  <div id="scripts-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;"></div>
 </div>
 
 <!-- SETTINGS PAGE -->
@@ -1436,7 +1447,7 @@ function addAgModalContact() {
 // ═══════════════ CORE UTILITIES ═══════════════
 // ── SUPABASE-BACKED STORAGE ────────────────────────────────────────────────
 var _mem = {};           // in-memory cache — single source of truth
-var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-calls','sw-dtv','sw-visits','sw-content-bank','sw-contacts','sw-content-status','sw-locations','sw-last-backup','sw-banner-dismissed'];
+var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-calls','sw-dtv','sw-visits','sw-scripts','sw-content-bank','sw-contacts','sw-content-status','sw-locations','sw-last-backup','sw-banner-dismissed'];
 
 // Synchronous store — writes to memory + localStorage, queues Supabase save
 var store = function(k, v) {
@@ -6073,8 +6084,95 @@ function setupMobileMenu() {
 }
 
 
-function init(){
-  renderPipeline();renderCRM();renderAgents();renderContacts();renderDtvLog();renderVisits();tLoad();renderDailyLog();renderKpiStrip();renderTasks();renderCallLog();updateSidebar();
+function getDefaultScripts(){
+  return {
+    'offer-script': {
+      id: 'offer-script',
+      title: 'Offer Script',
+      desc: 'Why you\'re offering your amount',
+      category: 'Offer',
+      content: 'Hi [Agent Name],\n\nThank you for showing me around [Property Address].\n\nI\'m very interested in the property, but the asking price doesn\'t reflect the current market value or the refurbishment works required.\n\nHere\'s my analysis:\n\n• Market Comparables: £[Comp Price]\n• Refurbishment Required: £[Refurb Cost]\n• My Timeline: Quick cash purchase (typically 6-8 weeks)\n\nMy offer of £[Your Offer] is based on:\n- Fair market value for the property in its current condition\n- The significant investment required to bring it to investment standard\n- My ability to move quickly without chain delays\n\nI\'m a serious investor and my solicitors are primed and ready to proceed immediately.\n\nLooking forward to your feedback.\n\nBest regards,\nLuke'
+    },
+    'offer-email': {
+      id: 'offer-email',
+      title: 'Offer Email Template',
+      desc: 'Official offer email to agent',
+      category: 'Email',
+      content: 'Hi [Agent Name],\n\nThank you again for showing me around [Property Address].\n\nAs discussed, I would like to go ahead with making an offer.\n\nMy plans are the following:\n\n• Quick cash purchase (typically 6-8 weeks)\n• Full refurbishment throughout\n• Rent-managed investment strategy\n\nOverall, I am interested in the property but at a price that is representative of all the works required. I would like to put forward my offer of £[Offer Amount], nothing to sell. I am buying for investment.\n\nMy proof of funds and ID are attached. My solicitors details are listed below, and my solicitor is primed and ready to start working on this purchase:\n\n[Solicitors Name]\n[Address]\n[Phone]\n\nLooking forward to hearing from you.\n\nBest regards,\nLuke'
+    },
+    'stc-script': {
+      id: 'stc-script',
+      title: 'STC Comparable Script',
+      desc: 'Finding the actual sale price for an STC property',
+      category: 'Research',
+      content: 'Hi [Agent Name],\n\nI\'m researching recent sales in the [Area] area and I came across [Property Address] which shows as STC on Rightmove at £[Asking Price].\n\nWould you be able to tell me what the property actually sold for? I\'m building comparables for similar properties in the area.\n\nI really appreciate your help.\n\nBest regards,\nLuke'
+    }
+  };
+}
+
+function ensureDefaultScripts(){
+  var scripts = retrieve('sw-scripts', {});
+  var defaults = getDefaultScripts();
+  var changed = false;
+  
+  Object.keys(defaults).forEach(function(key){
+    if(!scripts[key]){
+      scripts[key] = defaults[key];
+      changed = true;
+    }
+  });
+  
+  if(changed) store('sw-scripts', scripts);
+  return scripts;
+}
+
+function renderScripts(){
+  var scripts = ensureDefaultScripts();
+  var con = document.getElementById('scripts-list');
+  if(!con) return;
+  
+  con.innerHTML = '';
+  Object.keys(scripts).forEach(function(key){
+    var s = scripts[key];
+    var card = document.createElement('div');
+    card.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--bg);';
+    
+    var html = '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">';
+    html += '<div><div style="font-weight:600;font-size:14px;">'+s.title+'</div><div style="font-size:12px;color:var(--text-2);margin-top:4px;">'+s.desc+'</div></div>';
+    html += '<span style="font-size:11px;background:var(--border);color:var(--text-2);padding:4px 8px;border-radius:4px;">'+s.category+'</span>';
+    html += '</div>';
+    html += '<textarea id="script-'+key+'" style="width:100%;min-height:150px;padding:8px;border:1px solid var(--border);border-radius:4px;font-family:monospace;font-size:12px;resize:vertical;">'+s.content+'</textarea>';
+    html += '<div style="display:flex;gap:8px;margin-top:12px;">';
+    html += '<button class="btn btn-blue" onclick="copyScriptToClipboard(\''+key+'\')">📋 Copy</button>';
+    html += '<button class="btn btn-green" onclick="saveScript(\''+key+'\')">✓ Save</button>';
+    html += '</div>';
+    
+    card.innerHTML = html;
+    con.appendChild(card);
+  });
+}
+
+function copyScriptToClipboard(key){
+  var textarea = document.getElementById('script-'+key);
+  if(!textarea) return;
+  textarea.select();
+  document.execCommand('copy');
+  toast('Copied to clipboard!');
+}
+
+function saveScript(key){
+  var textarea = document.getElementById('script-'+key);
+  if(!textarea) return;
+  var scripts = retrieve('sw-scripts', {});
+  if(scripts[key]){
+    scripts[key].content = textarea.value;
+    store('sw-scripts', scripts);
+    toast('Script saved!');
+  }
+}
+
+
+  renderPipeline();renderCRM();renderAgents();renderContacts();renderDtvLog();renderVisits();tLoad();renderDailyLog();renderKpiStrip();renderTasks();renderCallLog();renderScripts();updateSidebar();
 }
 document.addEventListener('DOMContentLoaded',function(){
   setupMobileMenu();
