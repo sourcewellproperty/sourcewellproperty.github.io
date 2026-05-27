@@ -954,6 +954,7 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Stage</label><select id="d-stage"><option value="shortlisted">Shortlisted</option><option value="qualifying">Qualifying</option><option value="viewing">Viewing</option><option value="analysing">Analysing</option><option value="offer_submitted">Offer Submitted</option><option value="offer_accepted">Offer Accepted</option><option value="packaging">Deal Packaging</option><option value="sold">Deal Sold</option><option value="offer_rejected">Offer Rejected — Follow Up</option><option value="monitor">Monitor</option><option value="lost">Lost / No Deal</option></select></div>
       <div class="field"><label>Asking Price (£)</label><input type="number" id="d-ask" placeholder="e.g. 85000"></div>
       <div class="field"><label>Max Offer (£)</label><input type="number" id="d-max" placeholder="e.g. 72000"></div>
+      <div class="field"><label>Size (sqm)</label><input type="number" id="d-sqm" placeholder="e.g. 72"></div>
       <div class="field" style="position:relative;">
         <label>Linked Agent</label>
         <input type="hidden" id="d-agent" value="">
@@ -1662,6 +1663,7 @@ function openDealModal(id){
     if(d){
       document.getElementById('d-addr').value=d.addr||'';
       document.getElementById('d-zone').value=d.zone||'Newport';
+      document.getElementById('d-sqm').value=d.sqm||'';
       document.getElementById('d-type').value=d.type||'brr-sa';
       document.getElementById('d-sale-type').value=d.saleType||'traditional';
       document.getElementById('d-stage').value=d.stage||'shortlisted';
@@ -1694,6 +1696,7 @@ function openDealModal(id){
     document.getElementById('d-notes').value='';
     document.getElementById('d-stage').value='shortlisted';
     document.getElementById('d-type').value='brr-sa';
+  document.getElementById('d-sqm').value='';
     document.getElementById('d-sale-type').value='traditional';
     document.getElementById('d-agent').value='';
     document.getElementById('d-investor').value='';
@@ -1731,6 +1734,7 @@ function saveDeal(){
   var existing=eid?deals.find(function(x){return x.id===eid;}):null;
   var deal={id:eid||uid('d'),addr:addr,
     zone:document.getElementById('d-zone').value,
+    sqm:document.getElementById('d-sqm').value||'',
     type:document.getElementById('d-type').value,
     saleType:document.getElementById('d-sale-type').value,
     stage:document.getElementById('d-stage').value,
@@ -1863,7 +1867,8 @@ function renderPipeline(){
     // Stage
     var tdStage=document.createElement('td');tdStage.appendChild(makePill(STAGE_LABELS[d.stage]||d.stage,STAGE_STYLES[d.stage]||''));
     // Asking
-    var tdAsk=document.createElement('td');tdAsk.className='dt-mono';tdAsk.textContent=d.ask?fmt(d.ask):'—';
+    var tdAsk=document.createElement('td');tdAsk.className='dt-mono';
+    tdAsk.innerHTML=(d.ask?fmt(d.ask):'—')+(d.sqm?'<div style="font-size:10px;color:var(--txt3);font-family:var(--fm);">'+d.sqm+' sqm</div>':'');
     // Max
     var tdMax=document.createElement('td');tdMax.className='dt-mono pos';tdMax.textContent=d.max?fmt(d.max):'—';
     // Agent
