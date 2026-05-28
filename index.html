@@ -5313,21 +5313,38 @@ function saveComparablesToDeal() {
   });
 
   store('sw-pipeline', deals);
-  // ALSO explicitly save to localStorage to prevent Supabase overwrite
   try { localStorage.setItem('sw-pipeline', JSON.stringify(deals)); } catch(e) {}
+
+  // ALSO save comparables to sw-deal-data (survives Supabase sync)
+  var dealData = retrieve('sw-deal-data', {});
+  if(!dealData[dealId]) dealData[dealId] = {};
+  dealData[dealId].comparables = deal.comparables;
+  dealData[dealId].comparablesSavedAt = new Date().toISOString();
+  store('sw-deal-data', dealData);
+  try { localStorage.setItem('sw-deal-data', JSON.stringify(dealData)); } catch(e) {}
+
   renderActivityLog(dealId);
   toast('Comparables saved to: ' + deal.addr.split(',')[0]);
 }
 
 function loadCompsFromDeal(dealId) {
   if(!dealId) return;
+
+  // Check sw-deal-data first (most reliable), fall back to deal object
+  var dealData = retrieve('sw-deal-data', {});
+  var dd = dealData[dealId] || {};
   var deals = retrieve('sw-pipeline', []);
   var deal = deals.find(function(d){ return d.id === dealId; });
-  if(!deal || !deal.comparables || !deal.comparables.length) {
+
+  var comparables = (dd.comparables && dd.comparables.length) ? dd.comparables
+                  : (deal && deal.comparables && deal.comparables.length) ? deal.comparables
+                  : null;
+
+  if(!comparables || !comparables.length) {
     toast('No saved comparables for this deal', true);
     return;
   }
-  var snap = deal.comparables[0];
+  var snap = comparables[0];
   // Reload sold rows
   var soldBody = document.getElementById('sold-body');
   if(soldBody && snap.sold) {
@@ -5378,7 +5395,11 @@ function onAnalyserDealChange() {
   if(!deal) return;
   
   // Show comps button if available
-  loadBtn.style.display = (deal.comparables && deal.comparables.length) ? '' : 'none';
+  // Check sw-deal-data for comparables first
+  var dealDataCheck = retrieve('sw-deal-data', {});
+  var ddCheck = dealDataCheck[dealId] || {};
+  var hasComps = (ddCheck.comparables && ddCheck.comparables.length) || (deal.comparables && deal.comparables.length);
+  loadBtn.style.display = hasComps ? '' : 'none';
 
   // Load from sw-deal-data first (most reliable), fall back to deal object
   var dealData = retrieve('sw-deal-data', {});
