@@ -951,6 +951,7 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Area / Town</label><select id="d-zone"></select></div>
       <div class="field"><label>Deal Type</label><select id="d-type"><option value="brr-btl">BRR → BTL</option><option value="brr-sa">BRR → SA</option><option value="flip">Flip</option><option value="btl">BTL Only</option></select></div>
       <div class="field"><label>Sale Type</label><select id="d-sale-type"><option value="traditional">Traditional Sale</option><option value="traditional_auction">Traditional Auction</option><option value="modern_auction">Modern Method (MMoA)</option></select></div>
+      <div class="field"><label>Offer Submitted Date</label><input type="date" id="d-offer-date"></div>
       <div class="field"><label>Stage</label><select id="d-stage"><option value="shortlisted">Shortlisted</option><option value="qualifying">Qualifying</option><option value="viewing">Viewing</option><option value="analysing">Analysing</option><option value="offer_submitted">Offer Submitted</option><option value="offer_accepted">Offer Accepted</option><option value="packaging">Deal Packaging</option><option value="sold">Deal Sold</option><option value="offer_rejected">Offer Rejected — Follow Up</option><option value="monitor">Monitor</option><option value="lost">Lost / No Deal</option></select></div>
       <div class="field"><label>Asking Price (£)</label><input type="number" id="d-ask" placeholder="e.g. 85000"></div>
       <div class="field"><label>Max Offer (£)</label><input type="number" id="d-max" placeholder="e.g. 72000"></div>
@@ -1666,6 +1667,7 @@ function openDealModal(id){
       document.getElementById('d-sqm').value=d.sqm||'';
       document.getElementById('d-type').value=d.type||'brr-sa';
       document.getElementById('d-sale-type').value=d.saleType||'traditional';
+      document.getElementById('d-offer-date').value=d.offerDate||'';
       document.getElementById('d-stage').value=d.stage||'shortlisted';
       document.getElementById('d-ask').value=d.ask||'';
       document.getElementById('d-max').value=d.max||'';
@@ -1698,6 +1700,7 @@ function openDealModal(id){
     document.getElementById('d-type').value='brr-sa';
   document.getElementById('d-sqm').value='';
     document.getElementById('d-sale-type').value='traditional';
+  document.getElementById('d-offer-date').value='';
     document.getElementById('d-agent').value='';
     document.getElementById('d-investor').value='';
   }
@@ -1737,6 +1740,7 @@ function saveDeal(){
     sqm:document.getElementById('d-sqm').value||'',
     type:document.getElementById('d-type').value,
     saleType:document.getElementById('d-sale-type').value,
+    offerDate:document.getElementById('d-offer-date').value||'',
     stage:document.getElementById('d-stage').value,
     ask:document.getElementById('d-ask').value,
     max:document.getElementById('d-max').value,
@@ -1866,6 +1870,15 @@ function renderPipeline(){
     }
     // Stage
     var tdStage=document.createElement('td');tdStage.appendChild(makePill(STAGE_LABELS[d.stage]||d.stage,STAGE_STYLES[d.stage]||''));
+    if(d.offerDate && (d.stage==='offer_submitted'||d.stage==='offer_accepted'||d.stage==='offer_rejected')) {
+      var oDate=new Date(d.offerDate), now=new Date();
+      var daysSince=Math.floor((now-oDate)/(1000*60*60*24));
+      var oCol=daysSince>=7?'#ef4444':daysSince>=3?'#f59e0b':'#9ca3af';
+      var oEl=document.createElement('div');
+      oEl.style.cssText='font-size:10px;margin-top:3px;color:'+oCol+';font-weight:500;';
+      oEl.textContent='📅 '+daysSince+'d since offer';
+      tdStage.appendChild(oEl);
+    }
     // Asking
     var tdAsk=document.createElement('td');tdAsk.className='dt-mono';
     tdAsk.innerHTML=(d.ask?fmt(d.ask):'—')+(d.sqm?'<div style="font-size:10px;color:var(--txt3);font-family:var(--fm);">'+d.sqm+' sqm</div>':'');
