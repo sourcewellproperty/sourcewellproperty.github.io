@@ -1931,8 +1931,10 @@ function renderPipeline(){
     histPane.appendChild(histList);
     var logPane=document.createElement('div');
     logPane.style.cssText='padding:14px;';
-    var compCount=(d.comparables&&d.comparables.length)||0;
-    var analysisCount=(d.analyses&&d.analyses.length)||0;
+    var _ddAll = retrieve('sw-deal-data', {});
+    var _dd = _ddAll[d.id] || {};
+    var compCount = (_dd.comparables && _dd.comparables.length) || (d.comparables && d.comparables.length) || 0;
+    var analysisCount = (_dd.savedAt ? 1 : 0) || (d.analyses && d.analyses.length) || 0;
     var btnGroup = '<div style="display:flex;gap:6px;">';
     if(compCount) btnGroup += '<button onclick="loadCompsForDealFromPipeline(\''+d.id+'\');" style="font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:4px;background:#1e3a5f;border:1px solid var(--blue);color:var(--blue);cursor:pointer;">'+compCount+' Comps</button>';
     btnGroup += '<button onclick="openAnalyserForDeal(\''+d.id+'\');" style="font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:4px;background:#3a2d1e;border:1px solid var(--amber);color:var(--amber);cursor:pointer;">View Analysis</button>';
