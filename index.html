@@ -836,20 +836,38 @@ a.link:hover{text-decoration:underline;}
 <!-- CONTENT CALENDAR PAGE -->
 <div id="page-content" class="page">
   <div class="pg-hdr">
-    <div><div class="pg-title">Content Bank</div><div class="pg-sub">Capture thoughts and experiences · Post when ready</div></div>
+    <div><div class="pg-title">Content</div><div class="pg-sub">Plan your week · Capture ideas · Track posting</div></div>
     <button class="btn btn-amber" id="btn-add-content">+ Add Idea</button>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="content-filters">
-    <button class="f-btn on" data-cf="all">All</button>
-    <button class="f-btn" data-cf="unposted">Not Posted</button>
-    <button class="f-btn" data-cf="partial">Partial</button>
-    <button class="f-btn" data-cf="posted">Both Posted</button>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button class="f-btn on" id="ctab-planner" onclick="switchContentTab('planner')">📅 Weekly Planner</button>
+    <button class="f-btn" id="ctab-bank" onclick="switchContentTab('bank')">💡 Content Bank</button>
   </div>
-  <div id="content-bank-stats" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;"></div>
-  <div id="content-bank-list"></div>
-  <div id="content-bank-empty" class="empty" style="display:none;">
-    <div class="empty-title">No ideas yet</div>
-    <div class="empty-sub">Click + Add Idea to capture a thought, observation or experience to post about later</div>
+
+  <!-- WEEKLY PLANNER -->
+  <div id="content-planner-view">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <button class="btn btn-ghost btn-sm" onclick="shiftContentWeek(-1)">← Prev</button>
+      <div id="content-week-label" style="font-weight:600;font-size:14px;"></div>
+      <button class="btn btn-ghost btn-sm" onclick="shiftContentWeek(1)">Next →</button>
+    </div>
+    <div id="content-week-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;"></div>
+  </div>
+
+  <!-- CONTENT BANK -->
+  <div id="content-bank-view" style="display:none;">
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="content-filters">
+      <button class="f-btn on" data-cf="all">All</button>
+      <button class="f-btn" data-cf="unposted">Not Posted</button>
+      <button class="f-btn" data-cf="partial">Partial</button>
+      <button class="f-btn" data-cf="posted">Both Posted</button>
+    </div>
+    <div id="content-bank-stats" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;"></div>
+    <div id="content-bank-list"></div>
+    <div id="content-bank-empty" class="empty" style="display:none;">
+      <div class="empty-title">No ideas yet</div>
+      <div class="empty-sub">Click + Add Idea to capture a thought, observation or experience to post about later</div>
+    </div>
   </div>
 </div>
 
@@ -955,6 +973,13 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Stage</label><select id="d-stage"><option value="shortlisted">Shortlisted</option><option value="qualifying">Qualifying</option><option value="viewing">Viewing</option><option value="analysing">Analysing</option><option value="offer_submitted">Offer Submitted</option><option value="offer_accepted">Offer Accepted</option><option value="packaging">Deal Packaging</option><option value="sold">Deal Sold</option><option value="offer_rejected">Offer Rejected — Follow Up</option><option value="monitor">Monitor</option><option value="lost">Lost / No Deal</option></select></div>
       <div class="field"><label>Asking Price (£)</label><input type="number" id="d-ask" placeholder="e.g. 85000"></div>
       <div class="field"><label>Max Offer (£)</label><input type="number" id="d-max" placeholder="e.g. 72000"></div>
+      <div style="grid-column:1/-1;font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;">Offer History</div>
+      <div class="field"><label>Offer 1 (£)</label><input type="number" id="d-offer1" placeholder="e.g. 80000"></div>
+      <div class="field"><label>Offer 1 Date</label><input type="date" id="d-offer1-date"></div>
+      <div class="field"><label>Offer 2 (£)</label><input type="number" id="d-offer2" placeholder="e.g. 85000"></div>
+      <div class="field"><label>Offer 2 Date</label><input type="date" id="d-offer2-date"></div>
+      <div class="field"><label>Offer 3 (£)</label><input type="number" id="d-offer3" placeholder="e.g. 90000"></div>
+      <div class="field"><label>Offer 3 Date</label><input type="date" id="d-offer3-date"></div>
       <div class="field"><label>Size (sqm)</label><input type="number" id="d-sqm" placeholder="e.g. 72"></div>
       <div class="field" style="position:relative;">
         <label>Linked Agent</label>
@@ -1449,7 +1474,7 @@ function addAgModalContact() {
 // ═══════════════ CORE UTILITIES ═══════════════
 // ── SUPABASE-BACKED STORAGE ────────────────────────────────────────────────
 var _mem = {};           // in-memory cache — single source of truth
-var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-calls','sw-dtv','sw-visits','sw-scripts','sw-deal-data','sw-content-bank','sw-contacts','sw-content-status','sw-locations','sw-last-backup','sw-banner-dismissed'];
+var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-calls','sw-dtv','sw-visits','sw-scripts','sw-deal-data','sw-content-bank','sw-weekly-plan','sw-contacts','sw-content-status','sw-locations','sw-last-backup','sw-banner-dismissed'];
 
 // Synchronous store — writes to memory + localStorage, queues Supabase save
 var store = function(k, v) {
@@ -1502,7 +1527,7 @@ function showPage(name){
   if(name==='settings') loadSettingsPage();
   if(name==='dashboard') renderDashboard();
   if(name==='analyser') populateAnalyserDealSelect();
-  if(name==='content') renderContentBank();
+  if(name==='content'){ renderWeeklyPlanner(); renderContentBank(); }
   if(name==='dtv') renderDtvLog();
   if(name==='visits') renderVisits();
 }
@@ -1664,6 +1689,12 @@ function openDealModal(id){
     if(d){
       document.getElementById('d-addr').value=d.addr||'';
       document.getElementById('d-zone').value=d.zone||'Newport';
+      document.getElementById('d-offer1').value=d.offer1||'';
+      document.getElementById('d-offer1-date').value=d.offer1date||'';
+      document.getElementById('d-offer2').value=d.offer2||'';
+      document.getElementById('d-offer2-date').value=d.offer2date||'';
+      document.getElementById('d-offer3').value=d.offer3||'';
+      document.getElementById('d-offer3-date').value=d.offer3date||'';
       document.getElementById('d-sqm').value=d.sqm||'';
       document.getElementById('d-type').value=d.type||'brr-sa';
       document.getElementById('d-sale-type').value=d.saleType||'traditional';
@@ -1698,6 +1729,12 @@ function openDealModal(id){
     document.getElementById('d-notes').value='';
     document.getElementById('d-stage').value='shortlisted';
     document.getElementById('d-type').value='brr-sa';
+  document.getElementById('d-offer1').value='';
+  document.getElementById('d-offer1-date').value='';
+  document.getElementById('d-offer2').value='';
+  document.getElementById('d-offer2-date').value='';
+  document.getElementById('d-offer3').value='';
+  document.getElementById('d-offer3-date').value='';
   document.getElementById('d-sqm').value='';
     document.getElementById('d-sale-type').value='traditional';
   document.getElementById('d-offer-date').value='';
@@ -1737,6 +1774,12 @@ function saveDeal(){
   var existing=eid?deals.find(function(x){return x.id===eid;}):null;
   var deal={id:eid||uid('d'),addr:addr,
     zone:document.getElementById('d-zone').value,
+    offer1:document.getElementById('d-offer1').value||'',
+    offer1date:document.getElementById('d-offer1-date').value||'',
+    offer2:document.getElementById('d-offer2').value||'',
+    offer2date:document.getElementById('d-offer2-date').value||'',
+    offer3:document.getElementById('d-offer3').value||'',
+    offer3date:document.getElementById('d-offer3-date').value||'',
     sqm:document.getElementById('d-sqm').value||'',
     type:document.getElementById('d-type').value,
     saleType:document.getElementById('d-sale-type').value,
@@ -1883,7 +1926,10 @@ function renderPipeline(){
     var tdAsk=document.createElement('td');tdAsk.className='dt-mono';
     tdAsk.innerHTML=(d.ask?fmt(d.ask):'—')+(d.sqm?'<div style="font-size:10px;color:var(--txt3);font-family:var(--fm);">'+d.sqm+' sqm</div>':'');
     // Max
-    var tdMax=document.createElement('td');tdMax.className='dt-mono pos';tdMax.textContent=d.max?fmt(d.max):'—';
+    var tdMax=document.createElement('td');tdMax.className='dt-mono pos';
+    var _latestOffer = d.offer3||d.offer2||d.offer1||'';
+    var _offerNum = d.offer3?3:d.offer2?2:d.offer1?1:0;
+    tdMax.innerHTML=(d.max?fmt(d.max):'—')+(_latestOffer?'<div style="font-size:10px;color:var(--amber);font-family:var(--fm);margin-top:2px;">↳ Offer '+_offerNum+': '+fmt(_latestOffer)+'</div>':'');
     // Agent
     var tdAg=document.createElement('td');
     if(ag){var agN=document.createElement('div');agN.style.cssText='font-size:12px;font-weight:500;';agN.textContent=ag.name;var agS=document.createElement('div');agS.className='dt-muted';agS.textContent=(ag.agency||'')+(ag.branch?', '+ag.branch:'');tdAg.appendChild(agN);tdAg.appendChild(agS);}
@@ -5563,6 +5609,97 @@ function toggleContentPosted(postId, platform) {
   status[key] = !status[key];
   store('sw-content-status', status);
   renderContentCalendar();
+}
+
+// ── CONTENT WEEKLY PLANNER ─────────────────────────────────────────────────
+var _contentWeekOffset = 0;
+
+function switchContentTab(tab) {
+  document.getElementById('content-planner-view').style.display = tab==='planner' ? '' : 'none';
+  document.getElementById('content-bank-view').style.display   = tab==='bank'    ? '' : 'none';
+  document.getElementById('ctab-planner').className = 'f-btn' + (tab==='planner'?' on':'');
+  document.getElementById('ctab-bank').className    = 'f-btn' + (tab==='bank'   ?' on':'');
+  if(tab==='planner') renderWeeklyPlanner();
+  if(tab==='bank') renderContentBank();
+}
+
+function shiftContentWeek(dir) {
+  _contentWeekOffset += dir;
+  renderWeeklyPlanner();
+}
+
+function getWeekDates(offset) {
+  var today = new Date();
+  var mon = new Date(today);
+  mon.setDate(today.getDate() - ((today.getDay()+6)%7) + (offset*7));
+  var days = [];
+  for(var i=0;i<7;i++){
+    var d = new Date(mon);
+    d.setDate(mon.getDate()+i);
+    days.push(d);
+  }
+  return days;
+}
+
+function fmtPlanDate(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
+function renderWeeklyPlanner() {
+  var grid = document.getElementById('content-week-grid');
+  var label = document.getElementById('content-week-label');
+  if(!grid||!label) return;
+
+  var days = getWeekDates(_contentWeekOffset);
+  var plan = retrieve('sw-weekly-plan', {});
+  var dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var todayStr = fmtPlanDate(new Date());
+
+  label.textContent = dayNames[0]+' '+days[0].getDate()+' '+monthNames[days[0].getMonth()]+' – '+dayNames[6]+' '+days[6].getDate()+' '+monthNames[days[6].getMonth()];
+
+  grid.innerHTML = '';
+  days.forEach(function(d, i) {
+    var dateStr = fmtPlanDate(d);
+    var isToday = dateStr === todayStr;
+    var dayPlan = plan[dateStr] || { li: '', ig: '', liDone: false, igDone: false };
+
+    var col = document.createElement('div');
+    col.style.cssText = 'border:1px solid '+(isToday?'var(--amber)':'var(--border)')+';border-radius:8px;padding:10px;background:'+(isToday?'rgba(245,158,11,0.05)':'var(--bg)')+';min-height:160px;';
+
+    col.innerHTML =
+      '<div style="font-weight:700;font-size:12px;color:'+(isToday?'var(--amber)':'var(--txt)')+';margin-bottom:8px;">'+dayNames[i]+' <span style="font-weight:400;color:var(--txt3);">'+d.getDate()+'</span></div>'+
+
+      '<div style="font-size:10px;color:#0077b5;font-weight:600;margin-bottom:3px;">in LINKEDIN</div>'+
+      '<textarea data-date="'+dateStr+'" data-field="li" style="width:100%;font-size:11px;resize:none;padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--txt);height:50px;font-family:var(--fm);" placeholder="Post idea...">'+( dayPlan.li||'')+'</textarea>'+
+      '<label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt3);margin-top:3px;cursor:pointer;"><input type="checkbox" data-date="'+dateStr+'" data-field="liDone" '+(dayPlan.liDone?'checked':'')+' style="accent-color:var(--blue);"> Posted</label>'+
+
+      '<div style="font-size:10px;color:#e1306c;font-weight:600;margin:8px 0 3px;">📸 INSTAGRAM</div>'+
+      '<textarea data-date="'+dateStr+'" data-field="ig" style="width:100%;font-size:11px;resize:none;padding:5px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--txt);height:50px;font-family:var(--fm);" placeholder="Post idea...">'+( dayPlan.ig||'')+'</textarea>'+
+      '<label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--txt3);margin-top:3px;cursor:pointer;"><input type="checkbox" data-date="'+dateStr+'" data-field="igDone" '+(dayPlan.igDone?'checked':'')+' style="accent-color:#e1306c;"> Posted</label>';
+
+    grid.appendChild(col);
+
+    // Save on input/change
+    col.querySelectorAll('textarea').forEach(function(ta){
+      ta.addEventListener('input', function(){
+        var plan2 = retrieve('sw-weekly-plan', {});
+        if(!plan2[ta.dataset.date]) plan2[ta.dataset.date]={};
+        plan2[ta.dataset.date][ta.dataset.field] = ta.value;
+        store('sw-weekly-plan', plan2);
+        try{localStorage.setItem('sw-weekly-plan',JSON.stringify(plan2));}catch(e){}
+      });
+    });
+    col.querySelectorAll('input[type=checkbox]').forEach(function(cb){
+      cb.addEventListener('change', function(){
+        var plan2 = retrieve('sw-weekly-plan', {});
+        if(!plan2[cb.dataset.date]) plan2[cb.dataset.date]={};
+        plan2[cb.dataset.date][cb.dataset.field] = cb.checked;
+        store('sw-weekly-plan', plan2);
+        try{localStorage.setItem('sw-weekly-plan',JSON.stringify(plan2));}catch(e){}
+      });
+    });
+  });
 }
 
 function renderContentCalendar() {
