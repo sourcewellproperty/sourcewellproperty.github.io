@@ -973,13 +973,21 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Stage</label><select id="d-stage"><option value="shortlisted">Shortlisted</option><option value="qualifying">Qualifying</option><option value="viewing">Viewing</option><option value="analysing">Analysing</option><option value="offer_submitted">Offer Submitted</option><option value="offer_accepted">Offer Accepted</option><option value="packaging">Deal Packaging</option><option value="sold">Deal Sold</option><option value="offer_rejected">Offer Rejected — Follow Up</option><option value="monitor">Monitor</option><option value="lost">Lost / No Deal</option></select></div>
       <div class="field"><label>Asking Price (£)</label><input type="number" id="d-ask" placeholder="e.g. 85000"></div>
       <div class="field"><label>Max Offer (£)</label><input type="number" id="d-max" placeholder="e.g. 72000"></div>
-      <div style="grid-column:1/-1;font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;">Offer History</div>
-      <div class="field"><label>Offer 1 (£)</label><input type="number" id="d-offer1" placeholder="e.g. 80000"></div>
-      <div class="field"><label>Offer 1 Date</label><input type="date" id="d-offer1-date"></div>
-      <div class="field"><label>Offer 2 (£)</label><input type="number" id="d-offer2" placeholder="e.g. 85000"></div>
-      <div class="field"><label>Offer 2 Date</label><input type="date" id="d-offer2-date"></div>
-      <div class="field"><label>Offer 3 (£)</label><input type="number" id="d-offer3" placeholder="e.g. 90000"></div>
-      <div class="field"><label>Offer 3 Date</label><input type="date" id="d-offer3-date"></div>
+      <div style="grid-column:1/-1;font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;">Offer History &amp; Size</div>
+      <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:end;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:end;">
+          <div class="field" style="margin:0;"><label style="font-size:10px;">Offer 1 (£)</label><input type="number" id="d-offer1" placeholder="e.g. 80000"></div>
+          <div class="field" style="margin:0;"><label style="font-size:10px;">Date</label><input type="date" id="d-offer1-date"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:end;">
+          <div class="field" style="margin:0;"><label style="font-size:10px;">Offer 2 (£)</label><input type="number" id="d-offer2" placeholder="e.g. 85000"></div>
+          <div class="field" style="margin:0;"><label style="font-size:10px;">Date</label><input type="date" id="d-offer2-date"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:end;">
+          <div class="field" style="margin:0;"><label style="font-size:10px;">Offer 3 (£)</label><input type="number" id="d-offer3" placeholder="e.g. 90000"></div>
+          <div class="field" style="margin:0;"><label style="font-size:10px;">Date</label><input type="date" id="d-offer3-date"></div>
+        </div>
+      </div>
       <div class="field"><label>Size (sqm)</label><input type="number" id="d-sqm" placeholder="e.g. 72"></div>
       <div class="field" style="position:relative;">
         <label>Linked Agent</label>
@@ -1899,6 +1907,25 @@ function renderPipeline(){
     if(acts>0){aBadge.style.cssText='font-family:var(--fm);font-size:9px;background:#3a3a3c;color:#aeaeb2;border-radius:3px;padding:1px 5px;margin-left:6px;';aBadge.textContent=acts+(acts===1?' log':' logs');aDiv.appendChild(aBadge);}
     var aSub=document.createElement('div');aSub.className='dt-muted';aSub.textContent=(d.source||'')+(d.zone?' · '+d.zone:'');
     tdAddr.appendChild(aDiv);tdAddr.appendChild(aSub);
+
+    // Comps & Refurb progress indicators
+    var _hasComps = (_dd.comparables && _dd.comparables.length > 0);
+    var _hasRefurb = (_dd.elec || _dd.plumb || _dd.wins || _dd.doors || _dd.kfloor || _dd.bfloor || _dd.btile || _dd.damp || _dd.roof);
+    if(_hasComps || _hasRefurb) {
+      var progRow = document.createElement('div');
+      progRow.style.cssText = 'display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;';
+      var pill = function(label, done) {
+        var s = document.createElement('span');
+        s.style.cssText = 'font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:var(--fm);'
+          + (done ? 'background:#14532d33;color:#4ade80;' : 'background:var(--border);color:var(--txt3);');
+        s.textContent = (done ? '✓ ' : '○ ') + label;
+        return s;
+      };
+      progRow.appendChild(pill('Comps', _hasComps));
+      progRow.appendChild(pill('Refurb', _hasRefurb));
+      tdAddr.appendChild(progRow);
+    }
+
     if(d.url){var uBtn=document.createElement('a');uBtn.href=d.url;uBtn.target='_blank';uBtn.style.cssText='font-family:var(--fm);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:var(--blue-dim);color:var(--blue);text-decoration:none;display:inline-block;margin-top:3px;';uBtn.textContent='View listing →';uBtn.addEventListener('click',function(e){e.stopPropagation();});tdAddr.appendChild(uBtn);}
     tdAddr.addEventListener('click',function(){toggleDealLog(d.id);});
     // Type
