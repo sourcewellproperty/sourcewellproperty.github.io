@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Sourcewell Property</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#f5a623">
@@ -137,7 +137,7 @@ body{background:var(--bg);color:var(--txt);font-family:var(--fs);font-size:14px;
 .ex-card.open .ex-body{display:block;}
 /* DASHBOARD */
 .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-@media(max-width:768px){.dash-grid{grid-template-columns:1fr;}}
+@media(max-width:1024px){.dash-grid{grid-template-columns:1fr;}}
 .dash-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r);padding:18px 20px;overflow:hidden;}
 .dash-card.full{grid-column:1/-1;}
 .dash-title{font-family:var(--fm);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--txt3);margin-bottom:14px;}
@@ -325,8 +325,19 @@ a.link:hover{text-decoration:underline;}
 .pb-edit-lbl{font-size:12px;color:var(--txt2);flex:1;}
 .tog-mini{font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:5px 12px;border-radius:var(--r);cursor:pointer;background:var(--surf2);border:1.5px solid var(--brd);color:var(--txt3);transition:all .15s;flex:1;}
 .tog-mini.on{background:#052e16;border-color:#16a34a;color:var(--green);}
+/* MOBILE BOTTOM NAV */
+.mob-nav-btn {
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;flex:1;background:none;border:none;cursor:pointer;padding:6px 0;
+  color:var(--txt3);font-family:var(--fm);font-size:9px;font-weight:600;
+  text-transform:uppercase;letter-spacing:.4px;transition:color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.mob-nav-btn.active { color:var(--amber); }
+.mob-nav-btn svg { transition:stroke .15s; }
+
 /* MOBILE */
-@media(max-width:768px){
+@media(max-width:1024px){
   /* Sidebar: slide in as fixed overlay */
   #mob-menu-btn{display:flex!important;}
   .sb{
@@ -346,12 +357,17 @@ a.link:hover{text-decoration:underline;}
   }
   .sb.mob-open{display:flex!important;}
 
-  /* Main content */
+  /* Show bottom nav */
+  #mob-bottom-nav{ display:block!important; }
+
+  /* Main content — add padding at bottom for nav bar */
   .main{
     margin-left:0!important;
     padding:12px!important;
     padding-top:64px!important;
+    padding-bottom:72px!important;
     width:100%!important;
+    box-sizing:border-box;
   }
 
   /* Header */
@@ -459,6 +475,32 @@ a.link:hover{text-decoration:underline;}
   <span style="display:block;width:20px;height:2px;background:#000;border-radius:2px;"></span>
 </button>
 <div id="mob-overlay" onclick="closeMobileMenu()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:149;"></div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav id="mob-bottom-nav" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9996;background:var(--bg);border-top:1px solid var(--border);padding:0;safe-area-inset-bottom:env(safe-area-inset-bottom);">
+  <div style="display:flex;justify-content:space-around;align-items:stretch;height:56px;padding-bottom:env(safe-area-inset-bottom);">
+    <button class="mob-nav-btn active" onclick="showPage('pipeline')" id="mbn-pipeline">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:20px;height:20px;"><rect x="1" y="4" width="14" height="2.5" rx="1"/><rect x="1" y="8" width="10" height="2.5" rx="1"/><rect x="1" y="12" width="12" height="2.5" rx="1"/></svg>
+      <span>Pipeline</span>
+    </button>
+    <button class="mob-nav-btn" onclick="showPage('analyser')" id="mbn-analyser">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:20px;height:20px;"><path d="M2 13L6 9l3 3 5-6"/></svg>
+      <span>Analyse</span>
+    </button>
+    <button class="mob-nav-btn" onclick="showPage('tasks')" id="mbn-tasks">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:20px;height:20px;"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8l2 2 4-4"/></svg>
+      <span>Tasks</span>
+    </button>
+    <button class="mob-nav-btn" onclick="showPage('daily')" id="mbn-daily">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:20px;height:20px;"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M5 1v4M11 1v4M2 7h12"/></svg>
+      <span>Daily</span>
+    </button>
+    <button class="mob-nav-btn" onclick="toggleMobileMenu()" id="mbn-more">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="width:20px;height:20px;"><circle cx="8" cy="3" r="1.2" fill="currentColor"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/><circle cx="8" cy="13" r="1.2" fill="currentColor"/></svg>
+      <span>More</span>
+    </button>
+  </div>
+</nav>
 <aside class="sb">
   <div class="sb-logo">
   <svg viewBox="0 0 180 48" xmlns="http://www.w3.org/2000/svg" style="width:140px;height:auto;">
@@ -1623,6 +1665,11 @@ function toast(msg,isErr){
 function showPage(name){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.sb-item').forEach(function(b){b.classList.remove('active');});
+  // Update bottom nav active state
+  var mbnMap = {pipeline:'mbn-pipeline',analyser:'mbn-analyser',tasks:'mbn-tasks',daily:'mbn-daily'};
+  document.querySelectorAll('.mob-nav-btn').forEach(function(b){b.classList.remove('active');});
+  var mbnActive = document.getElementById(mbnMap[name]);
+  if(mbnActive) mbnActive.classList.add('active');
   closeMobileMenu();
   var pg=document.getElementById('page-'+name);
   var nb=document.getElementById('nav-'+name);
@@ -6497,7 +6544,7 @@ function toggleMobileMenu() {
 }
 
 function closeMobileMenu() {
-  if(window.innerWidth > 768) return;
+  if(window.innerWidth > 1024) return;
   var sb = document.querySelector('.sb');
   var overlay = document.getElementById('mob-overlay');
   if(sb) sb.classList.remove('mob-open');
@@ -6506,10 +6553,12 @@ function closeMobileMenu() {
 }
 
 function setupMobileMenu() {
-  if(window.innerWidth > 768) return;
+  if(window.innerWidth > 1024) return;
   var btn = document.getElementById('mob-menu-btn');
   var overlay = document.getElementById('mob-overlay');
+  var bottomNav = document.getElementById('mob-bottom-nav');
   if(btn) btn.style.display = 'flex';
+  if(bottomNav) bottomNav.style.display = 'block';
   if(btn) {
     btn.addEventListener('click', function(e){ e.stopPropagation(); toggleMobileMenu(); });
     btn.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); toggleMobileMenu(); }, {passive:false});
@@ -6519,7 +6568,7 @@ function setupMobileMenu() {
     overlay.addEventListener('touchend', function(e){ e.preventDefault(); closeMobileMenu(); }, {passive:false});
   }
   window.addEventListener('resize', function(){
-    if(window.innerWidth > 768) {
+    if(window.innerWidth > 1024) {
       var sb = document.querySelector('.sb');
       if(sb){ sb.classList.remove('mob-open'); sb.style.display = ''; }
       if(btn) btn.style.display = 'none';
