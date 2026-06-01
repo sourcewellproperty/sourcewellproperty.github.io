@@ -327,34 +327,102 @@ a.link:hover{text-decoration:underline;}
 .tog-mini.on{background:#052e16;border-color:#16a34a;color:var(--green);}
 /* MOBILE */
 @media(max-width:768px){
+  /* Sidebar: slide in as fixed overlay */
   #mob-menu-btn{display:flex!important;}
-  .sb{display:none;z-index:9997;position:fixed;top:0;left:0;height:100vh;width:260px;}
-  .main{margin-left:0!important;padding:16px 12px!important;}
-  .pg-hdr{flex-wrap:wrap;gap:10px;padding-top:56px;}
+  .sb{
+    display:none;
+    position:fixed!important;
+    top:0;left:0;
+    height:100%!important;
+    height:-webkit-fill-available!important;
+    width:80%!important;
+    max-width:300px!important;
+    z-index:9997;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    box-shadow:4px 0 20px rgba(0,0,0,.5);
+    flex-direction:column!important;
+    flex-wrap:nowrap!important;
+  }
+  .sb.mob-open{display:flex!important;}
+
+  /* Main content */
+  .main{
+    margin-left:0!important;
+    padding:12px!important;
+    padding-top:64px!important;
+    width:100%!important;
+  }
+
+  /* Header */
+  .pg-hdr{flex-wrap:wrap;gap:8px;padding-top:0;}
   .pg-title{font-size:18px;}
+
+  /* Stats */
   .stat-grid{grid-template-columns:1fr 1fr!important;}
-  .g2,.g3{grid-template-columns:1fr!important;}
-  .dt{font-size:11px;}
-  .dt th,.dt td{padding:8px 6px;}
-  .modal{width:96%!important;max-width:96%!important;padding:16px!important;}
-  #bulk-bar{left:0!important;}
-  .tabs{overflow-x:auto;flex-wrap:nowrap;}
+
+  /* Grids */
+  .g2,.g3,.g4,.da-wrap{grid-template-columns:1fr!important;}
+  .dg{grid-template-columns:1fr 1fr!important;}
+
+  /* Pipeline table — horizontal scroll */
+  .dt-wrap,#pipeline-wrap,[style*="overflow-x:auto"]{overflow-x:auto!important;-webkit-overflow-scrolling:touch;}
+  .dt{font-size:11px;min-width:600px;}
+  .dt th,.dt td{padding:7px 5px;white-space:nowrap;}
+
+  /* Modals — full screen on mobile */
+  .modal{
+    width:100%!important;
+    max-width:100%!important;
+    max-height:90vh!important;
+    margin:0!important;
+    border-radius:16px 16px 0 0!important;
+    padding:16px!important;
+    position:fixed!important;
+    bottom:0!important;
+    left:0!important;
+    top:auto!important;
+    transform:none!important;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .modal-wrap{align-items:flex-end!important;}
+
+  /* Filters */
+  .fbar{flex-wrap:wrap;gap:4px;}
+  .f-btn{padding:6px 10px;font-size:11px;}
+
+  /* Tabs */
+  .tabs{overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;}
   .tab-btn{white-space:nowrap;padding:8px 12px;}
+
+  /* Misc */
+  #bulk-bar{left:0!important;}
   .ex-card{margin-bottom:6px;}
   #sb-error-banner{font-size:10px;}
-  .fbar{flex-wrap:wrap;gap:4px;}
+
+  /* Analyser */
+  .da-wrap{grid-template-columns:1fr!important;}
+
+  /* Weekly planner — horizontal scroll on mobile */
+  #content-week-grid{grid-template-columns:repeat(7,220px)!important;overflow-x:auto;}
+
+  /* Task cards */
+  .task-card{font-size:12px;}
+
+  /* Buttons bigger tap targets */
+  .btn{min-height:36px;}
+  button{-webkit-tap-highlight-color:transparent;}
+
+  /* Prevent Safari auto-zoom on input focus (needs font-size >= 16px) */
+  input,select,textarea{font-size:16px!important;}
+  .field label{font-size:11px!important;}
 }
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:3px;}
-@media(max-width:768px){
-  .sb{width:100%;position:static;height:auto;flex-direction:row;flex-wrap:wrap;}
-  .main{margin-left:0;}
-  .da-wrap{grid-template-columns:1fr;}
-  .g2,.g3,.g4{grid-template-columns:1fr;}
-  .dg{grid-template-columns:1fr 1fr;}
-}
+
 </style>
 </head>
 <body>
@@ -1482,7 +1550,7 @@ function addAgModalContact() {
 // ═══════════════ CORE UTILITIES ═══════════════
 // ── SUPABASE-BACKED STORAGE ────────────────────────────────────────────────
 var _mem = {};           // in-memory cache — single source of truth
-var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-calls','sw-dtv','sw-visits','sw-scripts','sw-deal-data','sw-content-bank','sw-weekly-plan','sw-contacts','sw-content-status','sw-locations','sw-last-backup','sw-banner-dismissed'];
+var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-task-order','sw-calls','sw-dtv','sw-visits','sw-scripts','sw-deal-data','sw-content-bank','sw-weekly-plan','sw-contacts','sw-content-status','sw-locations','sw-last-backup','sw-banner-dismissed'];
 
 // Synchronous store — writes to memory + localStorage, queues Supabase save
 var store = function(k, v) {
@@ -4399,9 +4467,16 @@ function renderTasks() {
     }
   });
 
-  // Sort tasks within each group by due date
+  // Apply saved manual order, fall back to due date sort
+  var taskOrder = retrieve('sw-task-order', {});
   Object.keys(groups).forEach(function(key) {
+    var savedOrder = taskOrder[key] || [];
     groups[key].tasks.sort(function(a, b) {
+      var ai = savedOrder.indexOf(a.id);
+      var bi = savedOrder.indexOf(b.id);
+      if(ai !== -1 && bi !== -1) return ai - bi;
+      if(ai !== -1) return -1;
+      if(bi !== -1) return 1;
       return (a.due||'').localeCompare(b.due||'');
     });
   });
@@ -4438,79 +4513,150 @@ function renderTasks() {
     if(group.tasks.length === 0) return;
     if(groupsToShow.indexOf(groupKey) === -1) return;
 
+    // Group header
     var groupHeader = document.createElement('div');
-    groupHeader.style.cssText = 'margin-top:20px;margin-bottom:10px;padding:8px 12px;background:'+group.color+';color:#fff;border-radius:6px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;';
-    groupHeader.textContent = group.label + ' (' + group.tasks.length + ')';
+    groupHeader.style.cssText = 'margin-top:20px;margin-bottom:8px;display:flex;align-items:center;gap:8px;';
+    groupHeader.innerHTML =
+      '<div style="flex:1;height:2px;background:'+group.color+';border-radius:2px;opacity:0.4;"></div>'+
+      '<span style="font-size:11px;font-weight:700;color:'+group.color+';text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">'+group.label+' ('+group.tasks.length+')</span>'+
+      '<div style="flex:1;height:2px;background:'+group.color+';border-radius:2px;opacity:0.4;"></div>';
     list.appendChild(groupHeader);
+
+    // Droppable group container
+    var groupContainer = document.createElement('div');
+    groupContainer.dataset.group = groupKey;
+    groupContainer.style.cssText = 'display:flex;flex-direction:column;gap:6px;min-height:10px;';
 
     group.tasks.forEach(function(t) {
       var card = document.createElement('div');
       card.className = 'task-card' + (t.done?' done-card':'');
-      card.style.borderLeftColor = group.color;
-      card.style.borderLeftWidth = '4px';
+      card.dataset.id = t.id;
+      card.dataset.group = groupKey;
+      card.draggable = true;
+      card.style.cssText = 'display:flex;align-items:stretch;border-left:4px solid '+group.color+';border-radius:6px;background:var(--bg);border:1px solid var(--border);border-left:4px solid '+group.color+';cursor:default;transition:opacity .15s,box-shadow .15s;';
 
-      // Done checkbox
+      // Drag handle
+      var handle = document.createElement('div');
+      handle.style.cssText = 'display:flex;align-items:center;justify-content:center;padding:0 8px;color:var(--txt3);cursor:grab;font-size:14px;opacity:0.4;flex-shrink:0;user-select:none;';
+      handle.textContent = '⠿';
+      handle.title = 'Drag to reorder';
+      card.appendChild(handle);
+
+      // Done button
       var doneBtn = document.createElement('button');
       doneBtn.className = 'task-done-btn' + (t.done?' done':'');
+      doneBtn.style.cssText = 'flex-shrink:0;align-self:center;margin:12px 6px 12px 0;';
       if(t.done) doneBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>';
-      doneBtn.title = t.done ? 'Reopen' : 'Mark done';
-      doneBtn.addEventListener('click', (function(id){return function(){toggleTaskDone(id);};})(t.id));
+      doneBtn.addEventListener('click', (function(id){return function(e){e.stopPropagation();toggleTaskDone(id);};})(t.id));
+      card.appendChild(doneBtn);
 
       // Body
       var body = document.createElement('div');
-      body.className = 'task-body';
-      var titleEl = document.createElement('div');
-      titleEl.className = 'task-title';
-      titleEl.textContent = t.title;
-      body.appendChild(titleEl);
+      body.style.cssText = 'flex:1;padding:10px 8px 10px 0;min-width:0;';
 
-      var meta = document.createElement('div');
-      meta.className = 'task-meta';
-      meta.appendChild(makePill(TASK_TYPE_LABELS[t.type]||t.type, TASK_TYPE_STYLES[t.type]||''));
-      meta.appendChild(makePill(t.priority||'medium', TASK_PRI_STYLES[t.priority||'medium']||''));
+      // Top row: title + due date
+      var topRow = document.createElement('div');
+      topRow.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;';
+
+      var titleEl = document.createElement('div');
+      titleEl.style.cssText = 'font-weight:600;font-size:13px;color:'+(t.done?'var(--txt3)':'var(--txt)')+';'+(t.done?'text-decoration:line-through;':'');
+      titleEl.textContent = t.title;
+      topRow.appendChild(titleEl);
 
       if(t.due) {
         var daysLeft = Math.ceil((new Date(t.due) - new Date(todayStr)) / (1000 * 60 * 60 * 24));
-        var dueLabel = daysLeft < 0 ? Math.abs(daysLeft) + 'd overdue' : daysLeft === 0 ? 'TODAY' : daysLeft + 'd left';
-        meta.appendChild(makePill(dueLabel, 'color:#666;background:#eee;'));
+        var dueLabel = daysLeft < 0 ? Math.abs(daysLeft)+'d overdue' : daysLeft === 0 ? 'TODAY' : daysLeft+'d';
+        var dueColor = daysLeft < 0 ? '#ef4444' : daysLeft === 0 ? '#f59e0b' : 'var(--txt3)';
+        var dueBadge = document.createElement('div');
+        dueBadge.style.cssText = 'font-size:11px;font-weight:700;color:'+dueColor+';white-space:nowrap;flex-shrink:0;padding-top:1px;';
+        dueBadge.textContent = dueLabel;
+        topRow.appendChild(dueBadge);
+      }
+      body.appendChild(topRow);
+
+      // Linked deal / investor — shown as subtitle
+      var sub = '';
+      if(t.dealId){ var dl=deals.find(function(x){return x.id===t.dealId;}); if(dl) sub=dl.addr.split(',')[0]; }
+      if(t.invId){ var iv=invs.find(function(x){return x.id===t.invId;}); if(iv) sub=iv.name; }
+      if(sub){
+        var subEl = document.createElement('div');
+        subEl.style.cssText = 'font-size:11px;color:var(--blue);margin-bottom:5px;';
+        subEl.textContent = '→ ' + sub;
+        body.appendChild(subEl);
       }
 
-      if(t.dealId) {
-        var d = deals.find(function(x){return x.id === t.dealId;});
-        if(d) meta.appendChild(makePill(d.addr.split(',')[0], 'color:#0369a1;background:#e0f2fe;'));
-      }
-      if(t.invId) {
-        var inv = invs.find(function(x){return x.id === t.invId;});
-        if(inv) meta.appendChild(makePill(inv.name, 'color:#7c3aed;background:#f3e8ff;'));
+      // Pills row: type only (priority removed — groups handle urgency)
+      var meta = document.createElement('div');
+      meta.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;align-items:center;';
+      meta.appendChild(makePill(TASK_TYPE_LABELS[t.type]||t.type, TASK_TYPE_STYLES[t.type]||''));
+      if(t.notes){
+        var notePreview = document.createElement('span');
+        notePreview.style.cssText = 'font-size:10px;color:var(--txt3);font-style:italic;';
+        notePreview.textContent = t.notes.length > 50 ? t.notes.slice(0,50)+'…' : t.notes;
+        meta.appendChild(notePreview);
       }
       body.appendChild(meta);
 
-      // Notes
-      if(t.notes) {
-        var notesEl = document.createElement('div');
-        notesEl.className = 'task-notes';
-        notesEl.textContent = t.notes;
-        body.appendChild(notesEl);
-      }
-
-      card.appendChild(doneBtn);
       card.appendChild(body);
 
       // Actions
       var actions = document.createElement('div');
-      actions.className = 'task-actions';
+      actions.style.cssText = 'display:flex;flex-direction:column;gap:4px;justify-content:center;padding:8px 8px 8px 0;flex-shrink:0;';
       var editBtn = document.createElement('button');
-      editBtn.innerHTML = 'EDIT';
-      editBtn.addEventListener('click', (function(id){return function(){openTaskModal(id);};})(t.id));
+      editBtn.className = 'btn btn-ghost btn-sm';
+      editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', (function(id){return function(e){e.stopPropagation();openTaskModal(id);};})(t.id));
       var delBtn = document.createElement('button');
-      delBtn.innerHTML = 'DEL';
-      delBtn.addEventListener('click', (function(id){return function(){if(confirm('Delete task?')) {deleteTask(id);};};})(t.id));
+      delBtn.className = 'btn btn-ghost btn-sm';
+      delBtn.style.color = 'var(--red)';
+      delBtn.textContent = 'Del';
+      delBtn.addEventListener('click', (function(id){return function(e){e.stopPropagation();if(confirm('Delete task?'))deleteTask(id);};})(t.id));
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
       card.appendChild(actions);
 
-      list.appendChild(card);
+      // ── Drag and drop ─────────────────────────────────────────────
+      card.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', t.id + '|' + groupKey);
+        setTimeout(function(){ card.style.opacity = '0.4'; }, 0);
+      });
+      card.addEventListener('dragend', function() {
+        card.style.opacity = '1';
+        document.querySelectorAll('.task-drop-indicator').forEach(function(el){ el.remove(); });
+      });
+      card.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.task-drop-indicator').forEach(function(el){ el.remove(); });
+        var ind = document.createElement('div');
+        ind.className = 'task-drop-indicator';
+        ind.style.cssText = 'height:2px;background:var(--blue);border-radius:2px;margin:2px 0;';
+        card.parentNode.insertBefore(ind, card);
+      });
+      card.addEventListener('drop', function(e) {
+        e.preventDefault();
+        var data = e.dataTransfer.getData('text/plain').split('|');
+        var dragId = data[0], dragGroup = data[1];
+        if(dragGroup !== groupKey) return; // only within same group
+        document.querySelectorAll('.task-drop-indicator').forEach(function(el){ el.remove(); });
+        // Build new order
+        var cards = Array.from(groupContainer.querySelectorAll('[data-id]'));
+        var newOrder = cards.map(function(c){ return c.dataset.id; });
+        var fromIdx = newOrder.indexOf(dragId);
+        var toIdx = newOrder.indexOf(t.id);
+        if(fromIdx === toIdx) return;
+        newOrder.splice(fromIdx, 1);
+        newOrder.splice(toIdx, 0, dragId);
+        var to2 = retrieve('sw-task-order', {});
+        to2[groupKey] = newOrder;
+        store('sw-task-order', to2);
+        try{localStorage.setItem('sw-task-order', JSON.stringify(to2));}catch(ex){}
+        renderTasks();
+      });
+
+      groupContainer.appendChild(card);
     });
+
+    list.appendChild(groupContainer);
   });
 }
 function updateSidebar(){
@@ -6310,48 +6456,46 @@ function toggleMobileMenu() {
   var sb = document.querySelector('.sb');
   var overlay = document.getElementById('mob-overlay');
   if(!sb) return;
-  var isOpen = sb.style.display === 'flex';
-  sb.style.display = isOpen ? 'none' : 'flex';
-  if(overlay) overlay.style.display = isOpen ? 'none' : 'block';
+  var isOpen = sb.classList.contains('mob-open');
+  if(isOpen) {
+    sb.classList.remove('mob-open');
+    if(overlay) overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  } else {
+    sb.classList.add('mob-open');
+    if(overlay) overlay.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
 }
 
 function closeMobileMenu() {
   if(window.innerWidth > 768) return;
   var sb = document.querySelector('.sb');
   var overlay = document.getElementById('mob-overlay');
-  if(sb) sb.style.display = 'none';
+  if(sb) sb.classList.remove('mob-open');
   if(overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
 }
 
 function setupMobileMenu() {
-  // Only apply on mobile
   if(window.innerWidth > 768) return;
-  var sb = document.querySelector('.sb');
   var btn = document.getElementById('mob-menu-btn');
   var overlay = document.getElementById('mob-overlay');
-  // Hide sidebar initially
-  if(sb) sb.style.display = 'none';
-  // Show hamburger
   if(btn) btn.style.display = 'flex';
-  // Wire events
   if(btn) {
-    btn.addEventListener('click', toggleMobileMenu);
-    btn.addEventListener('touchend', function(e){
-      e.preventDefault();
-      toggleMobileMenu();
-    }, {passive:false});
+    btn.addEventListener('click', function(e){ e.stopPropagation(); toggleMobileMenu(); });
+    btn.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); toggleMobileMenu(); }, {passive:false});
   }
   if(overlay) {
     overlay.addEventListener('click', closeMobileMenu);
-    overlay.addEventListener('touchend', function(e){
-      e.preventDefault();
-      closeMobileMenu();
-    }, {passive:false});
+    overlay.addEventListener('touchend', function(e){ e.preventDefault(); closeMobileMenu(); }, {passive:false});
   }
   window.addEventListener('resize', function(){
     if(window.innerWidth > 768) {
-      if(sb) sb.style.display = '';
+      var sb = document.querySelector('.sb');
+      if(sb){ sb.classList.remove('mob-open'); sb.style.display = ''; }
       if(btn) btn.style.display = 'none';
+      document.body.style.overflow = '';
     }
   });
 }
