@@ -1879,7 +1879,9 @@ function renderPipeline(){
   body.innerHTML='';
   if(!filtered.length){empty.style.display='block';}
   else{empty.style.display='none';}
+  var _ddAll = retrieve('sw-deal-data', {});
   filtered.forEach(function(d){
+    var _dd = _ddAll[d.id] || {};
     var ag=d.agentId?ags.find(function(x){return x.id===d.agentId;}):null;
     var inv=d.investorId?invs.find(function(x){return x.id===d.investorId;}):null;
     // Main row
@@ -2017,8 +2019,6 @@ function renderPipeline(){
     histPane.appendChild(histList);
     var logPane=document.createElement('div');
     logPane.style.cssText='padding:14px;';
-    var _ddAll = retrieve('sw-deal-data', {});
-    var _dd = _ddAll[d.id] || {};
     var compCount = (_dd.comparables && _dd.comparables.length) || (d.comparables && d.comparables.length) || 0;
     var analysisCount = (_dd.savedAt ? 1 : 0) || (d.analyses && d.analyses.length) || 0;
     var btnGroup = '<div style="display:flex;gap:6px;">';
