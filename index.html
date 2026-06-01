@@ -6633,19 +6633,14 @@ function getDefaultScripts(){
 }
 
 function ensureDefaultScripts(){
-  var scripts = retrieve('sw-scripts', {});
-  var defaults = getDefaultScripts();
-  var changed = false;
-  
-  Object.keys(defaults).forEach(function(key){
-    if(!scripts[key]){
-      scripts[key] = defaults[key];
-      changed = true;
-    }
-  });
-  
-  if(changed) store('sw-scripts', scripts);
-  return scripts;
+  var scripts = retrieve('sw-scripts', null);
+  // Only add defaults if sw-scripts has never been set at all
+  if(scripts === null || scripts === undefined) {
+    scripts = getDefaultScripts();
+    store('sw-scripts', scripts);
+    try { localStorage.setItem('sw-scripts', JSON.stringify(scripts)); } catch(e) {}
+  }
+  return scripts || {};
 }
 
 var _editingScriptKey = null;
@@ -6726,7 +6721,7 @@ function deleteScript(key) {
 }
 
 function renderScripts(){
-  var scripts = ensureDefaultScripts();
+  var scripts = ensureDefaultScripts() || {};
   var con = document.getElementById('scripts-list');
   if(!con) return;
   con.innerHTML = '';
