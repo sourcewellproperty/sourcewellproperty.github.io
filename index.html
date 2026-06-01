@@ -6697,13 +6697,32 @@ function saveScriptModal() {
 }
 
 function deleteScript(key) {
-  if(!confirm('Delete this script?')) return;
-  var scripts = retrieve('sw-scripts', {});
-  delete scripts[key];
-  store('sw-scripts', scripts);
-  try { localStorage.setItem('sw-scripts', JSON.stringify(scripts)); } catch(e) {}
-  renderScripts();
-  toast('Script deleted');
+  var btn = document.getElementById('del-btn-' + key);
+  if(!btn) return;
+  if(btn.dataset.confirm === '1') {
+    // Second click — actually delete
+    var scripts = retrieve('sw-scripts', {});
+    delete scripts[key];
+    store('sw-scripts', scripts);
+    try { localStorage.setItem('sw-scripts', JSON.stringify(scripts)); } catch(e) {}
+    renderScripts();
+    toast('Script deleted');
+  } else {
+    // First click — ask for confirmation
+    btn.textContent = 'Sure?';
+    btn.style.color = '#ef4444';
+    btn.style.borderColor = '#ef4444';
+    btn.dataset.confirm = '1';
+    // Auto-reset after 3 seconds
+    setTimeout(function() {
+      if(btn && btn.dataset.confirm === '1') {
+        btn.textContent = 'Del';
+        btn.style.color = '';
+        btn.style.borderColor = '';
+        btn.dataset.confirm = '0';
+      }
+    }, 3000);
+  }
 }
 
 function renderScripts(){
@@ -6736,7 +6755,7 @@ function renderScripts(){
       +'</div>'
       +'<div style="display:flex;gap:6px;flex-shrink:0;">'
       +'<button class="btn btn-ghost btn-sm" onclick="openScriptModal(\'' + key + '\')">Edit</button>'
-      +'<button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="deleteScript(\'' + key + '\')">Del</button>'
+      +'<button class="btn btn-ghost btn-sm" id="del-btn-'+key+'" style="color:var(--red);" onclick="deleteScript(\'' + key + '\')">Del</button>'
       +'</div>';
     card.appendChild(hdr);
 
