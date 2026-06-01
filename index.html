@@ -1042,9 +1042,27 @@ a.link:hover{text-decoration:underline;}
 <!-- SCRIPTS & TEMPLATES PAGE -->
 <div id="page-scripts" class="page">
   <div class="pg-hdr">
-    <div><div class="pg-title">Scripts & Templates</div><div class="pg-sub">Manage your calling, offer, and email templates</div></div>
+    <div><div class="pg-title">Scripts & Templates</div><div class="pg-sub">Calling scripts, offer scripts, email templates</div></div>
+    <button class="btn btn-amber" onclick="openScriptModal()">+ Add Script</button>
   </div>
-  <div id="scripts-list" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;"></div>
+  <div id="scripts-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+</div>
+
+<!-- SCRIPT MODAL -->
+<div id="script-modal" class="modal-wrap" style="display:none;">
+  <div class="modal" style="max-width:600px;width:96%;">
+    <div class="modal-hdr"><span id="script-modal-title">Add Script</span><button class="modal-x" onclick="closeScriptModal()">×</button></div>
+    <div class="g2" style="margin-bottom:12px;">
+      <div class="field"><label>Title</label><input type="text" id="sm-title" placeholder="e.g. Offer Script"></div>
+      <div class="field"><label>Category</label><select id="sm-category"><option>Offer</option><option>Email</option><option>Research</option><option>Investor</option><option>Agent</option><option>Other</option></select></div>
+    </div>
+    <div class="field" style="margin-bottom:12px;"><label>Description</label><input type="text" id="sm-desc" placeholder="Short description of when to use this"></div>
+    <div class="field" style="margin-bottom:16px;"><label>Content</label><textarea id="sm-content" style="min-height:200px;resize:vertical;" placeholder="Write your script here..."></textarea></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeScriptModal()">Cancel</button>
+      <button class="btn btn-amber" onclick="saveScriptModal()">Save Script</button>
+    </div>
+  </div>
 </div>
 
 <!-- SETTINGS PAGE -->
@@ -4604,7 +4622,7 @@ function renderTasks() {
     // Droppable group container
     var groupContainer = document.createElement('div');
     groupContainer.dataset.group = groupKey;
-    groupContainer.style.cssText = 'display:flex;flex-direction:column;gap:8px;min-height:10px;margin-bottom:4px;';
+    groupContainer.style.cssText = 'display:flex;flex-direction:column;gap:0;min-height:10px;margin-bottom:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden;';
 
     group.tasks.forEach(function(t) {
       var card = document.createElement('div');
@@ -4612,7 +4630,7 @@ function renderTasks() {
       card.dataset.id = t.id;
       card.dataset.group = groupKey;
       card.draggable = true;
-      card.style.cssText = 'display:flex;align-items:stretch;border-radius:8px;background:var(--bg);border:1px solid var(--border);border-left:3px solid '+group.color+';cursor:default;transition:box-shadow .15s,opacity .15s;'+(t.done?'opacity:0.55;':'');
+      card.style.cssText = 'display:flex;align-items:center;border-radius:0;background:var(--bg);border:none;border-bottom:1px solid var(--border);border-left:3px solid '+group.color+';cursor:default;transition:opacity .15s;'+(t.done?'opacity:0.5;':'');
 
       // Drag handle — more visible
       var handle = document.createElement('div');
@@ -4626,7 +4644,7 @@ function renderTasks() {
       doneBtn.style.cssText = 'width:28px;height:28px;min-width:28px;border-radius:50%;'
         +'border:2.5px solid '+(t.done ? '#22c55e' : 'var(--txt3)')+';'
         +'background:'+(t.done ? '#22c55e' : 'transparent')+';'
-        +'flex-shrink:0;align-self:center;margin:0 10px 0 2px;cursor:pointer;'
+        +'flex-shrink:0;align-self:center;margin:0 8px 0 4px;cursor:pointer;'
         +'display:flex;align-items:center;justify-content:center;transition:all .15s;'
         +'-webkit-tap-highlight-color:transparent;';
       doneBtn.innerHTML = t.done
@@ -4637,11 +4655,11 @@ function renderTasks() {
 
       // Body
       var body = document.createElement('div');
-      body.style.cssText = 'flex:1;padding:10px 6px 10px 0;min-width:0;';
+      body.style.cssText = 'flex:1;padding:7px 6px 7px 0;min-width:0;';
 
       // Top row: title + due badge
       var topRow = document.createElement('div');
-      topRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:5px;';
+      topRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px;';
 
       var titleEl = document.createElement('div');
       titleEl.style.cssText = 'font-weight:600;font-size:13px;line-height:1.3;color:'+(t.done?'var(--txt3)':'var(--txt)')+';'+(t.done?'text-decoration:line-through;':'');
@@ -4671,10 +4689,11 @@ function renderTasks() {
         body.appendChild(subEl);
       }
 
-      // Bottom row: type pill + notes
+      // Bottom row: type + priority pills + notes
       var meta = document.createElement('div');
-      meta.style.cssText = 'display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px;';
+      meta.style.cssText = 'display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:2px;';
       meta.appendChild(makePill(TASK_TYPE_LABELS[t.type]||t.type, TASK_TYPE_STYLES[t.type]||''));
+      meta.appendChild(makePill((t.priority||'medium').toUpperCase(), TASK_PRI_STYLES[t.priority||'medium']||''));
       if(t.notes){
         var notePreview = document.createElement('span');
         notePreview.style.cssText = 'font-size:11px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;';
@@ -6629,39 +6648,148 @@ function ensureDefaultScripts(){
   return scripts;
 }
 
+var _editingScriptKey = null;
+
+function openScriptModal(key) {
+  _editingScriptKey = key || null;
+  var modal = document.getElementById('script-modal');
+  var titleEl = document.getElementById('script-modal-title');
+  if(key) {
+    var scripts = retrieve('sw-scripts', {});
+    var s = scripts[key] || {};
+    document.getElementById('sm-title').value = s.title || '';
+    document.getElementById('sm-category').value = s.category || 'Other';
+    document.getElementById('sm-desc').value = s.desc || '';
+    document.getElementById('sm-content').value = s.content || '';
+    titleEl.textContent = 'Edit Script';
+  } else {
+    document.getElementById('sm-title').value = '';
+    document.getElementById('sm-category').value = 'Other';
+    document.getElementById('sm-desc').value = '';
+    document.getElementById('sm-content').value = '';
+    titleEl.textContent = 'Add Script';
+  }
+  modal.style.display = 'flex';
+}
+
+function closeScriptModal() {
+  document.getElementById('script-modal').style.display = 'none';
+  _editingScriptKey = null;
+}
+
+function saveScriptModal() {
+  var title = document.getElementById('sm-title').value.trim();
+  if(!title) { toast('Please enter a title'); return; }
+  var scripts = retrieve('sw-scripts', {});
+  var key = _editingScriptKey || ('script-' + Date.now());
+  scripts[key] = {
+    id: key,
+    title: title,
+    category: document.getElementById('sm-category').value,
+    desc: document.getElementById('sm-desc').value.trim(),
+    content: document.getElementById('sm-content').value
+  };
+  store('sw-scripts', scripts);
+  try { localStorage.setItem('sw-scripts', JSON.stringify(scripts)); } catch(e) {}
+  closeScriptModal();
+  renderScripts();
+  toast(_editingScriptKey ? 'Script updated!' : 'Script added!');
+}
+
+function deleteScript(key) {
+  if(!confirm('Delete this script?')) return;
+  var scripts = retrieve('sw-scripts', {});
+  delete scripts[key];
+  store('sw-scripts', scripts);
+  try { localStorage.setItem('sw-scripts', JSON.stringify(scripts)); } catch(e) {}
+  renderScripts();
+  toast('Script deleted');
+}
+
 function renderScripts(){
   var scripts = ensureDefaultScripts();
   var con = document.getElementById('scripts-list');
   if(!con) return;
-  
   con.innerHTML = '';
+
+  var catColors = {
+    Offer:'#f59e0b', Email:'#3b82f6', Research:'#8b5cf6',
+    Investor:'#10b981', Agent:'#ef4444', Other:'#6b7280'
+  };
+
   Object.keys(scripts).forEach(function(key){
     var s = scripts[key];
+    var col = catColors[s.category] || '#6b7280';
     var card = document.createElement('div');
-    card.style.cssText = 'border:1px solid var(--border);border-radius:8px;padding:16px;background:var(--bg);';
-    
-    var html = '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">';
-    html += '<div><div style="font-weight:600;font-size:14px;">'+s.title+'</div><div style="font-size:12px;color:var(--text-2);margin-top:4px;">'+s.desc+'</div></div>';
-    html += '<span style="font-size:11px;background:var(--border);color:var(--text-2);padding:4px 8px;border-radius:4px;">'+s.category+'</span>';
-    html += '</div>';
-    html += '<textarea id="script-'+key+'" style="width:100%;min-height:150px;padding:8px;border:1px solid var(--border);border-radius:4px;font-family:monospace;font-size:12px;resize:vertical;">'+s.content+'</textarea>';
-    html += '<div style="display:flex;gap:8px;margin-top:12px;">';
-    html += '<button class="btn btn-blue" onclick="copyScriptToClipboard(\''+key+'\')">📋 Copy</button>';
-    html += '<button class="btn btn-green" onclick="saveScript(\''+key+'\')">✓ Save</button>';
-    html += '</div>';
-    
-    card.innerHTML = html;
+    card.style.cssText = 'border:1px solid var(--border);border-radius:8px;background:var(--bg);overflow:hidden;';
+
+    // Header bar
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);gap:10px;';
+    hdr.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;min-width:0;">'
+      +'<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:'+col+'22;color:'+col+';border:1px solid '+col+'44;white-space:nowrap;">'+s.category+'</span>'
+      +'<div>'
+      +'<div style="font-weight:600;font-size:14px;color:var(--txt);">'+s.title+'</div>'
+      +(s.desc ? '<div style="font-size:11px;color:var(--txt3);margin-top:1px;">'+s.desc+'</div>' : '')
+      +'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;flex-shrink:0;">'
+      +'<button class="btn btn-ghost btn-sm" onclick="openScriptModal(''+key+'')">Edit</button>'
+      +'<button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="deleteScript(''+key+'')">Del</button>'
+      +'</div>';
+    card.appendChild(hdr);
+
+    // Content area
+    var body = document.createElement('div');
+    body.style.cssText = 'padding:12px 16px;';
+    body.innerHTML = '<pre style="white-space:pre-wrap;font-family:var(--fm);font-size:12px;color:var(--txt2);margin:0;line-height:1.6;max-height:160px;overflow:hidden;position:relative;" id="sc-pre-'+key+'">'
+      +s.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      +'</pre>'
+      +'<button onclick="toggleScriptExpand(''+key+'')" id="sc-toggle-'+key+'" style="font-size:10px;font-weight:600;color:var(--txt3);background:none;border:none;cursor:pointer;padding:4px 0;margin-top:4px;font-family:var(--fm);">Show more ▾</button>';
+    card.appendChild(body);
+
+    // Footer actions
+    var footer = document.createElement('div');
+    footer.style.cssText = 'padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;';
+    footer.innerHTML = '<button class="btn btn-blue" onclick="copyScript(''+key+'')">📋 Copy to clipboard</button>';
+    card.appendChild(footer);
+
     con.appendChild(card);
   });
+
+  if(!Object.keys(scripts).length) {
+    con.innerHTML = '<div class="empty"><div class="empty-title">No scripts yet</div><div class="empty-sub">Click + Add Script to create your first template</div></div>';
+  }
 }
 
-function copyScriptToClipboard(key){
-  var textarea = document.getElementById('script-'+key);
-  if(!textarea) return;
-  textarea.select();
+function toggleScriptExpand(key) {
+  var pre = document.getElementById('sc-pre-'+key);
+  var btn = document.getElementById('sc-toggle-'+key);
+  if(!pre) return;
+  if(pre.style.maxHeight === 'none') {
+    pre.style.maxHeight = '160px';
+    btn.textContent = 'Show more ▾';
+  } else {
+    pre.style.maxHeight = 'none';
+    btn.textContent = 'Show less ▴';
+  }
+}
+
+function copyScript(key){
+  var scripts = retrieve('sw-scripts', {});
+  var s = scripts[key];
+  if(!s) return;
+  var ta = document.createElement('textarea');
+  ta.value = s.content;
+  document.body.appendChild(ta);
+  ta.select();
   document.execCommand('copy');
+  document.body.removeChild(ta);
   toast('Copied to clipboard!');
 }
+
+function copyScriptToClipboard(key){ copyScript(key); }
 
 function saveScript(key){
   var textarea = document.getElementById('script-'+key);
