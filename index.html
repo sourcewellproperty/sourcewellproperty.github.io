@@ -6735,8 +6735,8 @@ function renderScripts(){
       +'</div>'
       +'</div>'
       +'<div style="display:flex;gap:6px;flex-shrink:0;">'
-      +'<button class="btn btn-ghost btn-sm" onclick="openScriptModal(''+key+'')">Edit</button>'
-      +'<button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="deleteScript(''+key+'')">Del</button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="openScriptModal(\'' + key + '\')">Edit</button>'
+      +'<button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="deleteScript(\'' + key + '\')">Del</button>'
       +'</div>';
     card.appendChild(hdr);
 
@@ -6746,13 +6746,13 @@ function renderScripts(){
     body.innerHTML = '<pre style="white-space:pre-wrap;font-family:var(--fm);font-size:12px;color:var(--txt2);margin:0;line-height:1.6;max-height:160px;overflow:hidden;position:relative;" id="sc-pre-'+key+'">'
       +s.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')
       +'</pre>'
-      +'<button onclick="toggleScriptExpand(''+key+'')" id="sc-toggle-'+key+'" style="font-size:10px;font-weight:600;color:var(--txt3);background:none;border:none;cursor:pointer;padding:4px 0;margin-top:4px;font-family:var(--fm);">Show more ▾</button>';
+      +'<button onclick="toggleScriptExpand(\'' + key + '\')" id="sc-toggle-'+key+'" style="font-size:10px;font-weight:600;color:var(--txt3);background:none;border:none;cursor:pointer;padding:4px 0;margin-top:4px;font-family:var(--fm);">Show more ▾</button>';
     card.appendChild(body);
 
     // Footer actions
     var footer = document.createElement('div');
     footer.style.cssText = 'padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;';
-    footer.innerHTML = '<button class="btn btn-blue" onclick="copyScript(''+key+'')">📋 Copy to clipboard</button>';
+    footer.innerHTML = '<button class="btn btn-blue" onclick="copyScript(\'' + key + '\')">📋 Copy to clipboard</button>';
     card.appendChild(footer);
 
     con.appendChild(card);
