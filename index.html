@@ -4424,10 +4424,19 @@ function renderTasks() {
 
   empty.style.display = openCount ? 'none' : 'block';
 
-  // Render each group
+  // Render each group — respecting filter
+  var groupsToShow = {
+    'all':      ['overdue','today','week','upcoming'],
+    'overdue':  ['overdue'],
+    'today':    ['overdue','today'],
+    'upcoming': ['week','upcoming'],
+    'done':     ['done']
+  }[taskFilterVal] || ['overdue','today','week','upcoming'];
+
   ['overdue', 'today', 'week', 'upcoming', 'done'].forEach(function(groupKey) {
     var group = groups[groupKey];
     if(group.tasks.length === 0) return;
+    if(groupsToShow.indexOf(groupKey) === -1) return;
 
     var groupHeader = document.createElement('div');
     groupHeader.style.cssText = 'margin-top:20px;margin-bottom:10px;padding:8px 12px;background:'+group.color+';color:#fff;border-radius:6px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;';
