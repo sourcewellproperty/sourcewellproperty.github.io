@@ -2047,7 +2047,7 @@ function renderDealCard(d, container, ags, invs, _ddAll) {
   var stageLabel = STAGE_LABELS[d.stage] || d.stage;
   var stageStyle = STAGE_STYLES[d.stage] || '';
   var typeLabel = d.type==='brr-sa'?'BRR→SA':d.type==='brr-btl'?'BRR→BTL':d.type==='btl'?'BTL':d.type==='flip'?'Flip':d.type||'';
-  var hasComps = _dd.comparables && _dd.comparables.length;
+  var hasComps = ((_dd.comparables && _dd.comparables.length > 0) || (d.comparables && d.comparables.length > 0) || (d.activities && d.activities.some(function(a){return a.note && a.note.indexOf('Comparables saved') > -1;})  ));
   var hasRefurb = _dd.elec||_dd.plumb||_dd.wins||_dd.doors||_dd.kfloor||_dd.bfloor||_dd.btile||_dd.damp||_dd.roof;
   var latestOffer = d.offer3||d.offer2||d.offer1||'';
   var offerNum = d.offer3?3:d.offer2?2:d.offer1?1:0;
@@ -2230,7 +2230,7 @@ function renderPipeline(){
     tdAddr.appendChild(aDiv);tdAddr.appendChild(aSub);
 
     // Comps & Refurb progress indicators
-    var _hasComps = (_dd.comparables && _dd.comparables.length > 0);
+    var _hasComps = ((_dd.comparables && _dd.comparables.length > 0) || (d.comparables && d.comparables.length > 0) || (d.activities && d.activities.some(function(a){return a.note && a.note.indexOf('Comparables saved') > -1;})  ));
     var _hasRefurb = (_dd.elec || _dd.plumb || _dd.wins || _dd.doors || _dd.kfloor || _dd.bfloor || _dd.btile || _dd.damp || _dd.roof);
     if(_hasComps || _hasRefurb) {
       var progRow = document.createElement('div');
@@ -6105,7 +6105,7 @@ function onAnalyserDealChange() {
   // Check sw-deal-data for comparables first
   var dealDataCheck = retrieve('sw-deal-data', {});
   var ddCheck = dealDataCheck[dealId] || {};
-  var hasComps = (ddCheck.comparables && ddCheck.comparables.length) || (deal.comparables && deal.comparables.length);
+  var hasComps = (ddCheck.comparables && ddCheck.comparables.length) || (deal.comparables && deal.comparables.length) || (deal.activities && deal.activities.some(function(a){return a.note && a.note.indexOf('Comparables saved') > -1;}));
   loadBtn.style.display = hasComps ? '' : 'none';
 
   // Load from sw-deal-data first (most reliable), fall back to deal object
