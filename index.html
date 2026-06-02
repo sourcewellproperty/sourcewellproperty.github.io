@@ -1473,7 +1473,13 @@ a.link:hover{text-decoration:underline;}
         </select>
       </div>
       <div class="field"><label>Due Date</label><input type="date" id="tk-due"></div>
-      <div class="field"><label>Linked Deal</label><select id="tk-deal"><option value="">— None —</option></select></div>
+      <div class="field" style="grid-column:1/-1;">
+        <label>Linked Deals</label>
+        <div id="tk-deal-chips" style="display:flex;flex-wrap:wrap;gap:4px;min-height:28px;margin-bottom:6px;"></div>
+        <select id="tk-deal-add" style="width:100%;">
+          <option value="">+ Add a deal...</option>
+        </select>
+      </div>
       <div class="field"><label>Linked Contact</label><select id="tk-contact"><option value="">— None —</option></select></div>
       <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea id="tk-notes" style="min-height:60px;" placeholder="What needs to happen, context, expected outcome..."></textarea></div>
     </div>
@@ -4406,8 +4412,9 @@ function openTaskModal(id, prefDealId, prefDealAddr) {
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
       '<div><label style="display:block;font-family:JetBrains Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#4a5568;margin-bottom:5px;font-weight:600;">Due Date</label>' +
         '<input id="_tk_due" type="date" value="'+defDue+'" style="width:100%;background:#1c1c1e;border:1.5px solid #ffffff18;color:#f0f2f5;font-family:JetBrains Mono,monospace;font-size:12px;padding:8px 11px;border-radius:8px;outline:none;box-sizing:border-box;"></div>' +
-      '<div><label style="display:block;font-family:JetBrains Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#4a5568;margin-bottom:5px;font-weight:600;">Linked Deal</label>' +
-        '<select id="_tk_deal" style="width:100%;background:#1c1c1e;border:1.5px solid #ffffff18;color:#f0f2f5;font-family:JetBrains Mono,monospace;font-size:12px;padding:8px 11px;border-radius:8px;appearance:none;outline:none;">'+dealOptHtml+'</select></div>' +
+      '<div style="grid-column:1/-1;"><label style="display:block;font-family:JetBrains Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#4a5568;margin-bottom:5px;font-weight:600;">Linked Deals</label>' +
+        '<div id="_tk_deal_chips" style="display:flex;flex-wrap:wrap;gap:4px;min-height:24px;margin-bottom:6px;"></div>' +
+        '<select id="_tk_deal_add" style="width:100%;background:#1c1c1e;border:1.5px solid #ffffff18;color:#f0f2f5;font-family:JetBrains Mono,monospace;font-size:12px;padding:8px 11px;border-radius:8px;appearance:none;outline:none;"><option value="">+ Add a deal...</option>'+dealOptHtml+'</select></div>' +
     '</div>' +
     '<div style="margin-bottom:12px;">' +
       '<label style="display:block;font-family:JetBrains Mono,monospace;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#4a5568;margin-bottom:5px;font-weight:600;">Linked Contact</label>' +
@@ -4427,6 +4434,43 @@ function openTaskModal(id, prefDealId, prefDealAddr) {
     if(el) document.body.removeChild(el);
   }
 
+  // Multi-deal chip selector
+  box._dealIds = [];
+  var existingTask = id ? retrieve('sw-tasks',[]).find(function(x){return x.id===id;}) : null;
+  if(existingTask) {
+    // Load existing dealIds (or migrate legacy single dealId)
+    var existingIds = existingTask.dealIds && existingTask.dealIds.length
+      ? existingTask.dealIds
+      : (existingTask.dealId ? [existingTask.dealId] : []);
+    existingIds.forEach(function(did) { addDealChip(did); });
+  } else if(prefDealId) {
+    addDealChip(prefDealId);
+  }
+
+  function addDealChip(did) {
+    if(!did || box._dealIds.indexOf(did) !== -1) return;
+    var dl = retrieve('sw-pipeline',[]).find(function(x){return x.id===did;});
+    if(!dl) return;
+    box._dealIds.push(did);
+    var chip = document.createElement('div');
+    chip.style.cssText = 'display:inline-flex;align-items:center;gap:4px;background:#f5a62322;border:1px solid #f5a62355;color:#f5a623;font-size:11px;font-weight:600;padding:3px 8px;border-radius:4px;font-family:JetBrains Mono,monospace;';
+    chip.textContent = dl.addr.split(',')[0];
+    var rem = document.createElement('button');
+    rem.textContent = '×';
+    rem.style.cssText = 'background:none;border:none;color:#f5a623;cursor:pointer;font-size:14px;padding:0 0 0 2px;line-height:1;';
+    rem.addEventListener('click', function(){
+      box._dealIds = box._dealIds.filter(function(x){return x!==did;});
+      chip.remove();
+    });
+    chip.appendChild(rem);
+    box.querySelector('#_tk_deal_chips').appendChild(chip);
+  }
+
+  box.querySelector('#_tk_deal_add').addEventListener('change', function(){
+    addDealChip(this.value);
+    this.value = '';
+  });
+
   box.querySelector('#_tk_x').addEventListener('click', destroyOverlay);
   box.querySelector('#_tk_cancel').addEventListener('click', destroyOverlay);
   overlay.addEventListener('click', function(e){ if(e.target===overlay) destroyOverlay(); });
@@ -4442,7 +4486,7 @@ function openTaskModal(id, prefDealId, prefDealAddr) {
       type: box.querySelector('#_tk_type').value,
       priority: box.querySelector('#_tk_priority').value,
       due: box.querySelector('#_tk_due').value,
-      dealId: box.querySelector('#_tk_deal').value,
+      dealIds: (box._dealIds || []),
       contactRef: box.querySelector('#_tk_contact').value,
       notes: box.querySelector('#_tk_notes').value.trim(),
       done: false,
@@ -4450,7 +4494,7 @@ function openTaskModal(id, prefDealId, prefDealAddr) {
     };
     if(eid){
       var existing = tasks.find(function(x){return x.id===eid;});
-      if(existing) task.done = existing.done;
+      if(existing) { task.done = existing.done; task.callLog = existing.callLog || []; }
       var i = tasks.findIndex(function(x){return x.id===eid;});
       if(i>-1) tasks[i]=task; else tasks.unshift(task);
     } else { tasks.unshift(task); }
@@ -4683,11 +4727,23 @@ function renderTasks() {
 
       if(t.due) {
         var daysLeft = Math.ceil((new Date(t.due) - new Date(todayStr)) / (1000 * 60 * 60 * 24));
-        var dueLabel = daysLeft < 0 ? Math.abs(daysLeft)+'d overdue' : daysLeft === 0 ? 'TODAY' : daysLeft+'d';
-        var dueBg = daysLeft < 0 ? '#7f1d1d' : daysLeft === 0 ? '#78350f' : 'var(--border)';
-        var dueClr = daysLeft < 0 ? '#fca5a5' : daysLeft === 0 ? '#fcd34d' : 'var(--txt3)';
+        var dueDt = new Date(t.due);
+        var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var dayStr = dayNames[dueDt.getDay()] + ' ' + dueDt.getDate() + ' ' + monthNames[dueDt.getMonth()];
+        var dueLabel, dueBg, dueClr;
+        if(daysLeft < 0) {
+          dueLabel = Math.abs(daysLeft)+'d overdue';
+          dueBg = '#7f1d1d'; dueClr = '#fca5a5';
+        } else if(daysLeft === 0) {
+          dueLabel = 'TODAY';
+          dueBg = '#78350f'; dueClr = '#fcd34d';
+        } else {
+          dueLabel = dayStr;
+          dueBg = 'var(--border)'; dueClr = 'var(--txt3)';
+        }
         var dueBadge = document.createElement('div');
-        dueBadge.style.cssText = 'font-size:10px;font-weight:800;color:'+dueClr+';background:'+dueBg+';padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;letter-spacing:.3px;';
+        dueBadge.style.cssText = 'font-size:10px;font-weight:700;color:'+dueClr+';background:'+dueBg+';padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;';
         dueBadge.textContent = dueLabel;
         topRow.appendChild(dueBadge);
       }
@@ -4695,7 +4751,14 @@ function renderTasks() {
 
       // Linked deal / investor
       var sub = '';
-      if(t.dealId){ var dl=deals.find(function(x){return x.id===t.dealId;}); if(dl) sub=dl.addr.split(',')[0]; }
+      // Support multiple deals (dealIds array) and legacy single dealId
+      var taskDealIds = (t.dealIds && t.dealIds.length) ? t.dealIds : (t.dealId ? [t.dealId] : []);
+      if(taskDealIds.length) {
+        sub = taskDealIds.map(function(did){
+          var dl=deals.find(function(x){return x.id===did;});
+          return dl ? dl.addr.split(',')[0] : null;
+        }).filter(Boolean).join(', ');
+      }
       if(t.invId){ var iv=invs.find(function(x){return x.id===t.invId;}); if(iv) sub=iv.name; }
       if(sub){
         var subEl = document.createElement('div');
