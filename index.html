@@ -4499,6 +4499,21 @@ function saveTask() {
   toast('Task saved');
 }
 
+function addTaskNote(id, text) {
+  var tasks = retrieve('sw-tasks', []);
+  var task = tasks.find(function(t){ return t.id === id; });
+  if(!task) return;
+  if(!task.callLog) task.callLog = [];
+  var now = new Date();
+  var ts = now.getDate()+' '+ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()]
+    +', '+now.getHours()+':'+(now.getMinutes()<10?'0':'')+now.getMinutes();
+  task.callLog.push({ text: text, ts: ts });
+  store('sw-tasks', tasks);
+  try { localStorage.setItem('sw-tasks', JSON.stringify(tasks)); } catch(e) {}
+  renderTasks();
+  toast('Note added');
+}
+
 function toggleTaskDone(id) {
   var tasks = retrieve('sw-tasks', []);
   var t = tasks.find(function(x){return x.id===id;});
@@ -4701,11 +4716,76 @@ function renderTasks() {
         meta.appendChild(notePreview);
       }
       body.appendChild(meta);
+
+      // Call log entries
+      if(t.callLog && t.callLog.length) {
+        var logWrap = document.createElement('div');
+        logWrap.style.cssText = 'margin-top:6px;border-top:1px solid var(--border);padding-top:5px;display:flex;flex-direction:column;gap:3px;';
+        t.callLog.forEach(function(entry) {
+          var row = document.createElement('div');
+          row.style.cssText = 'display:flex;justify-content:space-between;gap:6px;';
+          var entryText = document.createElement('span');
+          entryText.style.cssText = 'font-size:11px;color:var(--txt);';
+          entryText.textContent = '📝 ' + entry.text;
+          var entryTime = document.createElement('span');
+          entryTime.style.cssText = 'font-size:10px;color:var(--txt3);white-space:nowrap;flex-shrink:0;';
+          entryTime.textContent = entry.ts;
+          row.appendChild(entryText);
+          row.appendChild(entryTime);
+          logWrap.appendChild(row);
+        });
+        body.appendChild(logWrap);
+      }
+
+      // Inline note input (hidden by default)
+      var noteRow = document.createElement('div');
+      noteRow.id = 'note-row-' + t.id;
+      noteRow.style.cssText = 'display:none;margin-top:6px;gap:4px;align-items:center;';
+      var noteInput = document.createElement('input');
+      noteInput.type = 'text';
+      noteInput.placeholder = 'Add a note... e.g. Called, no answer';
+      noteInput.style.cssText = 'flex:1;font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--txt);font-family:var(--fm);';
+      var noteAddBtn = document.createElement('button');
+      noteAddBtn.style.cssText = 'font-size:10px;font-weight:700;padding:5px 8px;border-radius:4px;background:var(--blue);border:none;color:#fff;cursor:pointer;font-family:var(--fm);white-space:nowrap;';
+      noteAddBtn.textContent = 'Add';
+      noteAddBtn.addEventListener('click', (function(id, inp, row){return function(e){
+        e.stopPropagation();
+        var txt = inp.value.trim();
+        if(!txt) return;
+        addTaskNote(id, txt);
+        inp.value = '';
+        row.style.display = 'none';
+      };})(t.id, noteInput, noteRow));
+      noteInput.addEventListener('keydown', (function(id, inp, row){return function(e){
+        if(e.key==='Enter'){
+          var txt = inp.value.trim();
+          if(!txt) return;
+          addTaskNote(id, txt);
+          inp.value = '';
+          row.style.display = 'none';
+        }
+        if(e.key==='Escape') { row.style.display = 'none'; }
+      };})(t.id, noteInput, noteRow));
+      noteRow.appendChild(noteInput);
+      noteRow.appendChild(noteAddBtn);
+      body.appendChild(noteRow);
+
       card.appendChild(body);
 
       // Actions — horizontal, right aligned
       var actions = document.createElement('div');
       actions.style.cssText = 'display:flex;align-items:center;gap:4px;padding:0 10px 0 4px;flex-shrink:0;';
+      var noteBtn = document.createElement('button');
+      noteBtn.style.cssText = 'font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;background:transparent;border:1px solid var(--border);color:var(--blue);cursor:pointer;font-family:var(--fm);white-space:nowrap;';
+      noteBtn.textContent = '+ Note';
+      noteBtn.addEventListener('click', (function(id){return function(e){
+        e.stopPropagation();
+        var row = document.getElementById('note-row-'+id);
+        if(!row) return;
+        var isOpen = row.style.display === 'flex';
+        row.style.display = isOpen ? 'none' : 'flex';
+        if(!isOpen) row.querySelector('input').focus();
+      };})(t.id));
       var editBtn = document.createElement('button');
       editBtn.style.cssText = 'font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;background:transparent;border:1px solid var(--border);color:var(--txt3);cursor:pointer;font-family:var(--fm);white-space:nowrap;';
       editBtn.textContent = 'Edit';
@@ -4714,6 +4794,7 @@ function renderTasks() {
       delBtn.style.cssText = 'font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;background:transparent;border:1px solid var(--border);color:#ef4444;cursor:pointer;font-family:var(--fm);white-space:nowrap;';
       delBtn.textContent = 'Del';
       delBtn.addEventListener('click', (function(id){return function(e){e.stopPropagation();if(confirm('Delete task?'))deleteTask(id);};})(t.id));
+      actions.appendChild(noteBtn);
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
       card.appendChild(actions);
