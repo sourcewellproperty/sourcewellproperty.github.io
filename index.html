@@ -2709,7 +2709,51 @@ function renderAgents(){
       });
     }
     if(ag.notes){var nb=document.createElement('div');nb.className='note-box';nb.textContent=ag.notes;body.appendChild(nb);}
-    var btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;margin-top:10px;';
+
+    // ── Linked Calls ──────────────────────────────────────────────────────
+    var agCalls = retrieve('sw-calls',[]).filter(function(c){return c.companyRef===ag.id;}).slice(0,5);
+    if(agCalls.length>0){
+      var callHdr=document.createElement('div');callHdr.className='z-mini';
+      callHdr.style.cssText='margin:12px 0 6px;display:flex;justify-content:space-between;align-items:center;';
+      callHdr.innerHTML='<span>Recent Calls</span><span style="color:var(--txt3);font-size:10px;">'+agCalls.length+' logged</span>';
+      body.appendChild(callHdr);
+      agCalls.forEach(function(c){
+        var cRow=document.createElement('div');
+        cRow.style.cssText='display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);';
+        var cDate=document.createElement('span');cDate.style.cssText='font-size:10px;color:var(--txt3);white-space:nowrap;min-width:70px;';
+        cDate.textContent=fmtD(c.date||c.createdAt||'');
+        var cMeta=document.createElement('div');cMeta.style.cssText='flex:1;';
+        var cOut=document.createElement('div');cOut.style.cssText='font-size:11px;font-weight:600;color:var(--txt);';
+        cOut.textContent=c.outcome||'Call';
+        if(c.notes){var cNote=document.createElement('div');cNote.style.cssText='font-size:10px;color:var(--txt3);margin-top:1px;';cNote.textContent=c.notes.length>60?c.notes.slice(0,60)+'…':c.notes;cMeta.appendChild(cNote);}
+        cMeta.insertBefore(cOut,cMeta.firstChild);
+        cRow.appendChild(cDate);cRow.appendChild(cMeta);
+        body.appendChild(cRow);
+      });
+    }
+
+    // ── Linked Tasks ──────────────────────────────────────────────────────
+    var agTasks = retrieve('sw-tasks',[]).filter(function(t){return t.contactRef==='ag_'+ag.id && !t.done;});
+    if(agTasks.length>0){
+      var taskHdr=document.createElement('div');taskHdr.className='z-mini';
+      taskHdr.style.cssText='margin:12px 0 6px;display:flex;justify-content:space-between;align-items:center;';
+      taskHdr.innerHTML='<span>Open Tasks</span><span style="background:#ef444422;color:#f87171;font-size:10px;padding:1px 6px;border-radius:4px;">'+agTasks.length+' open</span>';
+      body.appendChild(taskHdr);
+      agTasks.forEach(function(t){
+        var tRow=document.createElement('div');
+        tRow.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);cursor:pointer;';
+        var tDue=document.createElement('span');tDue.style.cssText='font-size:10px;color:var(--txt3);white-space:nowrap;min-width:70px;';
+        tDue.textContent=fmtD(t.due||'');
+        var tTitle=document.createElement('span');tTitle.style.cssText='flex:1;font-size:11px;font-weight:600;color:var(--txt);';
+        tTitle.textContent=t.title;
+        var tEdit=document.createElement('button');tEdit.className='btn btn-ghost btn-sm';tEdit.textContent='Edit';
+        tEdit.addEventListener('click',function(e){e.stopPropagation();openTaskModal(t.id);});
+        tRow.appendChild(tDue);tRow.appendChild(tTitle);tRow.appendChild(tEdit);
+        body.appendChild(tRow);
+      });
+    }
+
+    var btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;';
     // Contacts from sw-contacts linked to this company
     var _cList=retrieve('sw-contacts',[]).filter(function(c){return c.companyId===ag.id;});
     if(_cList.length>0){
@@ -2725,9 +2769,13 @@ function renderAgents(){
     body.appendChild(_addCtBtn);
     var btnE=document.createElement('button');btnE.className='btn btn-ghost btn-sm';btnE.textContent='Edit';
     btnE.addEventListener('click',(function(id){return function(){openAgentModal(id);};})(ag.id));
+    var btnCall=document.createElement('button');btnCall.className='btn btn-blue btn-sm';btnCall.textContent='📞 Log Call';
+    btnCall.addEventListener('click',(function(agId){return function(e){e.stopPropagation();showPage('calls');setTimeout(function(){openCallModal(null,agId);},100);};})(ag.id));
+    var btnTask=document.createElement('button');btnTask.className='btn btn-amber btn-sm';btnTask.textContent='+ Task';
+    btnTask.addEventListener('click',(function(agId,agName){return function(e){e.stopPropagation();openTaskModalForAgent(agId,agName);};})(ag.id,ag.name));
     var btnD=document.createElement('button');btnD.className='btn btn-danger btn-sm';btnD.textContent='Delete';
     btnD.addEventListener('click',(function(id){return function(){deleteAgent(id);};})(ag.id));
-    btns.appendChild(btnE);btns.appendChild(btnD);body.appendChild(btns);
+    btns.appendChild(btnCall);btns.appendChild(btnTask);btns.appendChild(btnE);btns.appendChild(btnD);body.appendChild(btns);
     card.appendChild(head);card.appendChild(body);
       list.appendChild(card);
     });
@@ -4486,7 +4534,12 @@ function setupTaskFilters() {
   document.getElementById('task-modal-save').addEventListener('click', saveTask);
 }
 
-function openTaskModal(id, prefDealId, prefDealAddr) {
+function openTaskModalForAgent(agentId, agentName) {
+  // Open task modal pre-filled with this agent as the contact
+  openTaskModal(null, null, null, 'ag_' + agentId, agentName);
+}
+
+function openTaskModal(id, prefDealId, prefDealAddr, prefContactRef, prefContactName) {
   // Destroy any existing task overlay first
   var existing = document.getElementById('_task_overlay');
   if(existing) existing.parentNode.removeChild(existing);
@@ -4513,11 +4566,12 @@ function openTaskModal(id, prefDealId, prefDealAddr) {
   });
 
   // Default values
-  var defTitle = prefDealAddr ? 'Chase re: '+prefDealAddr.split(',')[0] : '';
+  var defTitle = prefDealAddr ? 'Chase re: '+prefDealAddr.split(',')[0] : (prefContactName ? 'Chase: '+prefContactName : '');
   var defType = 'offer_chase';
   var defPri = 'medium';
   var defDue = (function(){ var d=new Date(); return d.toISOString().split('T')[0]; })();
   var defNotes = '';
+  var defContactRef = prefContactRef || '';
 
   if(id) {
     var t = retrieve('sw-tasks',[]).find(function(x){return x.id===id;});
@@ -4627,6 +4681,11 @@ function openTaskModal(id, prefDealId, prefDealAddr) {
     this.value = '';
   });
 
+  // Pre-fill contact ref if provided
+  if(defContactRef) {
+    var ctSel = box.querySelector('#_tk_contact');
+    if(ctSel) ctSel.value = defContactRef;
+  }
   box.querySelector('#_tk_x').addEventListener('click', destroyOverlay);
   box.querySelector('#_tk_cancel').addEventListener('click', destroyOverlay);
   overlay.addEventListener('click', function(e){ if(e.target===overlay) destroyOverlay(); });
