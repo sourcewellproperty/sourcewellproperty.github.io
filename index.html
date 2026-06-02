@@ -888,25 +888,7 @@ a.link:hover{text-decoration:underline;}
 
   <!-- DAILY LOG TAB -->
   <div id="dt-log" class="tab-pane active">
-    <div style="overflow-x:auto;">
-    <table class="dt"><thead><tr>
-      <th>Date</th>
-      <th>Area</th>
-      <th title="Properties shortlisted on Rightmove">Short.</th>
-      <th title="Properties with valid comparables">Comps</th>
-      <th title="Agent calls made on specific properties">Calls</th>
-      <th title="Calls answered">Ans.</th>
-      <th title="Voicemail left">VM</th>
-      <th title="Viewings booked">Views</th>
-      <th title="Offers submitted">Offers</th>
-      <th title="Agent office visits">Visits</th>
-      <th title="DTV letters posted">DTV</th>
-      <th title="LinkedIn post published">LI</th>
-      <th title="Instagram post published">IG</th>
-      <th>Notes</th>
-      <th></th>
-    </tr></thead><tbody id="dt-body"></tbody></table>
-    </div>
+    <div id="dt-log-cards"></div>
     <div id="dt-empty" class="empty" style="display:none;"><div class="empty-title">No days logged yet</div><div class="empty-sub">Click + Log Day to record your first session</div></div>
   </div>
 
@@ -3225,96 +3207,108 @@ function renderKpiStrip() {
 }
 
 function renderDailyLog() {
-  var days = retrieve('sw-daily',[]);
-  var body = document.getElementById('dt-body');
+  var days = retrieve('sw-daily', []);
+  var container = document.getElementById('dt-log-cards');
   var empty = document.getElementById('dt-empty');
-  body.innerHTML = '';
+  if(!container) return;
+  container.innerHTML = '';
   empty.style.display = days.length ? 'none' : 'block';
 
   days.forEach(function(d) {
-    var tr = document.createElement('tr');tr.className='dr';
-    // Date
-    var tdDate=document.createElement('td');
-    tdDate.innerHTML='<div style="font-weight:500;font-size:12px;">'+fmtD(d.date)+'</div>';
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px;';
 
-    // Area
-    var tdFocus=document.createElement('td');
-    tdFocus.style.cssText='font-size:11px;color:var(--txt3);';
-    tdFocus.textContent=d.focus||'—';
+    // Header: date + area
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;';
+    var dateEl = document.createElement('div');
+    dateEl.style.cssText = 'font-weight:600;font-size:14px;color:var(--txt);';
+    var dt = new Date(d.date);
+    var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    dateEl.textContent = dayNames[dt.getDay()] + ' ' + dt.getDate() + ' ' + monthNames[dt.getMonth()] + ' ' + dt.getFullYear();
+    hdr.appendChild(dateEl);
+    if(d.focus) {
+      var area = document.createElement('span');
+      area.style.cssText = 'font-size:11px;font-weight:600;background:var(--bg2);color:var(--txt3);padding:3px 10px;border-radius:4px;border:1px solid var(--border);';
+      area.textContent = d.focus;
+      hdr.appendChild(area);
+    }
+    card.appendChild(hdr);
 
-    // Shortlisted (with target indicator)
-    var tdShort=document.createElement('td');
-    var shortN=d.short||0;
-    var shortOk=shortN>=DT_SHORT_TARGET;
-    tdShort.innerHTML='<span style="font-family:var(--fm);font-size:13px;font-weight:700;color:'+(shortOk?'var(--green)':shortN>0?'var(--amber2)':'var(--txt3)')+';">'+shortN+'</span>'+(shortOk?'<span style="color:var(--green);font-size:10px;margin-left:3px;">✓</span>':'');
+    // Metrics grid
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:8px;margin-bottom:10px;';
 
-    // With comps
-    var tdComps=document.createElement('td');tdComps.className='dt-mono';
-    tdComps.style.color=d.comps>0?'var(--blue)':'var(--txt3)';
-    tdComps.textContent=d.comps||'—';
+    var metrics = [
+      {label:'Shortlisted', val:d.short||0, target:DT_SHORT_TARGET},
+      {label:'Comps', val:d.comps||0, color:'blue'},
+      {label:'Calls', val:d.calls||0},
+      {label:'Answered', val:d.answered||0, color:'green'},
+      {label:'Voicemail', val:d.vm||0},
+      {label:'Viewings', val:d.viewed||0, color:'blue'},
+      {label:'Offers', val:d.offers||0, color:'green'},
+      {label:'Visits', val:d.visits||0}
+    ];
 
-    // Calls
-    var tdCalls=document.createElement('td');tdCalls.className='dt-mono';
-    tdCalls.style.color=d.calls>0?'var(--txt)':'var(--txt3)';
-    tdCalls.textContent=d.calls||'—';
+    metrics.forEach(function(m) {
+      var cell = document.createElement('div');
+      cell.style.cssText = 'background:var(--bg2);border-radius:6px;padding:8px 10px;text-align:center;';
+      var num = document.createElement('div');
+      var numVal = m.val || 0;
+      var col = 'var(--txt3)';
+      if(m.target) { col = numVal >= m.target ? 'var(--green)' : numVal > 0 ? 'var(--amber2)' : 'var(--txt3)'; }
+      else if(m.color === 'blue' && numVal > 0) col = 'var(--blue)';
+      else if(m.color === 'green' && numVal > 0) col = 'var(--green)';
+      else if(numVal > 0) col = 'var(--txt)';
+      num.style.cssText = 'font-size:20px;font-weight:700;color:'+col+';line-height:1;font-family:var(--fm);';
+      num.textContent = numVal;
+      var lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-top:4px;font-family:var(--fm);';
+      lbl.textContent = m.label;
+      cell.appendChild(num); cell.appendChild(lbl);
+      grid.appendChild(cell);
+    });
+    card.appendChild(grid);
 
-    // Answered
-    var tdAns=document.createElement('td');tdAns.className='dt-mono';
-    tdAns.style.color=d.ans>0?'var(--green)':'var(--txt3)';
-    tdAns.textContent=d.ans||'—';
-
-    // VM
-    var tdVm=document.createElement('td');tdVm.className='dt-mono';
-    tdVm.style.color='var(--txt3)';tdVm.textContent=d.vm||'—';
-
-    // Viewings
-    var tdView=document.createElement('td');tdView.className='dt-mono';
-    tdView.style.color=d.view>0?'var(--amber2)':'var(--txt3)';
-    tdView.textContent=d.view||'—';
-
-    // Offers
-    var tdOff=document.createElement('td');tdOff.className='dt-mono';
-    tdOff.style.color=d.offsub>0?'var(--green)':'var(--txt3)';
-    tdOff.textContent=d.offsub||'—';
-
-    // Accepted
-    var tdAcc=document.createElement('td');tdAcc.className='dt-mono';
-    tdAcc.style.color=d.offacc>0?'var(--green)':'var(--txt3)';
-    tdAcc.textContent=d.offacc||'—';
-
-    // Agent visits
-    var tdVisits=document.createElement('td');tdVisits.className='dt-mono';
-    tdVisits.style.color=d.visits>0?'var(--amber2)':'var(--txt3)';
-    tdVisits.textContent=d.visits||'—';
-
-    // DTV letters
-    var tdDtv=document.createElement('td');tdDtv.className='dt-mono';
-    tdDtv.style.color=d.dtv>0?'var(--blue)':'var(--txt3)';
-    tdDtv.textContent=d.dtv||'—';
-
-    // LinkedIn
-    var tdLi=document.createElement('td');tdLi.style.textAlign='center';
-    tdLi.innerHTML=(d.linkedin==='1'||d.linkedin===1)?'<span style="color:var(--green);font-size:12px;">✓</span>':'<span style="color:var(--txt3);font-size:10px;">—</span>';
-
-    // Instagram
-    var tdIg=document.createElement('td');tdIg.style.textAlign='center';
-    tdIg.innerHTML=(d.instagram==='1'||d.instagram===1)?'<span style="color:#c084fc;font-size:12px;">✓</span>':'<span style="color:var(--txt3);font-size:10px;">—</span>';
+    // Social row
+    var social = document.createElement('div');
+    social.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:10px;';
+    var liStyle = d.li ? 'background:#E6F1FB;color:#185FA5;border:1px solid #B5D4F4;' : 'background:var(--bg2);color:var(--txt3);border:1px solid var(--border);';
+    var igStyle = d.ig ? 'background:#FBEAF0;color:#993556;border:1px solid #F4C0D1;' : 'background:var(--bg2);color:var(--txt3);border:1px solid var(--border);';
+    var liEl = document.createElement('span');
+    liEl.style.cssText = 'font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;'+liStyle;
+    liEl.textContent = d.li ? 'LinkedIn posted' : 'LinkedIn —';
+    var igEl = document.createElement('span');
+    igEl.style.cssText = 'font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;'+igStyle;
+    igEl.textContent = d.ig ? 'Instagram posted' : 'Instagram —';
+    social.appendChild(liEl); social.appendChild(igEl);
+    card.appendChild(social);
 
     // Notes
-    var tdNotes=document.createElement('td');
-    tdNotes.style.cssText='max-width:160px;font-size:11px;color:var(--txt3);line-height:1.4;';
-    tdNotes.textContent=d.notes||'';
+    if(d.notes) {
+      var note = document.createElement('div');
+      note.style.cssText = 'font-size:12px;color:var(--txt2);line-height:1.5;padding:8px 10px;background:var(--bg2);border-radius:6px;margin-bottom:10px;';
+      note.textContent = d.notes;
+      card.appendChild(note);
+    }
 
     // Actions
-    var tdAct=document.createElement('td');tdAct.style.whiteSpace='nowrap';
-    var btnE=document.createElement('button');btnE.className='btn btn-ghost btn-sm';btnE.textContent='Edit';btnE.style.marginRight='4px';
-    btnE.addEventListener('click',(function(id){return function(){openDayModal(id);};})(d.id));
-    var btnD=document.createElement('button');btnD.className='btn btn-danger btn-sm';btnD.textContent='Del';
-    btnD.addEventListener('click',(function(id){return function(){deleteDay(id);};})(d.id));
-    tdAct.appendChild(btnE);tdAct.appendChild(btnD);
+    var acts = document.createElement('div');
+    acts.style.cssText = 'display:flex;gap:6px;justify-content:flex-end;';
+    var editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-ghost btn-sm'; editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', (function(id){return function(){openDayModal(id);};})(d.id));
+    var delBtn = document.createElement('button');
+    delBtn.className = 'btn btn-ghost btn-sm'; delBtn.style.color = '#E24B4A'; delBtn.textContent = 'Del';
+    delBtn.addEventListener('click', (function(id){return function(){
+      var days2 = retrieve('sw-daily',[]).filter(function(x){return x.id!==id;});
+      store('sw-daily',days2); renderDailyLog(); renderKpiStrip(); toast('Day deleted');
+    };})(d.id));
+    acts.appendChild(editBtn); acts.appendChild(delBtn);
+    card.appendChild(acts);
 
-    [tdDate,tdFocus,tdShort,tdComps,tdCalls,tdAns,tdVm,tdView,tdOff,tdAcc,tdVisits,tdDtv,tdLi,tdIg,tdNotes,tdAct].forEach(function(td){tr.appendChild(td);});
-    body.appendChild(tr);
+    container.appendChild(card);
   });
 }
 
@@ -4548,15 +4542,42 @@ function openTaskModal(id, prefDealId, prefDealAddr, prefContactRef, prefContact
   var invs = retrieve('sw-crm', []);
   var ags = retrieve('sw-agents', []);
 
-  // Build agent options HTML
+  // Build contact options — contacts first, then agents, then investors
+  var contacts = retrieve('sw-contacts', []);
   var agOptHtml = '<option value="">— None —</option>';
-  ags.forEach(function(a){
-    var sel = (prefDealId && !id) ? '' : '';
-    agOptHtml += '<option value="ag_'+a.id+'">'+a.name+(a.agency?' · '+a.agency:'')+'</option>';
+
+  // 1. Real contacts (individual people from sw-contacts)
+  if(contacts.length) {
+    agOptHtml += '<optgroup label="Contacts">';
+    contacts.forEach(function(c){
+      var company = ags.find(function(a){return a.id===c.companyId;});
+      var label = c.name + (company ? ' · ' + company.name : '') + (c.role ? ' (' + c.role + ')' : '');
+      agOptHtml += '<option value="ct_'+c.id+'">'+label+'</option>';
+    });
+    agOptHtml += '</optgroup>';
+  }
+
+  // 2. Agents — only show individual agents (not companies), skip duplicates
+  var agentContacts = ags.filter(function(a){
+    return a.role !== 'Agency' && a.role !== 'Branch' && a.name !== a.agency;
   });
-  invs.forEach(function(inv){
-    agOptHtml += '<option value="inv_'+inv.id+'">'+inv.name+' (Investor)</option>';
-  });
+  if(agentContacts.length) {
+    agOptHtml += '<optgroup label="Agents">';
+    agentContacts.forEach(function(a){
+      var label = a.name + (a.agency && a.agency !== a.name ? ' · ' + a.agency : '');
+      agOptHtml += '<option value="ag_'+a.id+'">'+label+'</option>';
+    });
+    agOptHtml += '</optgroup>';
+  }
+
+  // 3. Investors
+  if(invs.length) {
+    agOptHtml += '<optgroup label="Investors">';
+    invs.forEach(function(inv){
+      agOptHtml += '<option value="inv_'+inv.id+'">'+inv.name+'</option>';
+    });
+    agOptHtml += '</optgroup>';
+  }
 
   // Build deal options HTML
   var dealOptHtml = '<option value="">— None —</option>';
