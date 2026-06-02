@@ -4800,50 +4800,33 @@ function renderTasks() {
   var ags = retrieve('sw-agents', []);
   var todayStr = today();
 
-  // Group tasks by due date status
   var groups = {
-    overdue: {label: '🔴 OVERDUE', color: '#dc2626', tasks: []},
-    today: {label: '🟠 DUE TODAY', color: '#f59e0b', tasks: []},
-    week: {label: '🟡 THIS WEEK', color: '#eab308', tasks: []},
-    upcoming: {label: '⚪ UPCOMING', color: '#9ca3af', tasks: []},
-    done: {label: '✅ COMPLETED', color: '#10b981', tasks: []}
+    overdue: {label:'Overdue', color:'#E24B4A', bg:'#FCEBEB', textColor:'#A32D2D', countBg:'#F7C1C1', tasks:[]},
+    today:   {label:'Due today', color:'#BA7517', bg:'#FAEEDA', textColor:'#854F0B', countBg:'#FAC775', tasks:[]},
+    week:    {label:'This week', color:'#639922', bg:'#EAF3DE', textColor:'#3B6D11', countBg:'#C0DD97', tasks:[]},
+    upcoming:{label:'Upcoming', color:'var(--txt3)', bg:'var(--bg2)', textColor:'var(--txt3)', countBg:'var(--border)', tasks:[]},
+    done:    {label:'Completed', color:'#10b981', bg:'transparent', textColor:'var(--txt3)', countBg:'var(--border)', tasks:[]}
   };
 
   tasks.forEach(function(t) {
     var status = taskDueStatus(t.due, t.done);
-    if(t.done) {
-      groups.done.tasks.push(t);
-    } else if(status === 'overdue') {
-      groups.overdue.tasks.push(t);
-    } else if(status === 'today') {
-      groups.today.tasks.push(t);
-    } else {
-      // Check if within this week (7 days from today)
-      if(t.due) {
-        var dueDate = new Date(t.due);
-        var todayDate = new Date(todayStr);
-        var daysUntil = (dueDate - todayDate) / (1000 * 60 * 60 * 24);
-        if(daysUntil > 0 && daysUntil <= 7) {
-          groups.week.tasks.push(t);
-        } else if(daysUntil > 7) {
-          groups.upcoming.tasks.push(t);
-        }
-      } else {
-        groups.upcoming.tasks.push(t);
-      }
-    }
+    if(t.done) { groups.done.tasks.push(t); return; }
+    if(status === 'overdue') { groups.overdue.tasks.push(t); return; }
+    if(status === 'today')   { groups.today.tasks.push(t); return; }
+    if(t.due) {
+      var daysUntil = (new Date(t.due) - new Date(todayStr)) / (1000*60*60*24);
+      if(daysUntil > 0 && daysUntil <= 7) groups.week.tasks.push(t);
+      else if(daysUntil > 7) groups.upcoming.tasks.push(t);
+    } else { groups.upcoming.tasks.push(t); }
   });
 
-  // Apply saved manual order, fall back to due date sort
   var taskOrder = retrieve('sw-task-order', {});
   Object.keys(groups).forEach(function(key) {
-    var savedOrder = taskOrder[key] || [];
-    groups[key].tasks.sort(function(a, b) {
-      var ai = savedOrder.indexOf(a.id);
-      var bi = savedOrder.indexOf(b.id);
-      if(ai !== -1 && bi !== -1) return ai - bi;
-      if(ai !== -1) return -1;
-      if(bi !== -1) return 1;
+    var saved = taskOrder[key] || [];
+    groups[key].tasks.sort(function(a,b){
+      var ai=saved.indexOf(a.id), bi=saved.indexOf(b.id);
+      if(ai!==-1&&bi!==-1) return ai-bi;
+      if(ai!==-1) return -1; if(bi!==-1) return 1;
       return (a.due||'').localeCompare(b.due||'');
     });
   });
@@ -4852,274 +4835,236 @@ function renderTasks() {
   var empty = document.getElementById('task-empty');
   list.innerHTML = '';
 
-  // Count open tasks
-  var openCount = tasks.filter(function(t){return !t.done;}).length;
-  var doneCount = tasks.filter(function(t){return t.done;}).length;
   var overdueCount = groups.overdue.tasks.length;
-  var todayCount = groups.today.tasks.length;
+  var todayCount   = groups.today.tasks.length;
+  var weekCount    = groups.week.tasks.length;
+  var upcomingCount= groups.upcoming.tasks.length;
+  var doneCount    = groups.done.tasks.length;
+  var openCount    = overdueCount+todayCount+weekCount+upcomingCount;
 
   document.getElementById('task-stats').innerHTML =
-    '<div class="stat-box"><div class="stat-val" style="color:var(--red);">'+overdueCount+'</div><div class="stat-lbl">Overdue</div></div>'+
-    '<div class="stat-box"><div class="stat-val" style="color:var(--amber2);">'+todayCount+'</div><div class="stat-lbl">Due today</div></div>'+
-    '<div class="stat-box"><div class="stat-val">'+openCount+'</div><div class="stat-lbl">Open tasks</div></div>'+
-    '<div class="stat-box"><div class="stat-val" style="color:var(--green);">'+doneCount+'</div><div class="stat-lbl">Completed</div></div>';
+    '<div class="stat-box"><div class="stat-val" style="color:#E24B4A;">'+overdueCount+'</div><div class="stat-lbl">Overdue</div></div>'+
+    '<div class="stat-box"><div class="stat-val" style="color:#BA7517;">'+todayCount+'</div><div class="stat-lbl">Today</div></div>'+
+    '<div class="stat-box"><div class="stat-val" style="color:#378ADD;">'+weekCount+'</div><div class="stat-lbl">This week</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+upcomingCount+'</div><div class="stat-lbl">Upcoming</div></div>'+
+    '<div class="stat-box"><div class="stat-val" style="color:#10b981;">'+doneCount+'</div><div class="stat-lbl">Done</div></div>';
 
   empty.style.display = openCount ? 'none' : 'block';
 
-  // Render each group — respecting filter
   var groupsToShow = {
-    'all':      ['overdue','today','week','upcoming'],
-    'overdue':  ['overdue'],
-    'today':    ['overdue','today'],
-    'upcoming': ['week','upcoming'],
-    'done':     ['done']
+    'all':     ['overdue','today','week','upcoming'],
+    'overdue': ['overdue'],
+    'today':   ['overdue','today'],
+    'upcoming':['week','upcoming'],
+    'done':    ['done']
   }[taskFilterVal] || ['overdue','today','week','upcoming'];
 
-  ['overdue', 'today', 'week', 'upcoming', 'done'].forEach(function(groupKey) {
+  ['overdue','today','week','upcoming','done'].forEach(function(groupKey) {
     var group = groups[groupKey];
     if(group.tasks.length === 0) return;
     if(groupsToShow.indexOf(groupKey) === -1) return;
 
-    // Group header — solid band
-    var groupHeader = document.createElement('div');
-    groupHeader.style.cssText = 'margin-top:20px;margin-bottom:8px;padding:7px 12px;border-radius:6px;'
-      +'background:'+group.color+'18;border-left:4px solid '+group.color+';'
-      +'display:flex;align-items:center;justify-content:space-between;';
-    groupHeader.innerHTML =
-      '<div style="display:flex;align-items:center;gap:8px;">'
-      +'<span style="font-size:12px;font-weight:800;color:'+group.color+';text-transform:uppercase;letter-spacing:.8px;">'+group.label+'</span>'
-      +'</div>'
-      +'<span style="font-size:11px;font-weight:700;background:'+group.color+'33;color:'+group.color+';'
-      +'padding:2px 8px;border-radius:10px;">'+group.tasks.length+(group.tasks.length===1?' task':' tasks')+'</span>';
-    list.appendChild(groupHeader);
+    // Group header
+    var hdr = document.createElement('div');
+    hdr.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;margin-top:16px;margin-bottom:8px;background:'+group.bg+';';
+    hdr.innerHTML =
+      '<div style="width:8px;height:8px;border-radius:50%;background:'+group.color+';flex-shrink:0;"></div>'+
+      '<span style="font-size:12px;font-weight:600;flex:1;color:'+group.textColor+';">'+group.label+'</span>'+
+      '<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:'+group.countBg+';color:'+group.textColor+';">'+group.tasks.length+(group.tasks.length===1?' task':' tasks')+'</span>';
+    list.appendChild(hdr);
 
-    // Droppable group container
-    var groupContainer = document.createElement('div');
-    groupContainer.dataset.group = groupKey;
-    groupContainer.style.cssText = 'display:flex;flex-direction:column;gap:0;min-height:10px;margin-bottom:12px;border:1px solid var(--border);border-radius:8px;overflow:hidden;';
+    var container = document.createElement('div');
+    container.dataset.group = groupKey;
+    container.style.cssText = 'display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;';
 
-    group.tasks.forEach(function(t) {
+    group.tasks.forEach(function(t, taskIndex) {
       var card = document.createElement('div');
-      card.className = 'task-card' + (t.done?' done-card':'');
       card.dataset.id = t.id;
       card.dataset.group = groupKey;
       card.draggable = true;
-      card.style.cssText = 'display:flex;align-items:center;border-radius:0;background:var(--bg);border:none;border-bottom:1px solid var(--border);border-left:3px solid '+group.color+';cursor:default;transition:opacity .15s;'+(t.done?'opacity:0.5;':'');
+      card.style.cssText = 'display:flex;align-items:stretch;background:var(--bg);border-bottom:1px solid var(--border);border-left:3px solid '+group.color+';'+(t.done?'opacity:0.55;':'')+(taskIndex===group.tasks.length-1?'border-bottom:none;':'');
 
-      // Drag handle — more visible
+      // Drag handle
       var handle = document.createElement('div');
-      handle.style.cssText = 'display:flex;align-items:center;justify-content:center;width:22px;color:var(--txt3);cursor:grab;flex-shrink:0;user-select:none;font-size:13px;opacity:0.35;';
+      handle.style.cssText = 'display:flex;align-items:center;padding:0 8px;color:var(--txt3);cursor:grab;font-size:12px;opacity:0.3;user-select:none;flex-shrink:0;';
       handle.innerHTML = '&#8942;&#8942;';
       card.appendChild(handle);
 
-      // Done button — bigger tap target
+      // Done button
       var doneBtn = document.createElement('button');
       doneBtn.title = t.done ? 'Mark incomplete' : 'Mark complete';
-      doneBtn.style.cssText = 'width:28px;height:28px;min-width:28px;border-radius:50%;'
-        +'border:2.5px solid '+(t.done ? '#22c55e' : 'var(--txt3)')+';'
-        +'background:'+(t.done ? '#22c55e' : 'transparent')+';'
-        +'flex-shrink:0;align-self:center;margin:0 8px 0 4px;cursor:pointer;'
-        +'display:flex;align-items:center;justify-content:center;transition:all .15s;'
-        +'-webkit-tap-highlight-color:transparent;';
+      doneBtn.style.cssText = 'width:22px;height:22px;min-width:22px;border-radius:50%;'
+        +'border:2px solid '+(t.done?'#639922':'var(--txt3)')+';'
+        +'background:'+(t.done?'#639922':'transparent')+';'
+        +'flex-shrink:0;align-self:center;margin:0 10px 0 0;cursor:pointer;'
+        +'display:flex;align-items:center;justify-content:center;transition:all .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
       doneBtn.innerHTML = t.done
-        ? '<svg width="13" height="13" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>'
-        : '<svg width="13" height="13" viewBox="0 0 10 10" fill="none" stroke="var(--txt3)" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>';
+        ? '<svg width="11" height="11" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>'
+        : '<svg width="11" height="11" viewBox="0 0 10 10" fill="none" stroke="var(--txt3)" stroke-width="2"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>';
       doneBtn.addEventListener('click', (function(id){return function(e){e.stopPropagation();toggleTaskDone(id);};})(t.id));
       card.appendChild(doneBtn);
 
       // Body
       var body = document.createElement('div');
-      body.style.cssText = 'flex:1;padding:7px 6px 7px 0;min-width:0;';
+      body.style.cssText = 'flex:1;padding:10px 8px 10px 0;min-width:0;';
 
-      // Top row: title + due badge
-      var topRow = document.createElement('div');
-      topRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px;';
-
+      // Title
       var titleEl = document.createElement('div');
-      titleEl.style.cssText = 'font-weight:600;font-size:13px;line-height:1.3;color:'+(t.done?'var(--txt3)':'var(--txt)')+';'+(t.done?'text-decoration:line-through;':'');
+      titleEl.style.cssText = 'font-weight:600;font-size:13px;color:'+(t.done?'var(--txt3)':'var(--txt)')+';'+(t.done?'text-decoration:line-through;':'')+';margin-bottom:6px;line-height:1.3;';
       titleEl.textContent = t.title;
-      topRow.appendChild(titleEl);
+      body.appendChild(titleEl);
 
-      if(t.due) {
-        var daysLeft = Math.ceil((new Date(t.due) - new Date(todayStr)) / (1000 * 60 * 60 * 24));
-        var dueDt = new Date(t.due);
-        var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-        var dayStr = dayNames[dueDt.getDay()] + ' ' + dueDt.getDate() + ' ' + monthNames[dueDt.getMonth()];
-        var dueLabel, dueBg, dueClr;
-        if(daysLeft < 0) {
-          dueLabel = Math.abs(daysLeft)+'d overdue';
-          dueBg = '#7f1d1d'; dueClr = '#fca5a5';
-        } else if(daysLeft === 0) {
-          dueLabel = 'TODAY';
-          dueBg = '#78350f'; dueClr = '#fcd34d';
-        } else {
-          dueLabel = dayStr;
-          dueBg = 'var(--border)'; dueClr = 'var(--txt3)';
-        }
-        var dueBadge = document.createElement('div');
-        dueBadge.style.cssText = 'font-size:10px;font-weight:700;color:'+dueClr+';background:'+dueBg+';padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;';
-        dueBadge.textContent = dueLabel;
-        topRow.appendChild(dueBadge);
-      }
-      body.appendChild(topRow);
+      // Chips row: type + priority + linked deals + agent
+      var chips = document.createElement('div');
+      chips.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin-bottom:6px;';
 
-      // Linked deal / investor
-      var sub = '';
-      // Support multiple deals (dealIds array) and legacy single dealId
+      // Type chip
+      var typeChip = document.createElement('span');
+      typeChip.style.cssText = 'font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:#E6F1FB;color:#185FA5;';
+      typeChip.textContent = TASK_TYPE_LABELS[t.type]||t.type;
+      chips.appendChild(typeChip);
+
+      // Priority chip
+      var priStyles = {
+        high:   'background:#FCEBEB;color:#A32D2D;',
+        medium: 'background:#FAEEDA;color:#854F0B;',
+        low:    'background:var(--border);color:var(--txt3);'
+      };
+      var priChip = document.createElement('span');
+      priChip.style.cssText = 'font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;'+(priStyles[t.priority||'medium']||priStyles.medium);
+      priChip.textContent = (t.priority||'medium').charAt(0).toUpperCase()+(t.priority||'medium').slice(1);
+      chips.appendChild(priChip);
+
+      // Linked deal chips (purple)
       var taskDealIds = (t.dealIds && t.dealIds.length) ? t.dealIds : (t.dealId ? [t.dealId] : []);
-      if(taskDealIds.length) {
-        sub = taskDealIds.map(function(did){
-          var dl=deals.find(function(x){return x.id===did;});
-          return dl ? dl.addr.split(',')[0] : null;
-        }).filter(Boolean).join(', ');
-      }
-      if(t.invId){ var iv=invs.find(function(x){return x.id===t.invId;}); if(iv) sub=iv.name; }
-      if(sub){
-        var subEl = document.createElement('div');
-        subEl.style.cssText = 'font-size:11px;font-weight:500;color:var(--blue);margin-bottom:5px;';
-        subEl.textContent = '↳ ' + sub;
-        body.appendChild(subEl);
+      taskDealIds.forEach(function(did){
+        var dl = deals.find(function(x){return x.id===did;});
+        if(!dl) return;
+        var dc = document.createElement('span');
+        dc.style.cssText = 'font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:#EEEDFE;color:#534AB7;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+        dc.textContent = dl.addr.split(',')[0];
+        chips.appendChild(dc);
+      });
+
+      // Linked agent chip (teal)
+      if(t.contactRef && t.contactRef.startsWith('ag_')) {
+        var agId = t.contactRef.replace('ag_','');
+        var agRec = ags.find(function(x){return x.id===agId;});
+        if(agRec) {
+          var ac = document.createElement('span');
+          ac.style.cssText = 'font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;background:#E1F5EE;color:#0F6E56;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+          ac.textContent = agRec.name;
+          chips.appendChild(ac);
+        }
       }
 
-      // Bottom row: type + priority pills + notes
-      var meta = document.createElement('div');
-      meta.style.cssText = 'display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:2px;';
-      meta.appendChild(makePill(TASK_TYPE_LABELS[t.type]||t.type, TASK_TYPE_STYLES[t.type]||''));
-      meta.appendChild(makePill((t.priority||'medium').toUpperCase(), TASK_PRI_STYLES[t.priority||'medium']||''));
-      if(t.notes){
-        var notePreview = document.createElement('span');
-        notePreview.style.cssText = 'font-size:11px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;';
-        notePreview.textContent = t.notes.length > 60 ? t.notes.slice(0,60)+'…' : t.notes;
-        meta.appendChild(notePreview);
-      }
-      body.appendChild(meta);
+      body.appendChild(chips);
 
-      // Call log entries
+      // Notes preview
+      if(t.notes) {
+        var noteEl = document.createElement('div');
+        noteEl.style.cssText = 'font-size:11px;color:var(--txt3);margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:400px;';
+        noteEl.textContent = t.notes.length > 70 ? t.notes.slice(0,70)+'…' : t.notes;
+        body.appendChild(noteEl);
+      }
+
+      // Call log entries (last 2)
       if(t.callLog && t.callLog.length) {
         var logWrap = document.createElement('div');
-        logWrap.style.cssText = 'margin-top:6px;border-top:1px solid var(--border);padding-top:5px;display:flex;flex-direction:column;gap:3px;';
-        t.callLog.forEach(function(entry) {
+        logWrap.style.cssText = 'margin-bottom:5px;';
+        var recent = t.callLog.slice(-2);
+        recent.forEach(function(entry){
           var row = document.createElement('div');
           row.style.cssText = 'display:flex;justify-content:space-between;gap:6px;';
           var entryText = document.createElement('span');
-          entryText.style.cssText = 'font-size:11px;color:var(--txt);';
-          entryText.textContent = '📝 ' + entry.text;
+          entryText.style.cssText = 'font-size:11px;color:var(--txt2);';
+          entryText.textContent = '📝 '+entry.text;
           var entryTime = document.createElement('span');
           entryTime.style.cssText = 'font-size:10px;color:var(--txt3);white-space:nowrap;flex-shrink:0;';
           entryTime.textContent = entry.ts;
-          row.appendChild(entryText);
-          row.appendChild(entryTime);
+          row.appendChild(entryText); row.appendChild(entryTime);
           logWrap.appendChild(row);
         });
         body.appendChild(logWrap);
       }
 
-      // Inline note input (hidden by default)
+      // Inline note input (hidden)
       var noteRow = document.createElement('div');
-      noteRow.id = 'note-row-' + t.id;
-      noteRow.style.cssText = 'display:none;margin-top:6px;gap:4px;align-items:center;';
+      noteRow.id = 'note-row-'+t.id;
+      noteRow.style.cssText = 'display:none;gap:4px;align-items:center;margin-top:4px;';
       var noteInput = document.createElement('input');
       noteInput.type = 'text';
-      noteInput.placeholder = 'Add a note... e.g. Called, no answer';
-      noteInput.style.cssText = 'flex:1;font-size:11px;padding:5px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--txt);font-family:var(--fm);';
+      noteInput.placeholder = 'Add a note...';
+      noteInput.style.cssText = 'flex:1;font-size:11px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--txt);font-family:var(--fm);';
       var noteAddBtn = document.createElement('button');
-      noteAddBtn.style.cssText = 'font-size:10px;font-weight:700;padding:5px 8px;border-radius:4px;background:var(--blue);border:none;color:#fff;cursor:pointer;font-family:var(--fm);white-space:nowrap;';
+      noteAddBtn.style.cssText = 'font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;background:var(--blue);border:none;color:#fff;cursor:pointer;font-family:var(--fm);';
       noteAddBtn.textContent = 'Add';
-      noteAddBtn.addEventListener('click', (function(id, inp, row){return function(e){
-        e.stopPropagation();
-        var txt = inp.value.trim();
-        if(!txt) return;
-        addTaskNote(id, txt);
-        inp.value = '';
-        row.style.display = 'none';
-      };})(t.id, noteInput, noteRow));
-      noteInput.addEventListener('keydown', (function(id, inp, row){return function(e){
-        if(e.key==='Enter'){
-          var txt = inp.value.trim();
-          if(!txt) return;
-          addTaskNote(id, txt);
-          inp.value = '';
-          row.style.display = 'none';
-        }
-        if(e.key==='Escape') { row.style.display = 'none'; }
-      };})(t.id, noteInput, noteRow));
-      noteRow.appendChild(noteInput);
-      noteRow.appendChild(noteAddBtn);
+      noteAddBtn.addEventListener('click', (function(id,inp,row){return function(e){e.stopPropagation();var txt=inp.value.trim();if(!txt)return;addTaskNote(id,txt);inp.value='';row.style.display='none';};})(t.id, noteInput, noteRow));
+      noteInput.addEventListener('keydown', (function(id,inp,row){return function(e){if(e.key==='Enter'){var txt=inp.value.trim();if(!txt)return;addTaskNote(id,txt);inp.value='';row.style.display='none';}if(e.key==='Escape')row.style.display='none';};})(t.id, noteInput, noteRow));
+      noteRow.appendChild(noteInput); noteRow.appendChild(noteAddBtn);
       body.appendChild(noteRow);
 
+      // Bottom row: due date badge + actions
+      var bottomRow = document.createElement('div');
+      bottomRow.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-top:4px;';
+
+      // Due date badge
+      if(t.due) {
+        var daysLeft = Math.ceil((new Date(t.due) - new Date(todayStr)) / (1000*60*60*24));
+        var dueDt = new Date(t.due);
+        var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var dayStr = dayNames[dueDt.getDay()]+' '+dueDt.getDate()+' '+monthNames[dueDt.getMonth()];
+        var dueBadgeStyle, dueText;
+        if(daysLeft < 0) { dueBadgeStyle='background:#FCEBEB;color:#A32D2D;'; dueText=Math.abs(daysLeft)+'d overdue'; }
+        else if(daysLeft === 0) { dueBadgeStyle='background:#FAEEDA;color:#854F0B;'; dueText='Today'; }
+        else { dueBadgeStyle='background:var(--border);color:var(--txt3);'; dueText=dayStr; }
+        var dueBadge = document.createElement('span');
+        dueBadge.style.cssText = 'font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;'+dueBadgeStyle;
+        dueBadge.textContent = dueText;
+        bottomRow.appendChild(dueBadge);
+      } else {
+        bottomRow.appendChild(document.createElement('span'));
+      }
+
+      // Actions
+      var actions = document.createElement('div');
+      actions.style.cssText = 'display:flex;gap:3px;';
+      var mkActBtn = function(label, clr, fn) {
+        var b = document.createElement('button');
+        b.style.cssText = 'font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:transparent;color:'+(clr||'var(--txt3)')+';cursor:pointer;font-family:var(--fm);touch-action:manipulation;';
+        b.textContent = label;
+        b.addEventListener('click', fn);
+        return b;
+      };
+      actions.appendChild(mkActBtn('+ Note','var(--blue)',function(e){e.stopPropagation();var r=document.getElementById('note-row-'+t.id);if(!r)return;var open=r.style.display==='flex';r.style.display=open?'none':'flex';if(!open)r.querySelector('input').focus();}));
+      actions.appendChild(mkActBtn('Edit','var(--txt3)',function(e){e.stopPropagation();openTaskModal(t.id);}));
+      var delBtn = mkActBtn('Del','#E24B4A',function(e){e.stopPropagation();});
+      delBtn.id = 'del-btn-'+t.id;
+      delBtn.addEventListener('click', (function(id){return function(e){e.stopPropagation();deleteTask(id);};})(t.id));
+      actions.appendChild(delBtn);
+      bottomRow.appendChild(actions);
+      body.appendChild(bottomRow);
       card.appendChild(body);
 
-      // Actions — horizontal, right aligned
-      var actions = document.createElement('div');
-      actions.style.cssText = 'display:flex;align-items:center;gap:4px;padding:0 10px 0 4px;flex-shrink:0;';
-      var noteBtn = document.createElement('button');
-      noteBtn.style.cssText = 'font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;background:transparent;border:1px solid var(--border);color:var(--blue);cursor:pointer;font-family:var(--fm);white-space:nowrap;';
-      noteBtn.textContent = '+ Note';
-      noteBtn.addEventListener('click', (function(id){return function(e){
-        e.stopPropagation();
-        var row = document.getElementById('note-row-'+id);
-        if(!row) return;
-        var isOpen = row.style.display === 'flex';
-        row.style.display = isOpen ? 'none' : 'flex';
-        if(!isOpen) row.querySelector('input').focus();
-      };})(t.id));
-      var editBtn = document.createElement('button');
-      editBtn.style.cssText = 'font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;background:transparent;border:1px solid var(--border);color:var(--txt3);cursor:pointer;font-family:var(--fm);white-space:nowrap;';
-      editBtn.textContent = 'Edit';
-      editBtn.addEventListener('click', (function(id){return function(e){e.stopPropagation();openTaskModal(id);};})(t.id));
-      var delBtn = document.createElement('button');
-      delBtn.style.cssText = 'font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px;background:transparent;border:1px solid var(--border);color:#ef4444;cursor:pointer;font-family:var(--fm);white-space:nowrap;';
-      delBtn.textContent = 'Del';
-      delBtn.addEventListener('click', (function(id){return function(e){e.stopPropagation();if(confirm('Delete task?'))deleteTask(id);};})(t.id));
-      actions.appendChild(noteBtn);
-      actions.appendChild(editBtn);
-      actions.appendChild(delBtn);
-      card.appendChild(actions);
+      // Drag and drop
+      card.addEventListener('dragstart', function(e){e.dataTransfer.setData('text/plain',t.id+'|'+groupKey);setTimeout(function(){card.style.opacity='0.4';},0);});
+      card.addEventListener('dragend', function(){card.style.opacity='1';document.querySelectorAll('.task-drop-indicator').forEach(function(el){el.remove();});});
+      card.addEventListener('dragover', function(e){e.preventDefault();document.querySelectorAll('.task-drop-indicator').forEach(function(el){el.remove();});var ind=document.createElement('div');ind.className='task-drop-indicator';ind.style.cssText='height:2px;background:var(--blue);border-radius:2px;';card.parentNode.insertBefore(ind,card);});
+      card.addEventListener('drop', function(e){e.preventDefault();var data=e.dataTransfer.getData('text/plain').split('|');var dragId=data[0],dragGroup=data[1];if(dragGroup!==groupKey)return;document.querySelectorAll('.task-drop-indicator').forEach(function(el){el.remove();});var cards=Array.from(container.querySelectorAll('[data-id]'));var newOrder=cards.map(function(c){return c.dataset.id;});var fromIdx=newOrder.indexOf(dragId);var toIdx=newOrder.indexOf(t.id);if(fromIdx===toIdx)return;newOrder.splice(fromIdx,1);newOrder.splice(toIdx,0,dragId);var to2=retrieve('sw-task-order',{});to2[groupKey]=newOrder;store('sw-task-order',to2);try{localStorage.setItem('sw-task-order',JSON.stringify(to2));}catch(ex){}renderTasks();});
 
-      // ── Drag and drop ─────────────────────────────────────────────
-      card.addEventListener('dragstart', function(e) {
-        e.dataTransfer.setData('text/plain', t.id + '|' + groupKey);
-        setTimeout(function(){ card.style.opacity = '0.4'; }, 0);
-      });
-      card.addEventListener('dragend', function() {
-        card.style.opacity = '1';
-        document.querySelectorAll('.task-drop-indicator').forEach(function(el){ el.remove(); });
-      });
-      card.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        document.querySelectorAll('.task-drop-indicator').forEach(function(el){ el.remove(); });
-        var ind = document.createElement('div');
-        ind.className = 'task-drop-indicator';
-        ind.style.cssText = 'height:2px;background:var(--blue);border-radius:2px;margin:2px 0;';
-        card.parentNode.insertBefore(ind, card);
-      });
-      card.addEventListener('drop', function(e) {
-        e.preventDefault();
-        var data = e.dataTransfer.getData('text/plain').split('|');
-        var dragId = data[0], dragGroup = data[1];
-        if(dragGroup !== groupKey) return; // only within same group
-        document.querySelectorAll('.task-drop-indicator').forEach(function(el){ el.remove(); });
-        // Build new order
-        var cards = Array.from(groupContainer.querySelectorAll('[data-id]'));
-        var newOrder = cards.map(function(c){ return c.dataset.id; });
-        var fromIdx = newOrder.indexOf(dragId);
-        var toIdx = newOrder.indexOf(t.id);
-        if(fromIdx === toIdx) return;
-        newOrder.splice(fromIdx, 1);
-        newOrder.splice(toIdx, 0, dragId);
-        var to2 = retrieve('sw-task-order', {});
-        to2[groupKey] = newOrder;
-        store('sw-task-order', to2);
-        try{localStorage.setItem('sw-task-order', JSON.stringify(to2));}catch(ex){}
-        renderTasks();
-      });
-
-      groupContainer.appendChild(card);
+      container.appendChild(card);
     });
 
-    list.appendChild(groupContainer);
+    list.appendChild(container);
   });
+
+  // Add task button at bottom
+  var addBtn = document.createElement('button');
+  addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:16px;padding:10px;border-radius:6px;border:1px dashed var(--border);background:transparent;color:var(--txt3);font-size:13px;font-family:var(--fm);cursor:pointer;touch-action:manipulation;';
+  addBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 1v12M1 7h12"/></svg> Add task';
+  addBtn.addEventListener('click', function(){ openTaskModal(); });
+  list.appendChild(addBtn);
 }
 function updateSidebar(){
   var deals=retrieve('sw-pipeline',[]);
