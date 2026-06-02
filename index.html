@@ -386,23 +386,24 @@ a.link:hover{text-decoration:underline;}
   .dt{font-size:11px;min-width:600px;}
   .dt th,.dt td{padding:7px 5px;white-space:nowrap;}
 
-  /* Modals — full screen on mobile */
+  /* Modals — slide up from bottom, clear the nav bar */
   .modal{
     width:100%!important;
     max-width:100%!important;
-    max-height:90vh!important;
+    max-height:calc(92vh - 56px)!important;
     margin:0!important;
     border-radius:16px 16px 0 0!important;
-    padding:16px!important;
+    padding:16px 16px 24px!important;
     position:fixed!important;
-    bottom:0!important;
+    bottom:56px!important;
     left:0!important;
     top:auto!important;
     transform:none!important;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
+    overflow-y:scroll!important;
+    -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior:contain;
   }
-  .modal-wrap{align-items:flex-end!important;}
+  .modal-wrap{align-items:flex-end!important;padding-bottom:56px!important;}
 
   /* Filters */
   .fbar{flex-wrap:wrap;gap:4px;}
@@ -426,9 +427,15 @@ a.link:hover{text-decoration:underline;}
   /* Task cards */
   .task-card{font-size:12px;}
 
-  /* Buttons bigger tap targets */
-  .btn{min-height:36px;}
-  button{-webkit-tap-highlight-color:transparent;}
+  /* Touch optimisations — remove 300ms tap delay everywhere */
+  a, button, .btn, .sb-item, .f-btn, .tab-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button { min-height: 44px; }
+  .btn { min-height: 44px; }
+  .f-btn { min-height: 36px; padding: 8px 12px; }
+  input, select, textarea { min-height: 44px; }
 
   /* Prevent Safari auto-zoom on input focus (needs font-size >= 16px) */
   input,select,textarea{font-size:16px!important;}
@@ -618,7 +625,7 @@ a.link:hover{text-decoration:underline;}
       <option value="">All areas</option>
     </select>
   </div>
-  <div style="overflow-x:auto;">
+  <div style="overflow-x:auto;" id="pl-table-wrap">
   <table class="dt" id="pl-table">
     <thead><tr>
       <th style="width:60px;"></th><th>Address</th><th>Type</th><th>Stage</th><th>Asking</th><th>Max Offer</th><th>Agent</th><th>Investor</th><th>Area</th><th>Added</th><th></th>
@@ -626,6 +633,7 @@ a.link:hover{text-decoration:underline;}
     <tbody id="pl-body"></tbody>
   </table>
   </div>
+  <div id="pl-cards" style="display:none;flex-direction:column;gap:10px;"></div>
   <div id="pl-empty" class="empty" style="display:none;"><div class="empty-title">No deals yet</div><div class="empty-sub">Add your first deal to get started</div></div>
   <div id="bulk-bar" style="display:none;position:fixed;bottom:0;left:220px;right:0;background:#1c0606;border-top:2px solid var(--red);padding:12px 20px;display:none;align-items:center;justify-content:space-between;z-index:999;">
     <span style="font-family:var(--fm);font-size:12px;font-weight:700;color:#fca5a5;"><span id="bulk-count">0</span> deal(s) selected</span>
@@ -2032,6 +2040,143 @@ function deleteDeal(id){
   toast('Deleted');
 }
 
+// ── MOBILE PIPELINE CARD ────────────────────────────────────────────────────
+function renderDealCard(d, container, ags, invs, _ddAll) {
+  var _dd = _ddAll[d.id] || {};
+  var ag = d.agentId ? ags.find(function(x){return x.id===d.agentId;}) : null;
+  var stageLabel = STAGE_LABELS[d.stage] || d.stage;
+  var stageStyle = STAGE_STYLES[d.stage] || '';
+  var typeLabel = d.type==='brr-sa'?'BRR→SA':d.type==='brr-btl'?'BRR→BTL':d.type==='btl'?'BTL':d.type==='flip'?'Flip':d.type||'';
+  var hasComps = _dd.comparables && _dd.comparables.length;
+  var hasRefurb = _dd.elec||_dd.plumb||_dd.wins||_dd.doors||_dd.kfloor||_dd.bfloor||_dd.btile||_dd.damp||_dd.roof;
+  var latestOffer = d.offer3||d.offer2||d.offer1||'';
+  var offerNum = d.offer3?3:d.offer2?2:d.offer1?1:0;
+
+  var card = document.createElement('div');
+  card.style.cssText = 'background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden;';
+
+  // Top strip: address + type badge
+  var top = document.createElement('div');
+  top.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 12px 8px;';
+
+  // Photo or placeholder
+  var photoEl = document.createElement('div');
+  photoEl.style.cssText = 'width:48px;height:48px;border-radius:6px;flex-shrink:0;overflow:hidden;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;';
+  if(d.photo) {
+    var img=document.createElement('img');
+    img.src=d.photo; img.style.cssText='width:100%;height:100%;object-fit:cover;';
+    img.onerror=function(){photoEl.textContent='🏠';};
+    photoEl.appendChild(img);
+  } else { photoEl.textContent='🏠'; }
+  top.appendChild(photoEl);
+
+  var info = document.createElement('div');
+  info.style.cssText = 'flex:1;min-width:0;';
+  var addr = document.createElement('div');
+  addr.style.cssText = 'font-weight:700;font-size:14px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+  addr.textContent = d.addr.split(',')[0];
+  var addrSub = document.createElement('div');
+  addrSub.style.cssText = 'font-size:11px;color:var(--txt3);margin-top:1px;';
+  addrSub.textContent = d.addr.split(',').slice(1).join(',').trim();
+  info.appendChild(addr);
+  info.appendChild(addrSub);
+  top.appendChild(info);
+  card.appendChild(top);
+
+  // Tags row
+  var tags = document.createElement('div');
+  tags.style.cssText = 'display:flex;gap:5px;padding:0 12px 8px;flex-wrap:wrap;align-items:center;';
+  tags.appendChild(makePill(typeLabel,'background:#1a1a1a;color:#f5a623;border:1px solid #f5a62344;font-size:10px;font-weight:700;'));
+  tags.appendChild(makePill(stageLabel, stageStyle));
+  if(d.sqm) { var sqmPill=document.createElement('span');sqmPill.style.cssText='font-size:10px;color:var(--txt3);';sqmPill.textContent=d.sqm+' sqm';tags.appendChild(sqmPill); }
+  card.appendChild(tags);
+
+  // Key numbers
+  var nums = document.createElement('div');
+  nums.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:1px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);';
+  var mkNum = function(label, val, clr) {
+    var cell = document.createElement('div');
+    cell.style.cssText = 'padding:8px 12px;';
+    var lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);margin-bottom:2px;font-family:var(--fm);';
+    lbl.textContent = label;
+    var val2 = document.createElement('div');
+    val2.style.cssText = 'font-size:14px;font-weight:700;color:'+(clr||'var(--txt)')+';font-family:var(--fm);';
+    val2.textContent = val;
+    cell.appendChild(lbl); cell.appendChild(val2);
+    return cell;
+  };
+  nums.appendChild(mkNum('Asking', d.ask?'£'+Number(d.ask).toLocaleString():'—'));
+  nums.appendChild(mkNum('Max Offer', d.max?'£'+Number(d.max).toLocaleString():'—', 'var(--green)'));
+  if(latestOffer||ag) {
+    if(latestOffer) nums.appendChild(mkNum('Offer '+offerNum, '£'+Number(latestOffer).toLocaleString(), 'var(--amber)'));
+    if(ag) nums.appendChild(mkNum('Agent', ag.name, 'var(--blue)'));
+  }
+  card.appendChild(nums);
+
+  // Progress + offer date
+  var footer = document.createElement('div');
+  footer.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;gap:8px;';
+  var prog = document.createElement('div');
+  prog.style.cssText = 'display:flex;gap:4px;';
+  var mkProgress = function(label, done) {
+    var p=document.createElement('span');
+    p.style.cssText='font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;'+(done?'background:#14532d33;color:#4ade80;':'background:var(--border);color:var(--txt3);');
+    p.textContent=(done?'✓ ':'○ ')+label;
+    return p;
+  };
+  prog.appendChild(mkProgress('Comps', hasComps));
+  prog.appendChild(mkProgress('Refurb', hasRefurb));
+  footer.appendChild(prog);
+
+  // Offer date badge
+  if(d.offerDate && (d.stage==='offer_submitted'||d.stage==='offer_accepted'||d.stage==='offer_rejected')) {
+    var oDate=new Date(d.offerDate), now=new Date();
+    var daysSince=Math.floor((now-oDate)/(1000*60*60*24));
+    var oCol=daysSince>=7?'#fca5a5':daysSince>=3?'#fcd34d':'#9ca3af';
+    var oBg=daysSince>=7?'#7f1d1d':daysSince>=3?'#78350f':'var(--border)';
+    var oEl=document.createElement('span');
+    oEl.style.cssText='font-size:10px;font-weight:700;color:'+oCol+';background:'+oBg+';padding:2px 7px;border-radius:4px;';
+    oEl.textContent='📅 '+daysSince+'d';
+    footer.appendChild(oEl);
+  }
+  card.appendChild(footer);
+
+  // Actions bar
+  var acts = document.createElement('div');
+  acts.style.cssText = 'display:flex;gap:0;border-top:1px solid var(--border);';
+  var mkBtn = function(label, clr, fn) {
+    var b=document.createElement('button');
+    b.style.cssText='flex:1;padding:12px 0;font-size:12px;font-weight:700;background:transparent;border:none;border-right:1px solid var(--border);color:'+(clr||'var(--txt3)')+';cursor:pointer;font-family:var(--fm);touch-action:manipulation;-webkit-tap-highlight-color:transparent;';
+    b.textContent=label;
+    b.addEventListener('click', fn);
+    return b;
+  };
+  var editB = mkBtn('Edit','var(--txt)', function(){openDealModal(d.id);});
+  var anlB  = mkBtn('Analyse','var(--blue)', function(){openAnalyserForDeal(d.id);});
+  var logB  = mkBtn('Log','var(--amber)', function(){toggleDealLog(d.id);});
+  var delB  = mkBtn('Del','var(--red)', function(){if(confirm('Delete this deal?')){var deals=retrieve('sw-pipeline',[]);store('sw-pipeline',deals.filter(function(x){return x.id!==d.id;}));renderPipeline();updateSidebar();}});
+  delB.style.borderRight='none';
+  acts.appendChild(editB); acts.appendChild(anlB); acts.appendChild(logB); acts.appendChild(delB);
+  card.appendChild(acts);
+
+  // Activity log panel (hidden by default)
+  var logPanel = document.createElement('div');
+  logPanel.id = 'deal-log-'+d.id;
+  logPanel.style.display = 'none';
+  card.appendChild(logPanel);
+
+  if(d.url) {
+    var viewLink = document.createElement('a');
+    viewLink.href=d.url; viewLink.target='_blank';
+    viewLink.style.cssText='display:block;text-align:center;padding:8px;font-size:11px;color:var(--blue);border-top:1px solid var(--border);text-decoration:none;';
+    viewLink.textContent='View Listing →';
+    card.appendChild(viewLink);
+  }
+
+  container.appendChild(card);
+}
+
 function renderPipeline(){
   var deals=retrieve('sw-pipeline',[]);
   var ags=retrieve('sw-agents',[]);
@@ -2043,11 +2188,18 @@ function renderPipeline(){
     .filter(function(d){return !plAreaFilter||d.zone===plAreaFilter;});
   var body=document.getElementById('pl-body');
   var empty=document.getElementById('pl-empty');
+  var cardsEl=document.getElementById('pl-cards');
+  var tableWrap=document.getElementById('pl-table-wrap');
+  var isMobile=window.innerWidth<=1024;
   body.innerHTML='';
+  if(cardsEl) cardsEl.innerHTML='';
+  if(tableWrap) tableWrap.style.display=isMobile?'none':'block';
+  if(cardsEl) cardsEl.style.display=isMobile?'flex':'none';
   if(!filtered.length){empty.style.display='block';}
   else{empty.style.display='none';}
   var _ddAll = retrieve('sw-deal-data', {});
   filtered.forEach(function(d){
+    if(isMobile){ renderDealCard(d,cardsEl,ags,invs,_ddAll); return; }
     var _dd = _ddAll[d.id] || {};
     var ag=d.agentId?ags.find(function(x){return x.id===d.agentId;}):null;
     var inv=d.investorId?invs.find(function(x){return x.id===d.investorId;}):null;
@@ -4375,10 +4527,14 @@ function openTaskModal(id, prefDealId, prefDealAddr) {
   // Create overlay from scratch — appended directly to body, no inherited stacking
   var overlay = document.createElement('div');
   overlay.id = '_task_overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  var _isMob = window.innerWidth <= 1024;
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;display:flex;align-items:' + (_isMob ? 'flex-end' : 'center') + ';justify-content:center;';
 
   var box = document.createElement('div');
-  box.style.cssText = 'background:#2c2c2e;border:1px solid #ffffff18;border-radius:12px;padding:24px;width:90%;max-width:580px;max-height:90vh;overflow-y:auto;font-family:Inter,sans-serif;position:relative;';
+  var isMob = window.innerWidth <= 1024;
+  box.style.cssText = isMob
+    ? 'background:#2c2c2e;border:1px solid #ffffff18;border-radius:16px 16px 0 0;padding:20px 16px 24px;width:100%;max-width:100%;max-height:calc(92vh - 56px);overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-family:Inter,sans-serif;position:fixed;bottom:56px;left:0;right:0;'
+    : 'background:#2c2c2e;border:1px solid #ffffff18;border-radius:12px;padding:24px;width:90%;max-width:580px;max-height:90vh;overflow-y:auto;font-family:Inter,sans-serif;position:relative;';
 
   var titleColor = '#f5a623';
   box.innerHTML = 
