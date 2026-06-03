@@ -2410,10 +2410,9 @@ function renderPipeline(){
     histPane.appendChild(histList);
     var logPane=document.createElement('div');
     logPane.style.cssText='padding:14px;';
-    var compCount = (_dd.comparables && _dd.comparables.length)
-      || (d.comparables && d.comparables.length)
-      || (d.activities && d.activities.some(function(a){return a.note && a.note.indexOf('Comparables saved')>-1;}))
-      ? 1 : 0;
+    var _realComps = (_dd.comparables && _dd.comparables.length > 0)
+      || (d.comparables && d.comparables.length > 0);
+    var compCount = _realComps ? 1 : 0;
     var analysisCount = (_dd.savedAt ? 1 : 0) || (d.analyses && d.analyses.length) || 0;
     var btnGroup = '<div style="display:flex;gap:6px;">';
     if(compCount) btnGroup += '<button onclick="loadCompsForDealFromPipeline(\''+d.id+'\');" style="font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:4px;background:var(--badge-blue);border:1px solid var(--blue);color:var(--blue);cursor:pointer;">'+compCount+' Comps</button>';
@@ -6172,7 +6171,8 @@ function onAnalyserDealChange() {
   // Check sw-deal-data for comparables first
   var dealDataCheck = retrieve('sw-deal-data', {});
   var ddCheck = dealDataCheck[dealId] || {};
-  var hasComps = (ddCheck.comparables && ddCheck.comparables.length) || (deal.comparables && deal.comparables.length) || (deal.activities && deal.activities.some(function(a){return a.note && a.note.indexOf('Comparables saved') > -1;}));
+  var hasComps = (ddCheck.comparables && ddCheck.comparables.length > 0)
+    || (deal.comparables && deal.comparables.length > 0);
   loadBtn.style.display = hasComps ? '' : 'none';
 
   // Load from sw-deal-data first (most reliable), fall back to deal object
