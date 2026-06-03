@@ -347,6 +347,20 @@ a.link:hover{text-decoration:underline;}
 .tog-mini{font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:5px 12px;border-radius:var(--r);cursor:pointer;background:var(--surf2);border:1.5px solid var(--brd);color:var(--txt3);transition:all .15s;flex:1;}
 .tog-mini.on{background:var(--badge-green);border-color:#16a34a;color:var(--green);}
 /* LIGHT MODE OVERRIDES for hardcoded colors */
+[data-theme="light"] .field input,
+[data-theme="light"] .field select,
+[data-theme="light"] .field textarea {
+  background: #fff8ee !important;
+  border-color: #e8d5b0 !important;
+  color: #1c1c1e !important;
+}
+[data-theme="light"] .field label { color: #6b4f00 !important; }
+[data-theme="light"] .field input:focus,
+[data-theme="light"] .field select:focus,
+[data-theme="light"] .field textarea:focus {
+  border-color: var(--amber) !important;
+  box-shadow: 0 0 0 2px #f5a62322;
+}
 [data-theme="light"] .sb-logo svg text { fill: #1c1c1e; }
 [data-theme="light"] .sb-logo svg text:last-of-type { fill: var(--amber); }
 [data-theme="light"] #page-pipeline .f-btn{background:#f8fafc!important;color:#475569!important;border-color:#e2e8f0!important;}
@@ -732,8 +746,7 @@ a.link:hover{text-decoration:underline;}
     <div class="card blue">
       <div class="sh"><span class="sh-title blue">02 · Assumptions</span><span class="badge-opt" style="background:var(--badge-blue);color:var(--blue);">Adjustable</span></div>
       <div class="g3">
-        <div class="field"><label>Sourcing Fee (£)</label><input type="number" id="sourcefee" value="4000"></div>
-        <div class="field"><label>BTL Mortgage Rate (%)</label><input type="number" id="mortrate" value="5.00" step="0.05"></div>
+          <div class="field"><label>BTL Mortgage Rate (%)</label><input type="number" id="mortrate" value="5.00" step="0.05"></div>
         <div class="field"><label>Bridging Rate (%/mo)</label><input type="number" id="bridgerate" value="0.90" step="0.05"></div>
         <div class="field"><label>Bridging Term (months)</label><input type="number" id="bridgemonths" value="6"></div>
         <div class="field"><label>Arrangement Fee (%)</label><input type="number" id="arrfee" value="2.00" step="0.25"></div>
@@ -1174,24 +1187,17 @@ a.link:hover{text-decoration:underline;}
       <div class="field"><label>Area / Town</label><select id="d-zone"></select></div>
       <div class="field"><label>Deal Type</label><select id="d-type"><option value="brr-btl">BRR → BTL</option><option value="brr-sa">BRR → SA</option><option value="flip">Flip</option><option value="btl">BTL Only</option></select></div>
       <div class="field"><label>Sale Type</label><select id="d-sale-type"><option value="traditional">Traditional Sale</option><option value="traditional_auction">Traditional Auction</option><option value="modern_auction">Modern Method (MMoA)</option></select></div>
-      <div class="field"><label>Offer Submitted Date</label><input type="date" id="d-offer-date"></div>
       <div class="field"><label>Stage</label><select id="d-stage"><option value="shortlisted">Shortlisted</option><option value="qualifying">Qualifying</option><option value="viewing">Viewing</option><option value="analysing">Analysing</option><option value="offer_submitted">Offer Submitted</option><option value="offer_accepted">Offer Accepted</option><option value="packaging">Deal Packaging</option><option value="sold">Deal Sold</option><option value="offer_rejected">Offer Rejected — Follow Up</option><option value="monitor">Monitor</option><option value="lost">Lost / No Deal</option></select></div>
       <div class="field"><label>Asking Price (£)</label><input type="number" id="d-ask" placeholder="e.g. 85000"></div>
       <div class="field"><label>Max Offer (£)</label><input type="number" id="d-max" placeholder="e.g. 72000"></div>
       <div style="grid-column:1/-1;font-size:11px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;">Offer History &amp; Size</div>
-      <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:end;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:end;">
-          <div class="field" style="margin:0;"><label style="font-size:10px;">Offer 1 (£)</label><input type="number" id="d-offer1" placeholder="e.g. 80000"></div>
-          <div class="field" style="margin:0;"><label style="font-size:10px;">Date</label><input type="date" id="d-offer1-date"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:end;">
-          <div class="field" style="margin:0;"><label style="font-size:10px;">Offer 2 (£)</label><input type="number" id="d-offer2" placeholder="e.g. 85000"></div>
-          <div class="field" style="margin:0;"><label style="font-size:10px;">Date</label><input type="date" id="d-offer2-date"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;align-items:end;">
-          <div class="field" style="margin:0;"><label style="font-size:10px;">Offer 3 (£)</label><input type="number" id="d-offer3" placeholder="e.g. 90000"></div>
-          <div class="field" style="margin:0;"><label style="font-size:10px;">Date</label><input type="date" id="d-offer3-date"></div>
-        </div>
+      <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="field"><label>Offer 1 (£)</label><input type="number" id="d-offer1" placeholder="e.g. 80000"></div>
+        <div class="field"><label>Offer 1 Date</label><input type="date" id="d-offer1-date"></div>
+        <div class="field"><label>Offer 2 (£)</label><input type="number" id="d-offer2" placeholder="e.g. 85000"></div>
+        <div class="field"><label>Offer 2 Date</label><input type="date" id="d-offer2-date"></div>
+        <div class="field"><label>Offer 3 (£)</label><input type="number" id="d-offer3" placeholder="e.g. 90000"></div>
+        <div class="field"><label>Offer 3 Date</label><input type="date" id="d-offer3-date"></div>
       </div>
       <div class="field"><label>Size (sqm)</label><input type="number" id="d-sqm" placeholder="e.g. 72"></div>
       <div class="field" style="position:relative;">
@@ -1256,17 +1262,17 @@ a.link:hover{text-decoration:underline;}
     <div class="modal-hdr"><span class="modal-title" id="agent-modal-title">Add Agent</span><button class="modal-x" id="agent-modal-x">×</button></div>
     <input type="hidden" id="ag-id">
     <div class="g2" style="margin-bottom:12px;overflow-y:auto;flex:1;">
-      <div class="field"><label>Agent Name</label><input type="text" id="ag-name" placeholder="e.g. Sarah Jones"></div>
-      <div class="field"><label>Role</label><select id="ag-role"><option>Negotiator</option><option>Senior Negotiator</option><option>Branch Manager</option><option>Director</option><option>Valuer</option><option>Other</option></select></div>
-      <div class="field"><label>Agency</label><input type="text" id="ag-agency" placeholder="e.g. Peter Alan"></div>
-      <div class="field"><label>Branch</label><input type="text" id="ag-branch" placeholder="e.g. Treorchy"></div>
-      <div class="field"><label>Phone</label><input type="text" id="ag-phone" placeholder="e.g. 01443 000000"></div>
-      <div class="field"><label>Email</label><input type="email" id="ag-email" placeholder="e.g. sarah@peteralan.co.uk"></div>
-      <div class="field"><label>Zone Coverage</label><input type="text" id="ag-zones" placeholder="e.g. Newport, Morriston"></div>
-      <div class="field"><label>Relationship</label><select id="ag-status"><option value="cold">Cold — Not yet spoken</option><option value="warm">Warm — Building</option><option value="hot">Hot — Active</option></select></div>
+      <div class="field" style="grid-column:1/-1;"><label>Agency Name</label><input type="text" id="ag-agency" placeholder="e.g. Peter Alan Newport"></div>
+      <div class="field"><label>Phone</label><input type="text" id="ag-phone" placeholder="e.g. 01633 000000"></div>
+      <div class="field"><label>Area / Town</label><input type="text" id="ag-zones" placeholder="e.g. Newport"></div>
+      <div class="field"><label>Relationship</label><select id="ag-status"><option value="cold">Cold — Not yet contacted</option><option value="warm">Warm — Building</option><option value="hot">Hot — Active relationship</option></select></div>
       <div class="field"><label>Last Contact</label><input type="date" id="ag-contact"></div>
-      <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea id="ag-notes" placeholder="How you met, specialisms, deals discussed..."></textarea></div>
+      <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea id="ag-notes" placeholder="Key contact names, what they specialise in, any deals discussed..."></textarea></div>
     </div>
+    <input type="hidden" id="ag-name" value="">
+    <input type="hidden" id="ag-role" value="">
+    <input type="hidden" id="ag-branch" value="">
+    <input type="hidden" id="ag-email" value="">
     <div style="background:var(--surf2);border-radius:var(--r);padding:12px;margin-bottom:4px;">
       <div style="font-family:var(--fm);font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--txt3);margin-bottom:8px;font-weight:700;">Named Contacts at this Agency</div>
       <div id="ag-contacts-list"></div>
@@ -1948,7 +1954,6 @@ function openDealModal(id){
       document.getElementById('d-sqm').value=d.sqm||'';
       document.getElementById('d-type').value=d.type||'brr-sa';
       document.getElementById('d-sale-type').value=d.saleType||'traditional';
-      document.getElementById('d-offer-date').value=d.offerDate||'';
       document.getElementById('d-stage').value=d.stage||'shortlisted';
       document.getElementById('d-ask').value=d.ask||'';
       document.getElementById('d-max').value=d.max||'';
@@ -1987,7 +1992,6 @@ function openDealModal(id){
   document.getElementById('d-offer3-date').value='';
   document.getElementById('d-sqm').value='';
     document.getElementById('d-sale-type').value='traditional';
-  document.getElementById('d-offer-date').value='';
     document.getElementById('d-agent').value='';
     document.getElementById('d-investor').value='';
   }
@@ -2033,7 +2037,6 @@ function saveDeal(){
     sqm:document.getElementById('d-sqm').value||'',
     type:document.getElementById('d-type').value,
     saleType:document.getElementById('d-sale-type').value,
-    offerDate:document.getElementById('d-offer-date').value||'',
     stage:document.getElementById('d-stage').value,
     ask:document.getElementById('d-ask').value,
     max:document.getElementById('d-max').value,
@@ -2197,8 +2200,9 @@ function renderDealCard(d, container, ags, invs, _ddAll) {
   footer.appendChild(prog);
 
   // Offer date badge
-  if(d.offerDate && (d.stage==='offer_submitted'||d.stage==='offer_accepted'||d.stage==='offer_rejected')) {
-    var oDate=new Date(d.offerDate), now=new Date();
+  var _latestOD = d.offer3date||d.offer2date||d.offer1date||'';
+  if(_latestOD && (d.stage==='offer_submitted'||d.stage==='offer_accepted'||d.stage==='offer_rejected')) {
+    var oDate=new Date(_latestOD), now=new Date();
     var daysSince=Math.floor((now-oDate)/(1000*60*60*24));
     var oCol=daysSince>=7?'#fca5a5':daysSince>=3?'#fcd34d':'#9ca3af';
     var oBg=daysSince>=7?'#7f1d1d':daysSince>=3?'#78350f':'var(--border)';
@@ -2328,8 +2332,9 @@ function renderPipeline(){
     }
     // Stage
     var tdStage=document.createElement('td');tdStage.appendChild(makeStagePill(d.stage));
-    if(d.offerDate && (d.stage==='offer_submitted'||d.stage==='offer_accepted'||d.stage==='offer_rejected')) {
-      var oDate=new Date(d.offerDate), now=new Date();
+    var _latestOfferDate = d.offer3date||d.offer2date||d.offer1date||'';
+    if(_latestOfferDate && (d.stage==='offer_submitted'||d.stage==='offer_accepted'||d.stage==='offer_rejected')) {
+      var oDate=new Date(_latestOfferDate), now=new Date();
       var daysSince=Math.floor((now-oDate)/(1000*60*60*24));
       var oCol=daysSince>=7?'#ef4444':daysSince>=3?'#f59e0b':'#9ca3af';
       var oEl=document.createElement('div');
@@ -2405,7 +2410,10 @@ function renderPipeline(){
     histPane.appendChild(histList);
     var logPane=document.createElement('div');
     logPane.style.cssText='padding:14px;';
-    var compCount = (_dd.comparables && _dd.comparables.length) || (d.comparables && d.comparables.length) || 0;
+    var compCount = (_dd.comparables && _dd.comparables.length)
+      || (d.comparables && d.comparables.length)
+      || (d.activities && d.activities.some(function(a){return a.note && a.note.indexOf('Comparables saved')>-1;}))
+      ? 1 : 0;
     var analysisCount = (_dd.savedAt ? 1 : 0) || (d.analyses && d.analyses.length) || 0;
     var btnGroup = '<div style="display:flex;gap:6px;">';
     if(compCount) btnGroup += '<button onclick="loadCompsForDealFromPipeline(\''+d.id+'\');" style="font-family:var(--fm);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:3px 9px;border-radius:4px;background:var(--badge-blue);border:1px solid var(--blue);color:var(--blue);cursor:pointer;">'+compCount+' Comps</button>';
@@ -3987,6 +3995,9 @@ function loadFromSupabase(onDone) {
     if(cloudOK){
       // Cloud has real data — pull it down BUT preserve all local analysis data
       var localDeals = _mem['sw-pipeline'] || [];
+      // Also preserve sw-scripts locally (user deletions must not be undone by Supabase)
+      var localScripts = retrieve('sw-scripts', null);
+
       var localFields = ['ask','gdv','rent','mgmt','sourcefee','mortrate','bridgerate','bridgemonths','arrfee','holding','htype','m2','floors','rooms','beds','baths','epc','elec','plumb','btile','kfloor','bfloor','bafloor','ensuite','gfbath','wins','doors','land','addworks','auctfee','damp','roof','paint','auction','analyses','comparables','activities'];
       var localDealMap = {};
       localDeals.forEach(function(d){ if(d.id) localDealMap[d.id] = d; });
@@ -4016,6 +4027,12 @@ function loadFromSupabase(onDone) {
           });
         });
         try{localStorage.setItem('sw-pipeline',JSON.stringify(_mem['sw-pipeline']));}catch(e){}
+      }
+
+      // Restore locally-deleted scripts (don't let Supabase undo deletions)
+      if(localScripts !== null) {
+        _mem['sw-scripts'] = localScripts;
+        try{localStorage.setItem('sw-scripts',JSON.stringify(localScripts));}catch(e){}
       }
 
       _sbReady=true;
@@ -5685,7 +5702,6 @@ function saveAnalysisToDeal() {
         gdv: document.getElementById('gdv').value,
         rent: document.getElementById('rent').value,
         mgmt: document.getElementById('mgmt').value,
-        sourcefee: document.getElementById('sourcefee').value,
         mortrate: document.getElementById('mortrate').value,
         bridgerate: document.getElementById('bridgerate').value,
         bridgemonths: document.getElementById('bridgemonths').value,
@@ -6169,7 +6185,6 @@ function onAnalyserDealChange() {
   if(src('gdv')) document.getElementById('gdv').value = src('gdv');
   if(src('rent')) document.getElementById('rent').value = src('rent');
   if(src('mgmt')) document.getElementById('mgmt').value = src('mgmt');
-  if(src('sourcefee')) document.getElementById('sourcefee').value = src('sourcefee');
   if(src('mortrate')) document.getElementById('mortrate').value = src('mortrate');
   if(src('bridgerate')) document.getElementById('bridgerate').value = src('bridgerate');
   if(src('bridgemonths')) document.getElementById('bridgemonths').value = src('bridgemonths');
