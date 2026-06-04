@@ -4990,11 +4990,12 @@ function renderTasks() {
   var todayStr = today();
 
   var groups = {
-    overdue: {label:'Overdue', color:'#E24B4A', bg:'#FCEBEB', textColor:'#A32D2D', countBg:'#F7C1C1', tasks:[]},
-    today:   {label:'Due today', color:'#BA7517', bg:'#FAEEDA', textColor:'#854F0B', countBg:'#FAC775', tasks:[]},
-    week:    {label:'This week', color:'#639922', bg:'#EAF3DE', textColor:'#3B6D11', countBg:'#C0DD97', tasks:[]},
-    upcoming:{label:'Upcoming', color:'var(--txt3)', bg:'var(--bg2)', textColor:'var(--txt3)', countBg:'var(--border)', tasks:[]},
-    done:    {label:'Completed', color:'#10b981', bg:'transparent', textColor:'var(--txt3)', countBg:'var(--border)', tasks:[]}
+    overdue:  {label:'Overdue',    color:'#E24B4A', bg:'#FCEBEB', textColor:'#A32D2D', countBg:'#F7C1C1', tasks:[]},
+    today:    {label:'Due today',  color:'#BA7517', bg:'#FAEEDA', textColor:'#854F0B', countBg:'#FAC775', tasks:[]},
+    tomorrow: {label:'Tomorrow',   color:'#7c6fcd', bg:'#F0EFFE', textColor:'#4c3d9e', countBg:'#d5cffa', tasks:[]},
+    week:     {label:'This week',  color:'#639922', bg:'#EAF3DE', textColor:'#3B6D11', countBg:'#C0DD97', tasks:[]},
+    upcoming: {label:'Upcoming',   color:'var(--txt3)', bg:'var(--bg2)', textColor:'var(--txt3)', countBg:'var(--border)', tasks:[]},
+    done:     {label:'Completed',  color:'#10b981', bg:'transparent', textColor:'var(--txt3)', countBg:'var(--border)', tasks:[]}
   };
 
   tasks.forEach(function(t) {
@@ -5004,7 +5005,8 @@ function renderTasks() {
     if(status === 'today')   { groups.today.tasks.push(t); return; }
     if(t.due) {
       var daysUntil = (new Date(t.due) - new Date(todayStr)) / (1000*60*60*24);
-      if(daysUntil > 0 && daysUntil <= 7) groups.week.tasks.push(t);
+      if(daysUntil > 0 && daysUntil <= 1) groups.tomorrow.tasks.push(t);
+      else if(daysUntil > 1 && daysUntil <= 7) groups.week.tasks.push(t);
       else if(daysUntil > 7) groups.upcoming.tasks.push(t);
     } else { groups.upcoming.tasks.push(t); }
   });
@@ -5031,24 +5033,25 @@ function renderTasks() {
   var doneCount    = groups.done.tasks.length;
   var openCount    = overdueCount+todayCount+weekCount+upcomingCount;
 
+  var tomorrowCount = groups.tomorrow.tasks.length;
   document.getElementById('task-stats').innerHTML =
     '<div class="stat-box"><div class="stat-val" style="color:#E24B4A;">'+overdueCount+'</div><div class="stat-lbl">Overdue</div></div>'+
     '<div class="stat-box"><div class="stat-val" style="color:#BA7517;">'+todayCount+'</div><div class="stat-lbl">Today</div></div>'+
+    '<div class="stat-box"><div class="stat-val" style="color:#7c6fcd;">'+tomorrowCount+'</div><div class="stat-lbl">Tomorrow</div></div>'+
     '<div class="stat-box"><div class="stat-val" style="color:#378ADD;">'+weekCount+'</div><div class="stat-lbl">This week</div></div>'+
-    '<div class="stat-box"><div class="stat-val">'+upcomingCount+'</div><div class="stat-lbl">Upcoming</div></div>'+
     '<div class="stat-box"><div class="stat-val" style="color:#10b981;">'+doneCount+'</div><div class="stat-lbl">Done</div></div>';
 
   empty.style.display = openCount ? 'none' : 'block';
 
   var groupsToShow = {
-    'all':     ['overdue','today','week','upcoming'],
+    'all':     ['overdue','today','tomorrow','week','upcoming'],
     'overdue': ['overdue'],
-    'today':   ['overdue','today'],
+    'today':   ['overdue','today','tomorrow'],
     'upcoming':['week','upcoming'],
     'done':    ['done']
-  }[taskFilterVal] || ['overdue','today','week','upcoming'];
+  }[taskFilterVal] || ['overdue','today','tomorrow','week','upcoming'];
 
-  ['overdue','today','week','upcoming','done'].forEach(function(groupKey) {
+  ['overdue','today','tomorrow','week','upcoming','done'].forEach(function(groupKey) {
     var group = groups[groupKey];
     if(group.tasks.length === 0) return;
     if(groupsToShow.indexOf(groupKey) === -1) return;
