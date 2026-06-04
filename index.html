@@ -3994,8 +3994,10 @@ function loadFromSupabase(onDone) {
     if(cloudOK){
       // Cloud has real data — pull it down BUT preserve all local analysis data
       var localDeals = _mem['sw-pipeline'] || [];
-      // Also preserve sw-scripts locally (user deletions must not be undone by Supabase)
+      // Preserve sw-scripts (deletions must not be undone by Supabase)
       var localScripts = retrieve('sw-scripts', null);
+      // Preserve sw-deal-data (analysis data must not be wiped by Supabase)
+      var localDealData = retrieve('sw-deal-data', null);
 
       var localFields = ['ask','gdv','rent','mgmt','sourcefee','mortrate','bridgerate','bridgemonths','arrfee','holding','htype','m2','floors','rooms','beds','baths','epc','elec','plumb','btile','kfloor','bfloor','bafloor','ensuite','gfbath','wins','doors','land','addworks','auctfee','damp','roof','paint','auction','analyses','comparables','activities'];
       var localDealMap = {};
@@ -4028,10 +4030,24 @@ function loadFromSupabase(onDone) {
         try{localStorage.setItem('sw-pipeline',JSON.stringify(_mem['sw-pipeline']));}catch(e){}
       }
 
-      // Restore locally-deleted scripts (don't let Supabase undo deletions)
+      // Restore locally-deleted scripts
       if(localScripts !== null) {
         _mem['sw-scripts'] = localScripts;
         try{localStorage.setItem('sw-scripts',JSON.stringify(localScripts));}catch(e){}
+      }
+      // Restore local analysis data — merge: local wins if deal has newer savedAt
+      if(localDealData !== null) {
+        var cloudDealData = _mem['sw-deal-data'] || {};
+        Object.keys(localDealData).forEach(function(dealId) {
+          var local = localDealData[dealId];
+          var cloud = cloudDealData[dealId];
+          // Keep local if it's newer than cloud, or cloud doesn't have it
+          if(!cloud || !cloud.savedAt || (local.savedAt && local.savedAt > cloud.savedAt)) {
+            cloudDealData[dealId] = local;
+          }
+        });
+        _mem['sw-deal-data'] = cloudDealData;
+        try{localStorage.setItem('sw-deal-data',JSON.stringify(cloudDealData));}catch(e){}
       }
 
       _sbReady=true;
@@ -5268,7 +5284,7 @@ function applyTrackerTargets() {
 
 function applyAnalyserDefaults(){
   var s=getSettings();var a=s.analyser||DEFAULT_ANALYSER;
-  var m={'sourcefee':a.srcFee,'mortrate':a.mortRate,'bridgerate':a.bridgeRate,'arrfee':a.arrFee,'bridgemonths':a.bridgeMonths,'holding':a.holding};
+  var m={'mortrate':a.mortRate,'bridgerate':a.bridgeRate,'arrfee':a.arrFee,'bridgemonths':a.bridgeMonths,'holding':a.holding};
   Object.keys(m).forEach(function(id){var el=document.getElementById(id);if(el)el.value=m[id];});
   calc();
 }
@@ -5623,7 +5639,7 @@ function saveAnalysisToDeal() {
     gdv: document.getElementById('gdv').value,
     rent: document.getElementById('rent').value,
     mgmt: document.getElementById('mgmt').value,
-    sourcefee: document.getElementById('sourcefee').value,
+    sourcefee: '0',
     mortrate: document.getElementById('mortrate').value,
     bridgerate: document.getElementById('bridgerate').value,
     bridgemonths: document.getElementById('bridgemonths').value,
@@ -5653,7 +5669,7 @@ function saveAnalysisToDeal() {
       deal.gdv = document.getElementById('gdv').value;
       deal.rent = document.getElementById('rent').value;
       deal.mgmt = document.getElementById('mgmt').value;
-      deal.sourcefee = document.getElementById('sourcefee').value;
+      deal.sourcefee = '0';
       deal.mortrate = document.getElementById('mortrate').value;
       deal.bridgerate = document.getElementById('bridgerate').value;
       deal.bridgemonths = document.getElementById('bridgemonths').value;
@@ -5735,6 +5751,9 @@ function saveAnalysisToDeal() {
       };
       store('sw-deal-data', dealData);
       try { localStorage.setItem('sw-deal-data', JSON.stringify(dealData)); } catch(e) {}
+      // Force immediate Supabase save so cloud stays in sync
+      _sbPendingSave = true;
+      if(typeof saveToSupabase === 'function') saveToSupabase();
 
       renderPipeline();
       toast('Analysis saved to: ' + deal.addr.split(',')[0]);
