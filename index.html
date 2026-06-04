@@ -2831,19 +2831,67 @@ function renderAgents(){
     }
 
     var btns=document.createElement('div');btns.style.cssText='display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;';
-    // Contacts from sw-contacts linked to this company
-    var _cList=retrieve('sw-contacts',[]).filter(function(c){return c.companyId===ag.id;});
-    if(_cList.length>0){
-      var _ctH=document.createElement('div');_ctH.className='z-mini';_ctH.style.cssText='margin:12px 0 6px;';_ctH.textContent='Contacts';body.appendChild(_ctH);
-      _cList.forEach(function(c){
-        var _cr=document.createElement('div');_cr.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--brd);font-size:12px;';
-        _cr.innerHTML='<span style="flex:1;font-weight:500;color:var(--txt);">'+c.name+(c.role?' <span style="color:var(--txt3);font-size:11px;">· '+c.role+'</span>':'')+'</span>'+(c.phone?'<a href="tel:'+c.phone+'" class="link" style="font-size:11px;">'+c.phone+'</a>':'');
-        body.appendChild(_cr);
-      });
-    }
-    var _addCtBtn=document.createElement('button');_addCtBtn.className='task-quick-add';_addCtBtn.style.cssText='margin-top:8px;margin-bottom:4px;font-size:9px;display:block;';_addCtBtn.textContent='+ Add Contact';
+    // Contacts stored in ag.contacts[] array
+    var _cList = ag.contacts || [];
+    // Header
+    var _ctSection = document.createElement('div');
+    _ctSection.style.cssText = 'margin:14px 0 8px;';
+
+    var _ctHdr = document.createElement('div');
+    _ctHdr.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;';
+    var _ctTitle = document.createElement('span');
+    _ctTitle.style.cssText = 'font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt3);font-family:var(--fm);';
+    _ctTitle.textContent = 'Contacts (' + _cList.length + ')';
+    var _addCtBtn = document.createElement('button');
+    _addCtBtn.style.cssText = 'font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:var(--badge-blue);color:var(--blue);border:1px solid var(--blue);cursor:pointer;font-family:var(--fm);';
+    _addCtBtn.textContent = '+ Add';
     _addCtBtn.addEventListener('click',(function(agId){return function(e){e.stopPropagation();openContactModal(null,agId);};})(ag.id));
-    body.appendChild(_addCtBtn);
+    _ctHdr.appendChild(_ctTitle);
+    _ctHdr.appendChild(_addCtBtn);
+    _ctSection.appendChild(_ctHdr);
+
+    if(_cList.length > 0) {
+      _cList.forEach(function(c) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:var(--surf2);margin-bottom:4px;';
+
+        var info = document.createElement('div');
+        info.style.cssText = 'flex:1;min-width:0;';
+        var nameEl = document.createElement('div');
+        nameEl.style.cssText = 'font-size:13px;font-weight:600;color:var(--txt);';
+        nameEl.textContent = c.name;
+        var roleEl = document.createElement('div');
+        roleEl.style.cssText = 'font-size:11px;color:var(--txt3);margin-top:1px;';
+        roleEl.textContent = [c.role, c.email].filter(Boolean).join(' · ');
+        info.appendChild(nameEl);
+        if(c.role || c.email) info.appendChild(roleEl);
+        row.appendChild(info);
+
+        if(c.phone) {
+          var callBtn = document.createElement('a');
+          callBtn.href = 'tel:' + c.phone;
+          callBtn.style.cssText = 'font-size:18px;text-decoration:none;padding:4px;';
+          callBtn.textContent = '📞';
+          callBtn.title = c.phone;
+          row.appendChild(callBtn);
+        }
+
+        var editC = document.createElement('button');
+        editC.style.cssText = 'font-size:10px;padding:3px 7px;border-radius:4px;border:1px solid var(--brd2);background:transparent;color:var(--txt3);cursor:pointer;font-family:var(--fm);';
+        editC.textContent = 'Edit';
+        editC.addEventListener('click',(function(cId){return function(e){e.stopPropagation();openContactModal(cId);};})(c.id));
+        row.appendChild(editC);
+
+        _ctSection.appendChild(row);
+      });
+    } else {
+      var noCtEl = document.createElement('div');
+      noCtEl.style.cssText = 'font-size:12px;color:var(--txt3);padding:8px 0;';
+      noCtEl.textContent = 'No contacts yet — click + Add to add Brunee, Samantha etc.';
+      _ctSection.appendChild(noCtEl);
+    }
+
+    body.appendChild(_ctSection);
     var btnE=document.createElement('button');btnE.className='btn btn-ghost btn-sm';btnE.textContent='Edit';
     btnE.addEventListener('click',(function(id){return function(){openAgentModal(id);};})(ag.id));
     var btnCall=document.createElement('button');btnCall.className='btn btn-blue btn-sm';btnCall.textContent='📞 Log Call';
