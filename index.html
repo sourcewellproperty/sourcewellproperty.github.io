@@ -604,11 +604,11 @@ a.link:hover{text-decoration:underline;}
     <button class="sb-item" id="nav-tracker" onclick="showPage('tracker')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>Territory Tracker
     </button>
-    <button class="sb-item" id="nav-crm" onclick="showPage('crm')">
+    <button class="sb-item" id="nav-crm" onclick="showPage('agents');setTimeout(function(){var btn=document.querySelector('[data-tab=ag-investors]');if(btn)btn.click();},100)">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-2.76 2.24-5 5-5"/><circle cx="12" cy="10" r="3"/><path d="M12 8v4M10 10h4"/></svg>Investors
     </button>
     <button class="sb-item" id="nav-agents" onclick="showPage('agents')">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="9" width="14" height="6" rx="2"/><circle cx="8" cy="5" r="3"/></svg>Agents
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5" cy="5" r="2.5"/><circle cx="11" cy="5" r="2.5"/><path d="M1 14c0-2.2 1.8-4 4-4M10 10c2.2 0 4 1.8 4 4"/><path d="M7 10a3 3 0 0 1 3 3"/></svg>CRM
     </button>
     <button class="sb-item" id="nav-tasks" onclick="showPage('tasks')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h6"/><circle cx="13" cy="12" r="2.5"/><path d="M13 10.5v1.5l1 1"/></svg>Tasks
@@ -782,8 +782,8 @@ a.link:hover{text-decoration:underline;}
         <div class="field"><label>Ground Floor Bathroom?</label><select id="gfbath" onchange="calc()"><option value="0">No</option><option value="4800">Yes (£4,800)</option></select></div>
       </div>
       <div class="g4 mt">
-        <div class="field"><label>Windows</label><input type="number" id="wins" value="8"></div>
-        <div class="field"><label>Doors</label><input type="number" id="doors" value="6"></div>
+        <div class="field"><label>Windows</label><input type="number" id="wins" placeholder="e.g. 8"></div>
+        <div class="field"><label>Doors</label><input type="number" id="doors" placeholder="e.g. 6"></div>
         <div class="field"><label>Landscape (£)</label><input type="number" id="land" value="0"></div>
         <div class="field"><label>Additional Works (£)</label><input type="number" id="addworks" value="0"></div>
         <div class="field"><label>EPC Insulate?</label><select id="epc"><option value="0">No</option><option value="1313">Yes</option></select></div>
@@ -908,17 +908,21 @@ a.link:hover{text-decoration:underline;}
 <!-- ═══ AGENTS PAGE ═══ -->
 <div id="page-agents" class="page">
   <div class="pg-hdr">
-    <div><div class="pg-title">Agents</div><div class="pg-sub">Companies · Contacts · South Wales</div></div>
-    <div style="display:flex;gap:8px;">
+    <div><div class="pg-title">CRM</div><div class="pg-sub">Companies · Contacts · Investors · Professionals</div></div>
+    <div style="display:flex;gap:8px;" id="crm-actions">
       <button class="btn btn-ghost" id="btn-add-contact">+ Add Contact</button>
       <button class="btn btn-amber" id="btn-add-agent">+ Add Company</button>
     </div>
   </div>
   <div class="stat-grid" id="agent-stats"></div>
   <div class="tabs">
-    <button class="tab-btn active" data-tab="ag-companies">Companies</button>
-    <button class="tab-btn" data-tab="ag-contacts">Contacts</button>
+    <button class="tab-btn active" data-tab="ag-companies">🏢 Companies</button>
+    <button class="tab-btn" data-tab="ag-contacts">👤 Contacts</button>
+    <button class="tab-btn" data-tab="ag-investors">💰 Investors</button>
+    <button class="tab-btn" data-tab="ag-professionals">⚖️ Professionals</button>
   </div>
+
+  <!-- COMPANIES TAB -->
   <div id="ag-companies" class="tab-pane active">
     <div class="fbar" id="agent-fbar">
       <span class="fbar-lbl">Relationship:</span>
@@ -930,15 +934,43 @@ a.link:hover{text-decoration:underline;}
     <div id="agent-list"></div>
     <div id="agent-empty" class="empty" style="display:none;"><div class="empty-title">No companies yet</div></div>
   </div>
+
+  <!-- CONTACTS TAB -->
   <div id="ag-contacts" class="tab-pane">
     <div class="fbar" id="contact-fbar">
       <span class="fbar-lbl">Company:</span>
-      <select id="contact-company-filter" style="font-family:var(--fm);font-size:10px;font-weight:700;padding:4px 10px;border-radius:5px;background:var(--surf);border:1.5px solid var(--brd);color:var(--txt2);cursor:pointer;">
+      <select id="contact-company-filter" style="font-family:var(--fm);font-size:10px;font-weight:700;padding:4px 10px;border-radius:5px;background:var(--surf2);border:1.5px solid var(--brd2);color:var(--txt2);cursor:pointer;">
         <option value="">All companies</option>
       </select>
     </div>
     <div id="contact-list"></div>
     <div id="contact-empty" class="empty" style="display:none;"><div class="empty-title">No contacts yet</div></div>
+  </div>
+
+  <!-- INVESTORS TAB -->
+  <div id="ag-investors" class="tab-pane">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <button class="btn btn-amber" id="btn-add-investor-crm">+ Add Investor</button>
+    </div>
+    <div id="crm-investor-list"></div>
+    <div id="crm-investor-empty" class="empty" style="display:none;"><div class="empty-title">No investors yet</div></div>
+  </div>
+
+  <!-- PROFESSIONALS TAB -->
+  <div id="ag-professionals" class="tab-pane">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div class="fbar" style="margin:0;">
+        <span class="fbar-lbl">Type:</span>
+        <button class="f-btn on" data-proffilter="all">All</button>
+        <button class="f-btn" data-proffilter="solicitor">Solicitors</button>
+        <button class="f-btn" data-proffilter="broker">Brokers</button>
+        <button class="f-btn" data-proffilter="surveyor">Surveyors</button>
+        <button class="f-btn" data-proffilter="other">Other</button>
+      </div>
+      <button class="btn btn-amber" id="btn-add-professional">+ Add Professional</button>
+    </div>
+    <div id="professional-list"></div>
+    <div id="professional-empty" class="empty" style="display:none;"><div class="empty-title">No professionals yet</div></div>
   </div>
 </div>
 
@@ -1253,6 +1285,32 @@ a.link:hover{text-decoration:underline;}
       <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea id="i-notes" placeholder="How you met, criteria, red lines, next steps..."></textarea></div>
     </div>
     <div class="modal-ftr"><button class="btn btn-ghost btn-sm" id="inv-modal-cancel">Cancel</button><button class="btn btn-amber btn-sm" id="inv-modal-save">Save Investor</button></div>
+  </div>
+</div>
+
+<!-- PROFESSIONALS MODAL -->
+<div id="prof-modal" class="modal-wrap" style="display:none;">
+  <div class="modal" style="max-width:500px;width:96%;">
+    <div class="modal-hdr"><span>Add / Edit Professional</span><button class="modal-x" onclick="closeModal('prof-modal')">×</button></div>
+    <input type="hidden" id="prof-id">
+    <div class="g2" style="margin-bottom:12px;">
+      <div class="field"><label>Name</label><input type="text" id="prof-name" placeholder="e.g. James Williams"></div>
+      <div class="field"><label>Type</label><select id="prof-type">
+        <option value="solicitor">Solicitor</option>
+        <option value="broker">Mortgage Broker</option>
+        <option value="surveyor">Surveyor</option>
+        <option value="accountant">Accountant</option>
+        <option value="other">Other</option>
+      </select></div>
+      <div class="field" style="grid-column:1/-1;"><label>Firm / Company</label><input type="text" id="prof-firm" placeholder="e.g. Smith & Co Solicitors"></div>
+      <div class="field"><label>Phone</label><input type="text" id="prof-phone" placeholder="e.g. 01633 000000"></div>
+      <div class="field"><label>Email</label><input type="email" id="prof-email" placeholder="e.g. james@smith.co.uk"></div>
+      <div class="field" style="grid-column:1/-1;"><label>Notes</label><textarea id="prof-notes" placeholder="Specialisms, how you met, key info..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('prof-modal')">Cancel</button>
+      <button class="btn btn-amber" onclick="saveProf()">Save</button>
+    </div>
   </div>
 </div>
 
@@ -1700,7 +1758,7 @@ function addAgModalContact() {
 // ═══════════════ CORE UTILITIES ═══════════════
 // ── SUPABASE-BACKED STORAGE ────────────────────────────────────────────────
 var _mem = {};           // in-memory cache — single source of truth
-var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-task-order','sw-calls','sw-dtv','sw-visits','sw-scripts','sw-deal-data','sw-content-bank','sw-weekly-plan','sw-contacts','sw-content-status','sw-locations','sw-last-backup','sw-banner-dismissed'];
+var ALL_KEYS = ['sw-pipeline','sw-crm','sw-agents','sw-professionals','sw-tracker','sw-daily','sw-targets','sw-tasks','sw-task-order','sw-calls','sw-dtv','sw-visits','sw-scripts','sw-deal-data','sw-content-bank','sw-weekly-plan','sw-contacts','sw-content-status','sw-locations','sw-last-backup','sw-banner-dismissed'];
 
 // Synchronous store — writes to memory + localStorage, queues Supabase save
 var store = function(k, v) {
@@ -2347,9 +2405,12 @@ function renderPipeline(){
     tdAsk.innerHTML=(d.ask?fmt(d.ask):'—')+(d.sqm?'<div style="font-size:10px;color:var(--txt3);font-family:var(--fm);">'+d.sqm+' sqm</div>':'');
     // Max
     var tdMax=document.createElement('td');tdMax.className='dt-mono pos';
-    var _latestOffer = d.offer3||d.offer2||d.offer1||'';
-    var _offerNum = d.offer3?3:d.offer2?2:d.offer1?1:0;
-    tdMax.innerHTML=(d.max?fmt(d.max):'—')+(_latestOffer?'<div style="font-size:10px;color:var(--amber);font-family:var(--fm);margin-top:2px;">↳ Offer '+_offerNum+': '+fmt(_latestOffer)+'</div>':'');
+    var _offerParts = [];
+    if(d.offer1) _offerParts.push(fmt(d.offer1));
+    if(d.offer2) _offerParts.push(fmt(d.offer2));
+    if(d.offer3) _offerParts.push(fmt(d.offer3));
+    var _offerChain = _offerParts.join(' → ');
+    tdMax.innerHTML=(d.max?fmt(d.max):'—')+(_offerChain?'<div style="font-size:10px;color:var(--amber);font-family:var(--fm);margin-top:2px;">↳ '+_offerChain+'</div>':'');
     // Agent
     var tdAg=document.createElement('td');
     if(ag){var agN=document.createElement('div');agN.style.cssText='font-size:12px;font-weight:500;';agN.textContent=ag.name;var agS=document.createElement('div');agS.className='dt-muted';agS.textContent=(ag.agency||'')+(ag.branch?', '+ag.branch:'');tdAg.appendChild(agN);tdAg.appendChild(agS);}
@@ -2672,6 +2733,10 @@ function setupAgentFilters(){
     });
   });
   document.getElementById('btn-add-agent').addEventListener('click',function(){openAgentModal();});
+  var _invCrmBtn = document.getElementById('btn-add-investor-crm');
+  if(_invCrmBtn) _invCrmBtn.addEventListener('click',function(){openInvModal();});
+  var _profBtn = document.getElementById('btn-add-professional');
+  if(_profBtn) _profBtn.addEventListener('click',function(){openProfModal();});
 }
 
 function openAgentModal(id){
@@ -2862,9 +2927,16 @@ function renderAgents(){
         nameEl.textContent = c.name;
         var roleEl = document.createElement('div');
         roleEl.style.cssText = 'font-size:11px;color:var(--txt3);margin-top:1px;';
-        roleEl.textContent = [c.role, c.email].filter(Boolean).join(' · ');
+        roleEl.textContent = [c.role, c.phone].filter(Boolean).join(' · ');
         info.appendChild(nameEl);
-        if(c.role || c.email) info.appendChild(roleEl);
+        if(c.role || c.phone) info.appendChild(roleEl);
+        if(c.status && c.status !== 'cold') {
+          var stEl = document.createElement('span');
+          var stColors = {warm:'background:var(--badge-amber);color:var(--amber);', hot:'background:var(--badge-red);color:var(--red);'};
+          stEl.style.cssText = 'font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-top:3px;display:inline-block;font-family:var(--fm);text-transform:uppercase;'+(stColors[c.status]||'');
+          stEl.textContent = c.status;
+          info.appendChild(stEl);
+        }
         row.appendChild(info);
 
         if(c.phone) {
@@ -4049,6 +4121,8 @@ function loadFromSupabase(onDone) {
       var localScripts = retrieve('sw-scripts', null);
       // Preserve sw-deal-data (analysis data must not be wiped by Supabase)
       var localDealData = retrieve('sw-deal-data', null);
+      // Preserve contacts within sw-agents (must not be wiped by Supabase)
+      var localAgents = retrieve('sw-agents', null);
 
       var localFields = ['ask','gdv','rent','mgmt','sourcefee','mortrate','bridgerate','bridgemonths','arrfee','holding','htype','m2','floors','rooms','beds','baths','epc','elec','plumb','btile','kfloor','bfloor','bafloor','ensuite','gfbath','wins','doors','land','addworks','auctfee','damp','roof','paint','auction','analyses','comparables','activities'];
       var localDealMap = {};
@@ -4086,6 +4160,20 @@ function loadFromSupabase(onDone) {
         _mem['sw-scripts'] = localScripts;
         try{localStorage.setItem('sw-scripts',JSON.stringify(localScripts));}catch(e){}
       }
+      // Restore contacts inside agents — merge: keep local contacts if agent exists locally
+      if(localAgents !== null) {
+        var cloudAgents = _mem['sw-agents'] || [];
+        var mergedAgents = cloudAgents.map(function(cloudAg) {
+          var localAg = localAgents.find(function(a){return a.id===cloudAg.id;});
+          if(localAg && localAg.contacts && localAg.contacts.length) {
+            cloudAg.contacts = localAg.contacts;
+          }
+          return cloudAg;
+        });
+        _mem['sw-agents'] = mergedAgents;
+        try{localStorage.setItem('sw-agents',JSON.stringify(mergedAgents));}catch(e){}
+      }
+
       // Restore local analysis data — merge: local wins if deal has newer savedAt
       if(localDealData !== null) {
         var cloudDealData = _mem['sw-deal-data'] || {};
@@ -5876,12 +5964,14 @@ function openContactModal(id, prefCompanyId) {
   if(id) {
     var c = retrieve('sw-contacts',[]).find(function(x){return x.id===id;});
     if(c) {
-      document.getElementById('ct-fname').value = c.fname||'';
-      document.getElementById('ct-lname').value = c.lname||'';
+      document.getElementById('ct-fname').value = c.fname||c.name.split(' ')[0]||'';
+      document.getElementById('ct-lname').value = c.lname||c.name.split(' ').slice(1).join(' ')||'';
       document.getElementById('ct-company').value = c.companyId||'';
       document.getElementById('ct-role').value = c.role||'';
       document.getElementById('ct-phone').value = c.phone||'';
       document.getElementById('ct-email').value = c.email||'';
+      document.getElementById('ct-linkedin').value = c.linkedin||'';
+      document.getElementById('ct-source').value = c.source||'';
       document.getElementById('ct-status').value = c.status||'cold';
       document.getElementById('ct-contact').value = c.lastContact||'';
       document.getElementById('ct-notes').value = c.notes||'';
@@ -5909,13 +5999,18 @@ function saveContact() {
 
   var subContact = {
     id: eid || uid('ct'),
+    fname: fname,
+    lname: lname,
     name: name,
     role: role,
     phone: phone,
     email: email,
     linkedin: document.getElementById('ct-linkedin').value.trim(),
     source: document.getElementById('ct-source').value.trim(),
-    notes: notes
+    status: document.getElementById('ct-status').value || 'cold',
+    lastContact: document.getElementById('ct-contact').value || '',
+    notes: notes,
+    companyId: document.getElementById('ct-company').value || ''
   };
 
   var agents = retrieve('sw-agents', []);
@@ -5934,6 +6029,8 @@ function saveContact() {
         company.contacts.unshift(subContact);
       }
       store('sw-agents', agents);
+      try{localStorage.setItem('sw-agents',JSON.stringify(agents));}catch(e){}
+      _sbPendingSave=true; if(typeof saveToSupabase==='function') saveToSupabase();
       closeModal('contact-modal');
       renderContacts();
       renderAgents();
@@ -6261,15 +6358,15 @@ function onAnalyserDealChange() {
   if(src('mgmt')) document.getElementById('mgmt').value = src('mgmt');
   if(src('mortrate')) document.getElementById('mortrate').value = src('mortrate');
   if(src('bridgerate')) document.getElementById('bridgerate').value = src('bridgerate');
-  if(src('bridgemonths')) document.getElementById('bridgemonths').value = src('bridgemonths');
-  if(src('arrfee')) document.getElementById('arrfee').value = src('arrfee');
-  if(src('holding')) document.getElementById('holding').value = src('holding');
+  if(src('bridgemonths') !== undefined && src('bridgemonths') !== null && src('bridgemonths') !== '') document.getElementById('bridgemonths').value = src('bridgemonths');
+  if(src('arrfee') !== undefined && src('arrfee') !== null && src('arrfee') !== '') document.getElementById('arrfee').value = src('arrfee');
+  if(src('holding') !== undefined && src('holding') !== null && src('holding') !== '') document.getElementById('holding').value = src('holding');
   if(src('htype')) document.getElementById('htype').value = src('htype');
-  if(src('m2')) document.getElementById('m2').value = src('m2');
-  if(src('floors')) document.getElementById('floors').value = src('floors');
-  if(src('rooms')) document.getElementById('rooms').value = src('rooms');
-  if(src('beds')) document.getElementById('beds').value = src('beds');
-  if(src('baths')) document.getElementById('baths').value = src('baths');
+  if(src('m2') !== undefined && src('m2') !== null && src('m2') !== '') document.getElementById('m2').value = src('m2');
+  if(src('floors') !== undefined && src('floors') !== null && src('floors') !== '') document.getElementById('floors').value = src('floors');
+  if(src('rooms') !== undefined && src('rooms') !== null && src('rooms') !== '') document.getElementById('rooms').value = src('rooms');
+  if(src('beds') !== undefined && src('beds') !== null && src('beds') !== '') document.getElementById('beds').value = src('beds');
+  if(src('baths') !== undefined && src('baths') !== null && src('baths') !== '') document.getElementById('baths').value = src('baths');
   if(src('furn')) document.getElementById('furn').value = src('furn');
   if(src('epc')) document.getElementById('epc').value = src('epc');
   if(src('elec')) document.getElementById('elec').value = src('elec');
@@ -6280,12 +6377,12 @@ function onAnalyserDealChange() {
   if(src('bafloor')) document.getElementById('bafloor').value = src('bafloor');
   if(src('ensuite')) document.getElementById('ensuite').value = src('ensuite');
   if(src('gfbath')) document.getElementById('gfbath').value = src('gfbath');
-  if(src('wins')) document.getElementById('wins').value = src('wins');
-  if(src('doors')) document.getElementById('doors').value = src('doors');
-  if(src('land')) document.getElementById('land').value = src('land');
-  if(src('addworks')) document.getElementById('addworks').value = src('addworks');
+  if(src('wins') !== undefined && src('wins') !== null && src('wins') !== '') document.getElementById('wins').value = src('wins');
+  if(src('doors') !== undefined && src('doors') !== null && src('doors') !== '') document.getElementById('doors').value = src('doors');
+  if(src('land') !== undefined && src('land') !== null && src('land') !== '') document.getElementById('land').value = src('land');
+  if(src('addworks') !== undefined && src('addworks') !== null && src('addworks') !== '') document.getElementById('addworks').value = src('addworks');
   if(src('vatRate')) document.getElementById('vat-rate').value = src('vatRate');
-  if(src('auctfee')) document.getElementById('auctfee').value = src('auctfee');
+  if(src('auctfee') !== undefined && src('auctfee') !== null && src('auctfee') !== '') document.getElementById('auctfee').value = src('auctfee');
 
   // Reset toggles
   if(src('damp')) { aState.damp = true; document.getElementById('damp-y').className = 'on-y'; document.getElementById('damp-n').className = ''; }
@@ -7344,6 +7441,116 @@ function loadSavedTheme() {
   } catch(e) {}
 }
 
+// ── CRM INVESTORS TAB ────────────────────────────────────────────────────
+function renderCRMInvestors() {
+  var invs = retrieve('sw-crm', []);
+  var list = document.getElementById('crm-investor-list');
+  var empty = document.getElementById('crm-investor-empty');
+  if(!list) return;
+  list.innerHTML = '';
+  empty.style.display = invs.length ? 'none' : 'block';
+  invs.forEach(function(inv) {
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--surf);border:1px solid var(--brd2);border-radius:8px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;';
+    var info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0;';
+    info.innerHTML =
+      '<div style="font-weight:700;font-size:14px;color:var(--txt);">'+inv.name+'</div>'+
+      '<div style="font-size:12px;color:var(--txt3);margin-top:2px;">'+[inv.email,inv.phone].filter(Boolean).join(' · ')+'</div>'+
+      (inv.pref?'<div style="font-size:11px;color:var(--amber);margin-top:4px;">Preference: '+inv.pref+'</div>':'');
+    var btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;gap:6px;flex-shrink:0;';
+    var eBtn = document.createElement('button');
+    eBtn.className='btn btn-ghost btn-sm'; eBtn.textContent='Edit';
+    eBtn.addEventListener('click',function(){openInvModal(inv.id);});
+    btns.appendChild(eBtn);
+    card.appendChild(info); card.appendChild(btns);
+    list.appendChild(card);
+  });
+}
+
+// ── CRM PROFESSIONALS ────────────────────────────────────────────────────
+var PROF_TYPES = {solicitor:'Solicitor',broker:'Mortgage Broker',surveyor:'Surveyor',accountant:'Accountant',other:'Other'};
+var _profFilterVal = 'all';
+
+function renderProfessionals(filter) {
+  _profFilterVal = filter || _profFilterVal;
+  var profs = retrieve('sw-professionals', []);
+  var list = document.getElementById('professional-list');
+  var empty = document.getElementById('professional-empty');
+  if(!list) return;
+  var filtered = _profFilterVal === 'all' ? profs : profs.filter(function(p){return p.type===_profFilterVal;});
+  list.innerHTML = '';
+  empty.style.display = filtered.length ? 'none' : 'block';
+  filtered.forEach(function(p) {
+    var card = document.createElement('div');
+    card.style.cssText = 'background:var(--surf);border:1px solid var(--brd2);border-radius:8px;padding:14px 16px;margin-bottom:8px;';
+    var typeColors = {solicitor:'var(--badge-purple);color:var(--purple)',broker:'var(--badge-blue);color:var(--blue)',surveyor:'var(--badge-green);color:var(--green)',accountant:'var(--badge-amber);color:var(--amber)',other:'var(--surf2);color:var(--txt3)'};
+    var tc = typeColors[p.type] || typeColors.other;
+    card.innerHTML =
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">'
+      +'<div style="flex:1;min-width:0;">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'
+      +'<span style="font-weight:700;font-size:14px;color:var(--txt);">'+p.name+'</span>'
+      +'<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;background:'+tc.split(';')[0].replace('var(','').replace(')','')+'22;'+tc+';">'+( PROF_TYPES[p.type]||p.type)+'</span>'
+      +'</div>'
+      +(p.firm?'<div style="font-size:12px;color:var(--txt2);font-weight:600;">'+p.firm+'</div>':'')
+      +'<div style="font-size:11px;color:var(--txt3);margin-top:3px;">'+[p.phone,p.email].filter(Boolean).join(' · ')+'</div>'
+      +(p.notes?'<div style="font-size:11px;color:var(--txt3);margin-top:5px;font-style:italic;">'+p.notes+'</div>':'')
+      +'</div>'
+      +'<div style="display:flex;gap:6px;flex-shrink:0;">'
+      +'<button onclick="openProfModal(''+p.id+'')" style="font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid var(--brd2);background:transparent;color:var(--txt3);cursor:pointer;font-family:var(--fm);">Edit</button>'
+      +'<button onclick="deleteProf(''+p.id+'')" style="font-size:10px;padding:4px 8px;border-radius:4px;border:1px solid var(--brd2);background:transparent;color:var(--red);cursor:pointer;font-family:var(--fm);">Del</button>'
+      +'</div></div>';
+    list.appendChild(card);
+  });
+}
+
+function openProfModal(id) {
+  var p = id ? (retrieve('sw-professionals',[]).find(function(x){return x.id===id;}) || {}) : {};
+  document.getElementById('prof-id').value = p.id || '';
+  document.getElementById('prof-name').value = p.name || '';
+  document.getElementById('prof-firm').value = p.firm || '';
+  document.getElementById('prof-type').value = p.type || 'solicitor';
+  document.getElementById('prof-phone').value = p.phone || '';
+  document.getElementById('prof-email').value = p.email || '';
+  document.getElementById('prof-notes').value = p.notes || '';
+  openModal('prof-modal');
+}
+
+function saveProf() {
+  var id = document.getElementById('prof-id').value;
+  var name = document.getElementById('prof-name').value.trim();
+  if(!name) { toast('Enter a name', true); return; }
+  var prof = {
+    id: id || uid('pf'),
+    name: name,
+    firm: document.getElementById('prof-firm').value.trim(),
+    type: document.getElementById('prof-type').value,
+    phone: document.getElementById('prof-phone').value.trim(),
+    email: document.getElementById('prof-email').value.trim(),
+    notes: document.getElementById('prof-notes').value.trim()
+  };
+  var profs = retrieve('sw-professionals', []);
+  if(id) { var i=profs.findIndex(function(x){return x.id===id;}); if(i>-1) profs[i]=prof; else profs.unshift(prof); }
+  else { profs.unshift(prof); }
+  store('sw-professionals', profs);
+  try{localStorage.setItem('sw-professionals',JSON.stringify(profs));}catch(e){}
+  closeModal('prof-modal');
+  renderProfessionals();
+  toast(name + ' saved');
+}
+
+function deleteProf(id) {
+  var profs = retrieve('sw-professionals',[]);
+  var btn = document.getElementById ? document.getElementById('del-prof-'+id) : null;
+  if(!btn || btn.dataset.confirm==='1') {
+    store('sw-professionals', profs.filter(function(x){return x.id!==id;}));
+    renderProfessionals();
+    toast('Deleted');
+  }
+}
+
 function init(){
   renderPipeline();renderCRM();renderAgents();renderContacts();renderDtvLog();renderVisits();tLoad();renderDailyLog();renderKpiStrip();renderTasks();renderCallLog();renderScripts();updateSidebar();
 }
@@ -7402,7 +7609,27 @@ document.addEventListener('DOMContentLoaded',function(){
   var agcBtn = document.getElementById('agc-add-btn');
   if(agcBtn) agcBtn.addEventListener('click', addAgModalContact);
   // Bind analyser tabs
-  bindTabs('#page-analyser');bindTabs('#page-daily');bindTabs('#page-agents');
+  bindTabs('#page-analyser');bindTabs('#page-daily');
+  // CRM tab wiring
+  document.querySelectorAll('#page-agents .tab-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var tab = btn.getAttribute('data-tab');
+      var actionsEl = document.getElementById('crm-actions');
+      if(actionsEl){
+        actionsEl.style.display = (tab==='ag-companies'||tab==='ag-contacts') ? 'flex' : 'none';
+      }
+      if(tab==='ag-investors') renderCRMInvestors();
+      if(tab==='ag-professionals') renderProfessionals();
+    });
+  });
+  // Professional type filter
+  document.querySelectorAll('[data-proffilter]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('[data-proffilter]').forEach(function(b){b.classList.remove('on');});
+      btn.classList.add('on');
+      renderProfessionals(btn.getAttribute('data-proffilter'));
+    });
+  });
   // Setup comparables
   setupComparables();
   // Initial calc
