@@ -7617,15 +7617,13 @@ document.addEventListener('DOMContentLoaded',function(){
   var agcBtn = document.getElementById('agc-add-btn');
   if(agcBtn) agcBtn.addEventListener('click', addAgModalContact);
   // Bind analyser tabs
-  bindTabs('#page-analyser');bindTabs('#page-daily');
-  // CRM tab wiring
+  bindTabs('#page-analyser');bindTabs('#page-daily');bindTabs('#page-agents');
+  // CRM extra: render correct content when tab switches
   document.querySelectorAll('#page-agents .tab-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
       var tab = btn.getAttribute('data-tab');
       var actionsEl = document.getElementById('crm-actions');
-      if(actionsEl){
-        actionsEl.style.display = (tab==='ag-companies'||tab==='ag-contacts') ? 'flex' : 'none';
-      }
+      if(actionsEl) actionsEl.style.display = (tab==='ag-companies'||tab==='ag-contacts') ? 'flex' : 'none';
       if(tab==='ag-investors') renderCRMInvestors();
       if(tab==='ag-professionals') renderProfessionals();
     });
