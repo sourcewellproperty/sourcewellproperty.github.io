@@ -604,7 +604,7 @@ a.link:hover{text-decoration:underline;}
     <button class="sb-item" id="nav-tracker" onclick="showPage('tracker')">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/></svg>Territory Tracker
     </button>
-    <button class="sb-item" id="nav-crm" onclick="showPage('agents');setTimeout(function(){var btn=document.querySelector('[data-tab=ag-investors]');if(btn)btn.click();},100)">
+    <button class="sb-item" id="nav-crm" onclick="goToInvestors()">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="3"/><path d="M1 14c0-2.76 2.24-5 5-5"/><circle cx="12" cy="10" r="3"/><path d="M12 8v4M10 10h4"/></svg>Investors
     </button>
     <button class="sb-item" id="nav-agents" onclick="showPage('agents')">
@@ -7412,6 +7412,14 @@ function saveScript(key){
   }
 }
 
+
+function goToInvestors() {
+  showPage('agents');
+  setTimeout(function(){
+    var btn = document.querySelector('[data-tab="ag-investors"]');
+    if(btn) btn.click();
+  }, 150);
+}
 
 function toggleTheme() {
   var isLight = document.documentElement.getAttribute('data-theme') === 'light';
