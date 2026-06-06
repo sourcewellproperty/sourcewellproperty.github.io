@@ -1243,6 +1243,7 @@ a.link:hover{text-decoration:underline;}
         <div id="d-agent-count" style="font-family:var(--fm);font-size:9px;color:var(--txt3);margin-top:3px;"></div>
       </div>
       </div>
+      <div class="field"><label>Linked Contact</label><select id="d-contact"><option value="">— None —</option></select></div>
       <div class="field"><label>Linked Investor</label><select id="d-investor"><option value="">— None —</option></select></div>
       <div class="field"><label>Date Added</label><input type="date" id="d-date"></div>
       <div class="field"><label>Source</label><select id="d-source"><option>Rightmove</option><option>Zoopla</option><option>OnTheMarket</option><option>Direct Mail</option><option>Agent Relationship</option><option>Auction</option><option>Referral</option><option>Other</option></select></div>
@@ -1692,6 +1693,8 @@ function filterAgentDropdown() {
         dropdown.style.display = 'none';
         if(clearBtn) clearBtn.style.display = 'block';
         if(countEl) countEl.textContent = 'Selected: ' + a.name;
+        // Filter contact dropdown to this agent's contacts
+        if(typeof populateContactDropdown === 'function') populateContactDropdown(a.id);
       });
       dropdown.appendChild(item);
     });
@@ -1986,6 +1989,45 @@ function openDealModal(id){
     o.textContent=inv.name+(inv.role?' ('+inv.role+')':'');
     invSel.appendChild(o);
   });
+
+  // Populate contact dropdown - filter by selected agent
+  var contactSel = document.getElementById('d-contact');
+  function populateContactDropdown(agentId) {
+    contactSel.innerHTML='<option value="">— None —</option>';
+    var contacts = [];
+    ags.forEach(function(a){
+      if(agentId && a.id !== agentId) return;
+      if(a.contacts && a.contacts.length) {
+        a.contacts.forEach(function(c){
+          contacts.push({id:c.id, name:c.name, role:c.role, company:a.agency||a.name});
+        });
+      }
+    });
+    contacts.sort(function(a,b){return a.name.localeCompare(b.name);});
+    if(contacts.length) {
+      var grp = document.createElement('optgroup');
+      grp.label = agentId ? 'Contacts at this agency' : 'All contacts';
+      contacts.forEach(function(c){
+        var o = document.createElement('option');
+        o.value = c.id;
+        o.textContent = c.name + (c.role?' · '+c.role:'') + (!agentId?' ('+c.company+')':'');
+        grp.appendChild(o);
+      });
+      contactSel.appendChild(grp);
+    }
+  }
+  populateContactDropdown('');
+
+  // Re-filter contacts when agent changes
+  document.getElementById('d-agent').addEventListener('change',function(){
+    populateContactDropdown(this.value);
+  });
+  // Also hook agent clear button
+  var _agClearBtn = document.getElementById('d-agent-clear');
+  if(_agClearBtn) _agClearBtn.addEventListener('click',function(){
+    setTimeout(function(){ populateContactDropdown(''); },50);
+  });
+
   // Init agent autocomplete
   var _agHidden = document.getElementById('d-agent');
   var _agSearch = document.getElementById('d-agent-search');
@@ -2025,6 +2067,9 @@ function openDealModal(id){
         if(_agRec && _agSrch) { _agSrch.value = _agRec.name+(_agRec.agency?' · '+_agRec.agency:''); }
         if(_agClr) _agClr.style.display = _eidAg ? 'block' : 'none';
       }
+      // Pre-filter contacts to match selected agent, then set value
+      if(typeof populateContactDropdown === 'function') populateContactDropdown(d.agentId||'');
+      document.getElementById('d-contact').value=d.contactId||'';
       document.getElementById('d-investor').value=d.investorId||'';
       document.getElementById('d-date').value=d.date||today();
       document.getElementById('d-source').value=d.source||'Rightmove';
@@ -2051,6 +2096,7 @@ function openDealModal(id){
   document.getElementById('d-sqm').value='';
     document.getElementById('d-sale-type').value='traditional';
     document.getElementById('d-agent').value='';
+  document.getElementById('d-contact').value='';
     document.getElementById('d-investor').value='';
   }
   openModal('deal-modal');
@@ -2099,6 +2145,7 @@ function saveDeal(){
     ask:document.getElementById('d-ask').value,
     max:document.getElementById('d-max').value,
     agentId:document.getElementById('d-agent').value,
+    contactId:document.getElementById('d-contact').value||'',
     investorId:document.getElementById('d-investor').value,
     date:document.getElementById('d-date').value,
     source:document.getElementById('d-source').value,
