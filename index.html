@@ -694,9 +694,15 @@ a.link:hover{text-decoration:underline;}
     <button class="f-btn" data-filter="lost">Lost</button>
     <button class="f-btn" data-filter="archive">Archive</button>
     <span class="fbar-lbl" style="margin-left:8px;">Area:</span>
-    <select id="pl-area-filter" style="font-family:var(--fm);font-size:10px;font-weight:700;padding:4px 10px;border-radius:5px;background:var(--surf2);border:1.5px solid var(--brd2);color:var(--txt2);cursor:pointer;text-transform:uppercase;letter-spacing:1px;">
-      <option value="">All areas</option>
-    </select>
+    <button class="f-btn on" id="area-btn-all" onclick="setAreaFilter('')">All</button>
+    <button class="f-btn" id="area-btn-newport" onclick="setAreaFilter('newport')">
+      <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#60a5fa;margin-right:4px;vertical-align:middle;"></span>Newport
+    </button>
+    <button class="f-btn" id="area-btn-morriston" onclick="setAreaFilter('morriston')">
+      <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#34d399;margin-right:4px;vertical-align:middle;"></span>Morriston
+    </button>
+    <button class="f-btn" id="area-btn-other" onclick="setAreaFilter('other')">Other</button>
+    <select id="pl-area-filter" style="display:none;"></select>
   </div>
   <div style="overflow-x:auto;" id="pl-table-wrap">
   <table class="dt" id="pl-table">
@@ -1932,6 +1938,15 @@ function makeTypePill(type){ return makePill(TYPE_LABELS[type]||type, isLightMod
 var plFilterVal='all';
 
 var plAreaFilter='';
+function setAreaFilter(val) {
+  plAreaFilter = val;
+  ['all','newport','morriston','other'].forEach(function(k){
+    var btn = document.getElementById('area-btn-'+k);
+    if(btn) btn.classList.toggle('on', (k==='all' && val==='') || k===val);
+  });
+  renderPipeline();
+}
+
 function setupPipelineFilters(){
   document.querySelectorAll('#page-pipeline .f-btn').forEach(function(btn){
     btn.addEventListener('click',function(){
@@ -2368,7 +2383,16 @@ function renderPipeline(){
     plFilterVal==='archive'?deals.filter(function(d){return d.stage==='lost'&&d.archived;}):
     plFilterVal==='lost'?deals.filter(function(d){return d.stage==='lost'&&!d.archived;}):
     deals.filter(function(d){return d.stage===plFilterVal;}))
-    .filter(function(d){return !plAreaFilter||d.zone===plAreaFilter;});
+    .filter(function(d){
+      if(!plAreaFilter) return true;
+      if(plAreaFilter==='other') {
+        var z=(d.zone||'').toLowerCase();
+        return z.indexOf('newport')===-1 && z.indexOf('morriston')===-1 && z.indexOf('sa6')===-1;
+      }
+      if(plAreaFilter==='newport') return (d.zone||'').toLowerCase().indexOf('newport')>-1;
+      if(plAreaFilter==='morriston') return (d.zone||'').toLowerCase().indexOf('morriston')>-1 || (d.zone||'').toLowerCase().indexOf('sa6')>-1;
+      return d.zone===plAreaFilter;
+    });
   var body=document.getElementById('pl-body');
   var empty=document.getElementById('pl-empty');
   var cardsEl=document.getElementById('pl-cards');
@@ -2388,6 +2412,11 @@ function renderPipeline(){
     var inv=d.investorId?invs.find(function(x){return x.id===d.investorId;}):null;
     // Main row
     var tr=document.createElement('tr');
+    var _zone=(d.zone||'').toLowerCase();
+    var _areaColor = _zone.indexOf('newport')>-1 ? '#60a5fa33'
+                   : (_zone.indexOf('morriston')>-1||_zone.indexOf('sa6')>-1) ? '#34d39933'
+                   : '';
+    if(_areaColor) tr.style.borderLeft='3px solid '+(_areaColor.replace('33',''));
     tr.className='dr';
     tr.style.cursor='pointer';
     // Photo cell
@@ -2503,8 +2532,14 @@ function renderPipeline(){
     }
     tdAct.appendChild(btnDel);
     var tdArea=document.createElement('td');
-    if(d.zone){var areaEl=document.createElement('span');areaEl.style.cssText='font-family:var(--fm);font-size:10px;color:var(--txt3);';areaEl.textContent=d.zone;tdArea.appendChild(areaEl);}
-    else{tdArea.innerHTML='<span class="dt-muted">—</span>';}
+    if(d.zone){
+      var _zL=(d.zone||'').toLowerCase();
+      var _zCol=_zL.indexOf('newport')>-1?'var(--blue)':(_zL.indexOf('morriston')>-1||_zL.indexOf('sa6')>-1)?'var(--green)':'var(--txt3)';
+      var areaEl=document.createElement('span');
+      areaEl.style.cssText='font-family:var(--fm);font-size:10px;font-weight:700;color:'+_zCol+';';
+      areaEl.textContent=d.zone;
+      tdArea.appendChild(areaEl);
+    } else{tdArea.innerHTML='<span class="dt-muted">—</span>';}
     if(_bulkMode){
       var tdCb=document.createElement('td');tdCb.style.cssText='width:30px;text-align:center;';
       var cb=document.createElement('input');cb.type='checkbox';cb.id='bulk-cb-'+d.id;cb.checked=!!_bulkSelected[d.id];
