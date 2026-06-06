@@ -4829,14 +4829,15 @@ function openTaskModal(id, prefDealId, prefDealAddr, prefContactRef, prefContact
     agOptHtml += '</optgroup>';
   }
 
-  // 2. Agents — only show individual agents (not companies), skip duplicates
-  var agentContacts = ags.filter(function(a){
-    return a.role !== 'Agency' && a.role !== 'Branch' && a.name !== a.agency;
-  });
-  if(agentContacts.length) {
-    agOptHtml += '<optgroup label="Agents">';
-    agentContacts.forEach(function(a){
-      var label = a.name + (a.agency && a.agency !== a.name ? ' · ' + a.agency : '');
+  // 2. Agents / Companies — show all
+  if(ags.length) {
+    agOptHtml += '<optgroup label="Agents & Companies">';
+    var sortedAgsOpt = ags.slice().sort(function(a,b){
+      return (a.agency||a.name||'').localeCompare(b.agency||b.name||'');
+    });
+    sortedAgsOpt.forEach(function(a){
+      var label = a.agency || a.name || 'Unnamed';
+      if(a.name && a.name !== a.agency) label += ' · ' + a.name;
       agOptHtml += '<option value="ag_'+a.id+'">'+label+'</option>';
     });
     agOptHtml += '</optgroup>';
